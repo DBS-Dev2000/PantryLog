@@ -81,10 +81,10 @@ export default function HomePage() {
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Welcome back!
+          Welcome to BITE! 🦷
         </Typography>
         <Typography variant="body1" color="textSecondary">
-          Manage your pantry and freezer inventory efficiently.
+          Take a BITE out of waste. Your smart inventory management system.
         </Typography>
       </Box>
 

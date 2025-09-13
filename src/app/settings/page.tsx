@@ -138,10 +138,10 @@ export default function SettingsPage() {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, pb: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Settings
+        BITE Settings
       </Typography>
       <Typography variant="body1" color="textSecondary" paragraph>
-        Manage your account, storage configuration, and application preferences
+        Configure your Basic Inventory Tracking Engine preferences and household settings
       </Typography>
 
       {/* User Profile Card */}

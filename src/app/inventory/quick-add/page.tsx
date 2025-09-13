@@ -348,7 +348,7 @@ export default function QuickAddPage() {
             </Typography>
           </Box>
           <Typography variant="body1" color="textSecondary">
-            Scan product barcode + location QR code for instant inventory addition
+            Take a BITE out of waste - Scan product + location for instant inventory tracking
           </Typography>
         </Box>
       </Box>

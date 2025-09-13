@@ -101,8 +101,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const drawer = (
     <Box>
       <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          PantryLog
+        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+          BITE
         </Typography>
       </Toolbar>
       <Divider />
@@ -153,8 +153,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            PantryLog
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+            BITE
           </Typography>
           <IconButton
             size="large"

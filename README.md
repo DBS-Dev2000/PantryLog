@@ -1,6 +1,8 @@
-# PantryLog - Smart Kitchen Inventory Management
+# BITE - Basic Inventory Tracking Engine 🦷
 
-A comprehensive inventory management system for tracking food items across pantries, freezers, and refrigerators. Built with Next.js, TypeScript, and Supabase.
+**Take a BITE out of waste!**
+
+A smart, comprehensive inventory management system for tracking food items across pantries, freezers, and refrigerators. Built with Next.js, TypeScript, and Supabase.
 
 ## Features
 
@@ -181,4 +183,4 @@ For questions or issues:
 
 ---
 
-Built with ❤️ for efficient kitchen management
+Built with ❤️ to help you take a BITE out of food waste 🦷

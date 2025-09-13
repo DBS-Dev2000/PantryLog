@@ -7,8 +7,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'PantryLog - Inventory Management',
-  description: 'Track your pantry and freezer inventory with ease',
+  title: 'BITE - Basic Inventory Tracking Engine',
+  description: 'Take a BITE out of waste. Smart inventory management for your pantry and freezer.',
 }
 
 export default function RootLayout({
