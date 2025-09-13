@@ -80,52 +80,55 @@ export default function BarcodeScanner({
       })
 
       console.log('✅ Camera stream obtained')
+      setStream(mediaStream)
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream
+      // Wait for video element to be available, then assign stream
+      const assignStreamToVideo = () => {
+        if (videoRef.current) {
+          console.log('📹 Assigning stream to video element')
+          videoRef.current.srcObject = mediaStream
 
-        // Add event listeners to handle video loading
-        videoRef.current.onloadedmetadata = () => {
-          console.log('📹 Video metadata loaded, setting camera active')
-          setCameraActive(true)
-        }
-
-        videoRef.current.oncanplay = () => {
-          console.log('📹 Video can play, setting camera active')
-          setCameraActive(true)
-        }
-
-        videoRef.current.onplaying = () => {
-          console.log('📹 Video is playing, camera should be visible')
-          setCameraActive(true)
-        }
-
-        videoRef.current.onerror = (e) => {
-          console.error('📹 Video error:', e)
-          setError('Video playback failed')
-          setCameraActive(false)
-        }
-
-        // Force play the video
-        videoRef.current.play()
-          .then(() => {
-            console.log('📹 Video play started successfully')
+          // Add event listeners to handle video loading
+          videoRef.current.onloadedmetadata = () => {
+            console.log('📹 Video metadata loaded, setting camera active')
             setCameraActive(true)
-          })
-          .catch((e) => {
-            console.error('📹 Play error:', e)
-            setError('Could not start video playback')
-            setCameraActive(false)
-          })
+          }
 
-        // Also set camera active after a short delay as fallback
-        setTimeout(() => {
-          console.log('⏰ Fallback: Setting camera active after delay')
-          setCameraActive(true)
-        }, 1000)
+          videoRef.current.oncanplay = () => {
+            console.log('📹 Video can play, setting camera active')
+            setCameraActive(true)
+          }
+
+          videoRef.current.onplaying = () => {
+            console.log('📹 Video is playing, camera should be visible')
+            setCameraActive(true)
+          }
+
+          videoRef.current.onerror = (e) => {
+            console.error('📹 Video error:', e)
+            setError('Video playback failed')
+            setCameraActive(false)
+          }
+
+          // Force play the video
+          videoRef.current.play()
+            .then(() => {
+              console.log('📹 Video play started successfully')
+              setCameraActive(true)
+            })
+            .catch((e) => {
+              console.error('📹 Play error:', e)
+              setError('Could not start video playback')
+              setCameraActive(false)
+            })
+        } else {
+          console.log('⏳ Video element not ready, retrying in 100ms...')
+          setTimeout(assignStreamToVideo, 100)
+        }
       }
 
-      setStream(mediaStream)
+      // Start trying to assign the stream
+      assignStreamToVideo()
 
     } catch (err: any) {
       console.error('❌ Camera error:', err)
@@ -240,13 +243,9 @@ export default function BarcodeScanner({
                 {error}
               </Typography>
             </Box>
-          ) : !cameraActive ? (
-            <Box sx={{ textAlign: 'center', color: 'white', p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <CircularProgress sx={{ color: 'white', mb: 2 }} />
-              <Typography>Starting camera...</Typography>
-            </Box>
           ) : (
             <Box sx={{ position: 'relative', flexGrow: 1 }}>
+              {/* Always render video element so ref is available */}
               <video
                 ref={videoRef}
                 autoPlay
@@ -261,42 +260,68 @@ export default function BarcodeScanner({
                 }}
               />
 
-              {/* Scanning Frame Overlay */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  border: '3px solid #00ff00',
-                  width: '80%',
-                  maxWidth: 250,
-                  height: '25%',
-                  borderRadius: 2,
-                  pointerEvents: 'none',
-                  boxShadow: '0 0 15px rgba(0,255,0,0.5)'
-                }}
-              />
+              {/* Loading overlay when camera not active */}
+              {!cameraActive && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    color: 'white'
+                  }}
+                >
+                  <CircularProgress sx={{ color: 'white', mb: 2 }} />
+                  <Typography>Starting camera...</Typography>
+                </Box>
+              )}
 
-              {/* Instructions */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 16,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  backgroundColor: 'rgba(0,0,0,0.8)',
-                  color: 'white',
-                  px: 2,
-                  py: 1,
-                  borderRadius: 1,
-                  textAlign: 'center'
-                }}
-              >
-                <Typography variant="body2">
-                  📱 Position barcode in green frame
-                </Typography>
-              </Box>
+              {/* Scanning Frame Overlay - only when camera is active */}
+              {cameraActive && (
+                <>
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      border: '3px solid #00ff00',
+                      width: '80%',
+                      maxWidth: 250,
+                      height: '25%',
+                      borderRadius: 2,
+                      pointerEvents: 'none',
+                      boxShadow: '0 0 15px rgba(0,255,0,0.5)'
+                    }}
+                  />
+
+                  {/* Instructions */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 16,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      backgroundColor: 'rgba(0,0,0,0.8)',
+                      color: 'white',
+                      px: 2,
+                      py: 1,
+                      borderRadius: 1,
+                      textAlign: 'center'
+                    }}
+                  >
+                    <Typography variant="body2">
+                      📱 Position barcode in green frame
+                    </Typography>
+                  </Box>
+                </>
+              )}
             </Box>
           )}
         </Box>
