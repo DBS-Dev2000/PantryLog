@@ -83,7 +83,46 @@ export default function BarcodeScanner({
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
-        setCameraActive(true)
+
+        // Add event listeners to handle video loading
+        videoRef.current.onloadedmetadata = () => {
+          console.log('📹 Video metadata loaded, setting camera active')
+          setCameraActive(true)
+        }
+
+        videoRef.current.oncanplay = () => {
+          console.log('📹 Video can play, setting camera active')
+          setCameraActive(true)
+        }
+
+        videoRef.current.onplaying = () => {
+          console.log('📹 Video is playing, camera should be visible')
+          setCameraActive(true)
+        }
+
+        videoRef.current.onerror = (e) => {
+          console.error('📹 Video error:', e)
+          setError('Video playback failed')
+          setCameraActive(false)
+        }
+
+        // Force play the video
+        videoRef.current.play()
+          .then(() => {
+            console.log('📹 Video play started successfully')
+            setCameraActive(true)
+          })
+          .catch((e) => {
+            console.error('📹 Play error:', e)
+            setError('Could not start video playback')
+            setCameraActive(false)
+          })
+
+        // Also set camera active after a short delay as fallback
+        setTimeout(() => {
+          console.log('⏰ Fallback: Setting camera active after delay')
+          setCameraActive(true)
+        }, 1000)
       }
 
       setStream(mediaStream)
@@ -126,6 +165,21 @@ export default function BarcodeScanner({
       console.log('✅ Manual barcode entered:', manualBarcode)
       onScan(manualBarcode.trim())
       handleClose()
+    }
+  }
+
+  const debugCamera = () => {
+    console.log('🔍 Camera Debug Info:')
+    console.log('   cameraActive:', cameraActive)
+    console.log('   stream:', stream)
+    console.log('   video element:', videoRef.current)
+    console.log('   video srcObject:', videoRef.current?.srcObject)
+    console.log('   video readyState:', videoRef.current?.readyState)
+    console.log('   video paused:', videoRef.current?.paused)
+
+    if (videoRef.current && !videoRef.current.paused) {
+      console.log('🎬 Attempting to play video...')
+      videoRef.current.play().catch(console.error)
     }
   }
 
@@ -198,10 +252,12 @@ export default function BarcodeScanner({
                 autoPlay
                 playsInline
                 muted
+                webkit-playsinline="true"
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover'
+                  objectFit: 'cover',
+                  backgroundColor: 'black'
                 }}
               />
 
@@ -275,6 +331,9 @@ export default function BarcodeScanner({
       </DialogContent>
 
       <DialogActions>
+        <Button onClick={debugCamera} size="small" sx={{ mr: 'auto' }}>
+          Debug
+        </Button>
         <Typography variant="caption" color="textSecondary" sx={{ flexGrow: 1 }}>
           📷 Camera helps you see the barcode - Type the numbers in the field above
         </Typography>
