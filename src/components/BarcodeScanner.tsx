@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import {
   Dialog,
   DialogTitle,
@@ -20,7 +21,14 @@ import {
   FlashOff as FlashOffIcon,
   FlipCameraAndroid as FlipCameraIcon
 } from '@mui/icons-material'
-import { BarcodeScannerComponent } from 'react-qr-barcode-scanner'
+// Dynamic import for client-side only
+const BarcodeScannerComponent = dynamic(
+  () => import('react-qr-barcode-scanner').then(mod => mod.BarcodeScannerComponent),
+  {
+    ssr: false,
+    loading: () => <CircularProgress />
+  }
+)
 
 interface BarcodeScannerProps {
   open: boolean
@@ -66,6 +74,11 @@ export default function BarcodeScanner({
     } else {
       setError('Camera scanning failed. Please try again or enter the barcode manually.')
     }
+  }
+
+  const handleClose = () => {
+    setError(null)
+    onClose()
   }
 
   return (
@@ -117,19 +130,26 @@ export default function BarcodeScanner({
           }}
         >
           {open && (
-            <BarcodeScannerComponent
-              width="100%"
-              height="100%"
-              onUpdate={(err, result) => {
-                if (result) {
-                  handleScan(result.getText())
-                } else if (err && err.name !== 'NotFoundException') {
-                  handleError(err)
-                }
-              }}
-              facingMode="environment"
-              torch={false}
-            />
+            <Suspense fallback={<CircularProgress sx={{ color: 'white' }} />}>
+              <BarcodeScannerComponent
+                width="100%"
+                height="100%"
+                onUpdate={(err: any, result: any) => {
+                  try {
+                    if (result) {
+                      handleScan(result.getText())
+                    } else if (err && err.name !== 'NotFoundException') {
+                      handleError(err)
+                    }
+                  } catch (error) {
+                    console.error('Scanner update error:', error)
+                    handleError(error)
+                  }
+                }}
+                facingMode="environment"
+                torch={false}
+              />
+            </Suspense>
           )}
 
           {/* Scanning Overlay */}

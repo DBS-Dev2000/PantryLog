@@ -11,7 +11,8 @@
       "Bash(echo:*)",
       "Bash(node)",
       "Bash(npx supabase:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "WebFetch(domain:bite.prolongedpantry.com)"
     ],
     "deny": [],
     "ask": []
