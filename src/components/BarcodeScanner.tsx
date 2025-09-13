@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import dynamic from 'next/dynamic'
+import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library'
 import {
   Dialog,
   DialogTitle,
@@ -42,14 +43,17 @@ export default function BarcodeScanner({
   open,
   onClose,
   onScan,
-  title = "Camera Barcode Helper",
-  description = "Use your camera to see the barcode clearly, then enter it manually"
+  title = "Barcode Scanner",
+  description = "Position barcode in camera view - auto-detection will scan automatically"
 }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [cameraActive, setCameraActive] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [manualBarcode, setManualBarcode] = useState('')
+  const [scanning, setScanning] = useState(false)
+  const [showManualEntry, setShowManualEntry] = useState(false)
+  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null)
 
   useEffect(() => {
     if (open && isBrowser) {
@@ -115,6 +119,7 @@ export default function BarcodeScanner({
             .then(() => {
               console.log('📹 Video play started successfully')
               setCameraActive(true)
+              startBarcodeScanning()
             })
             .catch((e) => {
               console.error('📹 Play error:', e)
@@ -144,7 +149,57 @@ export default function BarcodeScanner({
     }
   }
 
+  const startBarcodeScanning = () => {
+    try {
+      console.log('🔍 Starting automatic barcode detection...')
+      setScanning(true)
+
+      if (!videoRef.current) {
+        console.log('❌ Video element not available for scanning')
+        return
+      }
+
+      const codeReader = new BrowserMultiFormatReader()
+      codeReaderRef.current = codeReader
+
+      // Start continuous scanning
+      codeReader.decodeFromVideoDevice(
+        undefined, // Use default camera
+        videoRef.current,
+        (result, error) => {
+          if (result) {
+            console.log('✅ Barcode automatically detected:', result.getText())
+            onScan(result.getText())
+            handleClose()
+          } else if (error && !(error instanceof NotFoundException)) {
+            console.log('⚠️ Barcode scan error (continuing):', error.message)
+          }
+        }
+      )
+
+      // Show manual entry option after 10 seconds if no barcode detected
+      setTimeout(() => {
+        if (cameraActive && !showManualEntry) {
+          console.log('⏰ Auto-scan timeout, showing manual entry option')
+          setShowManualEntry(true)
+        }
+      }, 10000)
+
+    } catch (err) {
+      console.error('❌ Failed to start barcode scanning:', err)
+      setShowManualEntry(true)
+    }
+  }
+
   const stopCamera = () => {
+    // Stop barcode scanning
+    if (codeReaderRef.current) {
+      console.log('🛑 Stopping barcode scanner')
+      codeReaderRef.current.reset()
+      codeReaderRef.current = null
+    }
+
+    // Stop camera stream
     if (stream) {
       console.log('📷 Stopping camera stream')
       stream.getTracks().forEach(track => track.stop())
@@ -154,6 +209,8 @@ export default function BarcodeScanner({
       videoRef.current.srcObject = null
     }
     setCameraActive(false)
+    setScanning(false)
+    setShowManualEntry(false)
   }
 
   const handleClose = () => {
@@ -291,13 +348,14 @@ export default function BarcodeScanner({
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      border: '3px solid #00ff00',
+                      border: scanning ? '3px solid #00ff00' : '3px solid #ffff00',
                       width: '80%',
                       maxWidth: 250,
                       height: '25%',
                       borderRadius: 2,
                       pointerEvents: 'none',
-                      boxShadow: '0 0 15px rgba(0,255,0,0.5)'
+                      boxShadow: scanning ? '0 0 15px rgba(0,255,0,0.5)' : '0 0 15px rgba(255,255,0,0.5)',
+                      animation: scanning ? 'pulse 1s infinite' : 'none'
                     }}
                   />
 
@@ -317,50 +375,87 @@ export default function BarcodeScanner({
                     }}
                   >
                     <Typography variant="body2">
-                      📱 Position barcode in green frame
+                      {scanning ? '🔍 Scanning for barcodes...' : '📱 Position barcode in frame'}
                     </Typography>
                   </Box>
+
+                  {/* Manual Entry Button */}
+                  {showManualEntry && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 16,
+                        left: '50%',
+                        transform: 'translateX(-50%)'
+                      }}
+                    >
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => setShowManualEntry(true)}
+                        sx={{
+                          backgroundColor: 'rgba(255,255,255,0.9)',
+                          color: 'black',
+                          '&:hover': { backgroundColor: 'white' }
+                        }}
+                      >
+                        📝 Enter Manually
+                      </Button>
+                    </Box>
+                  )}
                 </>
               )}
             </Box>
           )}
         </Box>
 
-        {/* Manual Entry Section */}
-        <Box sx={{ p: 2, backgroundColor: 'grey.100' }}>
-          <Typography variant="body2" color="textSecondary" gutterBottom>
-            Enter the barcode numbers you see:
-          </Typography>
-          <Box display="flex" gap={1}>
-            <TextField
-              label="Barcode Numbers"
-              value={manualBarcode}
-              onChange={(e) => setManualBarcode(e.target.value)}
-              placeholder="e.g. 012000161155"
-              size="small"
-              sx={{ flexGrow: 1 }}
-              inputProps={{
-                inputMode: 'numeric',
-                pattern: '[0-9]*'
-              }}
-            />
-            <Button
-              variant="contained"
-              onClick={handleSubmit}
-              disabled={!manualBarcode.trim()}
-            >
-              Use This Code
-            </Button>
+        {/* Manual Entry Section - Show after timeout or on mobile when needed */}
+        {showManualEntry && (
+          <Box sx={{ p: 2, backgroundColor: 'grey.100', borderTop: '1px solid #ddd' }}>
+            <Typography variant="body2" color="textSecondary" gutterBottom>
+              🔍 Auto-scan not working? Enter the barcode numbers manually:
+            </Typography>
+            <Box display="flex" gap={1}>
+              <TextField
+                label="Barcode Numbers"
+                value={manualBarcode}
+                onChange={(e) => setManualBarcode(e.target.value)}
+                placeholder="e.g. 012000161155"
+                size="small"
+                sx={{ flexGrow: 1 }}
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*'
+                }}
+                autoFocus
+              />
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={!manualBarcode.trim()}
+              >
+                Use This Code
+              </Button>
+            </Box>
           </Box>
-        </Box>
+        )}
       </DialogContent>
 
       <DialogActions>
         <Button onClick={debugCamera} size="small" sx={{ mr: 'auto' }}>
           Debug
         </Button>
-        <Typography variant="caption" color="textSecondary" sx={{ flexGrow: 1 }}>
-          📷 Camera helps you see the barcode - Type the numbers in the field above
+        {!showManualEntry && cameraActive && (
+          <Button
+            onClick={() => setShowManualEntry(true)}
+            variant="outlined"
+            size="small"
+          >
+            📝 Manual Entry
+          </Button>
+        )}
+        <Typography variant="caption" color="textSecondary" sx={{ flexGrow: 1, textAlign: 'center' }}>
+          {scanning ? '🔍 Auto-scanning...' : '📷 Position barcode in frame'}
         </Typography>
         <Button onClick={handleClose}>
           Cancel
