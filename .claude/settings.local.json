@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "WebSearch",
+      "WebFetch(domain:www.ean-search.org)",
+      "WebFetch(domain:upcdatabase.org)",
+      "WebFetch(domain:go-upc.com)",
+      "Bash(taskkill:*)",
+      "Bash(echo:*)",
+      "Bash(node)",
+      "Bash(npx supabase:*)",
+      "Bash(npm install:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
