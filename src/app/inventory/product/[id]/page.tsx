@@ -136,7 +136,7 @@ export default function ProductDetailPage() {
 
       if (productError) throw productError
 
-      setProduct(productData)
+      setProduct(productData as ProductDetail)
 
       // Load all storage locations to build paths
       const { data: allStorageLocations, error: locationsError } = await supabase
@@ -166,13 +166,13 @@ export default function ProductDetailPage() {
         for (const item of itemsData) {
           if (item.storage_locations?.id) {
             const fullPath = buildLocationPath(item.storage_locations.id, allStorageLocations)
-            item.storage_locations.full_path = fullPath
+            ;(item.storage_locations as any).full_path = fullPath
           }
         }
       }
 
       console.log('📦 Product inventory items with paths:', itemsData?.length || 0)
-      setInventoryItems(itemsData || [])
+      setInventoryItems((itemsData || []) as InventoryItem[])
 
     } catch (err: any) {
       console.error('Error loading product data:', err)
@@ -573,7 +573,7 @@ export default function ProductDetailPage() {
                           }}
                         >
                           <LocationIcon fontSize="small" sx={{ mr: 0.5, verticalAlign: 'middle' }} />
-                          {item.storage_locations?.full_path || item.storage_locations?.name || 'Unknown Location'}
+                          {(item.storage_locations as any)?.full_path || item.storage_locations?.name || 'Unknown Location'}
                         </Typography>
                         <Typography variant="caption" color="textSecondary">
                           {item.storage_locations?.type}
@@ -667,7 +667,7 @@ export default function ProductDetailPage() {
                                 '&:hover': { color: 'primary.dark' }
                               }}
                             >
-                              {item.storage_locations?.full_path || item.storage_locations?.name || 'Unknown Location'}
+                              {(item.storage_locations as any)?.full_path || item.storage_locations?.name || 'Unknown Location'}
                             </Typography>
                             <Typography variant="caption" color="textSecondary">
                               {item.storage_locations?.type}

@@ -105,7 +105,7 @@ export default function InventoryPage() {
         for (const item of inventoryData) {
           if (item.storage_locations?.id) {
             const fullPath = await buildLocationPath(item.storage_locations.id, allStorageLocations)
-            item.storage_locations.full_path = fullPath
+            ;(item.storage_locations as any).full_path = fullPath
           }
         }
       }
@@ -395,9 +395,9 @@ export default function InventoryPage() {
                             '&:hover': item.storage_locations?.id ? { color: 'primary.dark' } : {}
                           }}
                         >
-                          {item.storage_locations?.full_path || item.storage_locations?.name || 'Unknown Location'}
+                          {(item.storage_locations as any)?.full_path || item.storage_locations?.name || 'Unknown Location'}
                         </Typography>
-                        {item.storage_locations?.full_path && item.storage_locations?.full_path !== item.storage_locations?.name && (
+                        {(item.storage_locations as any)?.full_path && (item.storage_locations as any)?.full_path !== item.storage_locations?.name && (
                           <Typography variant="caption" color="textSecondary">
                             {item.storage_locations.type}
                           </Typography>

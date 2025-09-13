@@ -260,14 +260,20 @@ export default function StorageConfigPage() {
 
       // First pass: create all locations
       data?.forEach(location => {
-        locationMap.set(location.id, { ...location, children: [] })
+        locationMap.set(location.id, {
+          ...location,
+          children: [],
+          level: (location as any).level || 0,
+          sort_order: (location as any).sort_order || 0,
+          parent_id: (location as any).parent_id || undefined
+        })
       })
 
       // Second pass: build hierarchy
       data?.forEach(location => {
         const loc = locationMap.get(location.id)!
-        if (location.parent_id) {
-          const parent = locationMap.get(location.parent_id)
+        if ((location as any).parent_id) {
+          const parent = locationMap.get((location as any).parent_id)
           if (parent) {
             parent.children!.push(loc)
           }

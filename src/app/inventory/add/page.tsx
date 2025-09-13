@@ -330,7 +330,7 @@ export default function AddItemPage() {
           id: location.id,
           label: location.name,
           fullPath: fullPath,
-          level: location.level
+          level: (location as any).level || 0
         })
       })
 
@@ -582,7 +582,7 @@ export default function AddItemPage() {
 
         if (productCreateError) throw productCreateError
         productId = newProduct.id
-        setGeneratedBarcode(newProduct.upc) // Save for potential printing
+        setGeneratedBarcode(newProduct.upc || '') // Save for potential printing
       }
 
       // Create household if needed (temporary solution)
@@ -909,7 +909,7 @@ export default function AddItemPage() {
       {step === 'details' && (
         <Fade in={true}>
           <Paper sx={{ p: 4 }}>
-            <Box display="flex" justify="space-between" alignItems="center" mb={3}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
               <Typography variant="h6">
                 {productData?.name ? 'Complete Product Details' : 'Enter Product Details'}
               </Typography>
