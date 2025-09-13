@@ -1,8 +1,3 @@
 {
-  "framework": "nextjs",
-  "functions": {
-    "src/app/api/**/*": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  "framework": "nextjs"
 }
