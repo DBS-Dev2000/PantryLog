@@ -21,14 +21,8 @@ import {
   FlashOff as FlashOffIcon,
   FlipCameraAndroid as FlipCameraIcon
 } from '@mui/icons-material'
-// Dynamic import for client-side only
-const BarcodeScannerComponent = dynamic(
-  () => import('react-qr-barcode-scanner').then(mod => mod.BarcodeScannerComponent),
-  {
-    ssr: false,
-    loading: () => <CircularProgress />
-  }
-)
+// Use a simpler approach for production compatibility
+const isBrowser = typeof window !== 'undefined'
 
 interface BarcodeScannerProps {
   open: boolean
@@ -45,40 +39,79 @@ export default function BarcodeScanner({
   title = "Scan Barcode",
   description = "Position the barcode within the camera view"
 }: BarcodeScannerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [scanning, setScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null)
+  const [stream, setStream] = useState<MediaStream | null>(null)
 
   useEffect(() => {
-    if (open) {
-      // Check camera permission when opening
-      navigator.permissions.query({ name: 'camera' as PermissionName })
-        .then(permission => {
-          setHasPermission(permission.state === 'granted')
-        })
-        .catch(() => setHasPermission(null))
+    if (open && isBrowser) {
+      startCamera()
+    } else {
+      stopCamera()
     }
+
+    return () => stopCamera()
   }, [open])
 
-  const handleScan = (result: string) => {
-    console.log('✅ Barcode scanned:', result)
-    onScan(result)
-    onClose()
+  const startCamera = async () => {
+    try {
+      setError(null)
+      setScanning(true)
+
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment', // Use back camera
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        })
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream
+        }
+
+        setStream(mediaStream)
+        setScanning(false)
+      } else {
+        throw new Error('Camera not supported on this device')
+      }
+    } catch (err: any) {
+      console.error('Camera error:', err)
+      if (err.name === 'NotAllowedError') {
+        setError('Camera permission denied. Please allow camera access.')
+      } else if (err.name === 'NotFoundError') {
+        setError('No camera found on this device.')
+      } else {
+        setError('Failed to start camera. Please try manual entry.')
+      }
+      setScanning(false)
+    }
   }
 
-  const handleError = (error: any) => {
-    console.error('Barcode scan error:', error)
-    if (error?.name === 'NotAllowedError') {
-      setError('Camera permission denied. Please allow camera access in your browser settings.')
-    } else if (error?.name === 'NotFoundError') {
-      setError('No camera found on this device.')
-    } else {
-      setError('Camera scanning failed. Please try again or enter the barcode manually.')
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop())
+      setStream(null)
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
     }
   }
 
   const handleClose = () => {
+    stopCamera()
     setError(null)
     onClose()
+  }
+
+  const handleManualEntry = () => {
+    const barcode = prompt('Enter barcode manually:')
+    if (barcode) {
+      onScan(barcode)
+      handleClose()
+    }
   }
 
   return (
@@ -129,27 +162,56 @@ export default function BarcodeScanner({
             minHeight: 300
           }}
         >
-          {open && (
-            <Suspense fallback={<CircularProgress sx={{ color: 'white' }} />}>
-              <BarcodeScannerComponent
-                width="100%"
-                height="100%"
-                onUpdate={(err: any, result: any) => {
-                  try {
-                    if (result) {
-                      handleScan(result.getText())
-                    } else if (err && err.name !== 'NotFoundException') {
-                      handleError(err)
-                    }
-                  } catch (error) {
-                    console.error('Scanner update error:', error)
-                    handleError(error)
-                  }
+          {scanning ? (
+            <Box sx={{ textAlign: 'center', color: 'white' }}>
+              <CircularProgress sx={{ color: 'white', mb: 2 }} />
+              <Typography>Starting camera...</Typography>
+            </Box>
+          ) : error ? (
+            <Box sx={{ textAlign: 'center', color: 'white', p: 3 }}>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                Camera not available
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={handleManualEntry}
+                color="primary"
+              >
+                Enter Barcode Manually
+              </Button>
+            </Box>
+          ) : (
+            <>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
                 }}
-                facingMode="environment"
-                torch={false}
               />
-            </Suspense>
+
+              {/* Manual Entry Overlay */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16
+                }}
+              >
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleManualEntry}
+                  sx={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+                >
+                  Manual Entry
+                </Button>
+              </Box>
+            </>
           )}
 
           {/* Scanning Overlay */}
@@ -194,8 +256,11 @@ export default function BarcodeScanner({
 
       <DialogActions>
         <Typography variant="caption" color="textSecondary" sx={{ flexGrow: 1 }}>
-          Point camera at barcode and it will scan automatically
+          Camera view for barcode positioning - Use manual entry button to input barcode
         </Typography>
+        <Button onClick={handleManualEntry} variant="outlined">
+          Manual Entry
+        </Button>
         <Button onClick={handleClose}>
           Cancel
         </Button>
