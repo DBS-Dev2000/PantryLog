@@ -196,7 +196,8 @@ export default function QuickUsePage() {
     }
   }
 
-  // Check if we came from a QR code scan or barcode scan
+  useEffect(() => {
+    // Check if we came from a QR code scan or barcode scan
     const locationParam = searchParams.get('location')
     const itemParam = searchParams.get('item')
 
@@ -211,7 +212,7 @@ export default function QuickUsePage() {
       setItemBarcode(itemParam)
       lookupProduct(itemParam)
     }
-  }, [router, searchParams])
+  }, [searchParams])
 
   // Load storage location from QR code
   const loadStorageLocationFromId = async (locationId: string) => {
