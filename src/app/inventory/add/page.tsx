@@ -368,6 +368,13 @@ export default function AddItemPage() {
       if (session?.user) {
         setUser(session.user)
         await loadStorageLocations(session.user)
+
+        // Check if coming from Manual Add (skip barcode step)
+        const isManualAdd = searchParams.get('manual') === 'true'
+        if (isManualAdd) {
+          setProductData({ name: '', upc: `MANUAL-${Date.now()}` })
+          setStep('details')
+        }
       } else {
         router.push('/auth')
       }
@@ -379,7 +386,7 @@ export default function AddItemPage() {
     if (barcodeInputRef.current) {
       barcodeInputRef.current.focus()
     }
-  }, [router])
+  }, [router, searchParams])
 
   // Look up product by UPC/barcode
   const lookupProduct = async (barcode: string) => {

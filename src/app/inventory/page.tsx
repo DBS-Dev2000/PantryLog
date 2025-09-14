@@ -230,7 +230,7 @@ export default function InventoryPage() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => router.push('/inventory/add')}
+          onClick={() => router.push('/inventory/quick-add')}
           size="large"
         >
           Add Item
@@ -308,7 +308,7 @@ export default function InventoryPage() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => router.push('/inventory/add')}
+            onClick={() => router.push('/inventory/quick-add')}
           >
             Add Your First Item
           </Button>
