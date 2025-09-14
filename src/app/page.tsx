@@ -88,9 +88,6 @@ export default function HomePage() {
         </Typography>
       </Box>
 
-      <Alert severity="info" sx={{ mb: 4 }}>
-        This is the initial setup. Complete your household setup and start adding items to your inventory.
-      </Alert>
 
       {/* Primary Actions - Mobile First */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
@@ -99,10 +96,7 @@ export default function HomePage() {
             <CardContent sx={{ textAlign: 'center', py: 3 }}>
               <AddIcon sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
               <Typography variant="h6" gutterBottom>
-                Add
-              </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                Scan product + location
+                Quick Add
               </Typography>
               <Button
                 variant="contained"
@@ -122,10 +116,7 @@ export default function HomePage() {
             <CardContent sx={{ textAlign: 'center', py: 3 }}>
               <RemoveIcon sx={{ fontSize: 48, color: 'error.main', mb: 1 }} />
               <Typography variant="h6" gutterBottom>
-                Use
-              </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                Remove items used
+                Quick Use
               </Typography>
               <Button
                 variant="contained"
