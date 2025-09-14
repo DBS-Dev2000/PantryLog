@@ -404,7 +404,7 @@ export default function QuickAddPage() {
             </Typography>
           </Box>
           <Typography variant="body1" color="textSecondary">
-            Take a BITE out of waste - Scan product + location for instant inventory tracking
+            Smart inventory tracking - Scan, identify, and manage with intelligent efficiency
           </Typography>
         </Box>
       </Box>

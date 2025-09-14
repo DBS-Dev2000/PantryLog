@@ -1,8 +1,8 @@
-# BITE - Basic Inventory Tracking Engine 🦷
+# PantryIQ - Smart Inventory Management 🧠
 
-**Take a BITE out of waste!**
+**Where modern efficiency meets traditional preparedness**
 
-A smart, comprehensive inventory management system for tracking food items across pantries, freezers, and refrigerators. Built with Next.js, TypeScript, and Supabase.
+An intelligent, AI-powered inventory management system for tracking food items across pantries, freezers, and refrigerators. Features barcode scanning, visual AI recognition, receipt processing, and smart household management. Built with Next.js, TypeScript, and Supabase.
 
 ## Features
 
@@ -183,4 +183,4 @@ For questions or issues:
 
 ---
 
-Built with ❤️ to help you take a BITE out of food waste 🦷
+Built with ❤️ to bring intelligence to your kitchen 🧠

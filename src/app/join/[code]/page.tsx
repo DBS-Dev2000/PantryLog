@@ -192,10 +192,10 @@ export default function JoinHouseholdPage() {
         <CardContent sx={{ textAlign: 'center', py: 4 }}>
           <HouseholdIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
           <Typography variant="h5" gutterBottom>
-            Join BITE Household
+            Join PantryIQ Household
           </Typography>
           <Typography variant="body2" color="primary.main" sx={{ fontStyle: 'italic', mb: 2 }}>
-            Take a BITE out of waste together!
+            Smart inventory management for the whole family
           </Typography>
 
           {invite && (

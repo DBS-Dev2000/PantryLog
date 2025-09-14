@@ -7,8 +7,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'BITE - Basic Inventory Tracking Engine',
-  description: 'Take a BITE out of waste. Smart inventory management for your pantry and freezer.',
+  title: 'PantryIQ - Smart Inventory Management',
+  description: 'Intelligent inventory management with AI-powered recognition, barcode scanning, and smart tracking.',
 }
 
 export default function RootLayout({

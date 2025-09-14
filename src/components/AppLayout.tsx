@@ -106,7 +106,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <Box>
       <Toolbar>
         <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-          BITE
+          PantryIQ
         </Typography>
       </Toolbar>
       <Divider />
@@ -158,7 +158,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            BITE
+            PantryIQ
           </Typography>
           <IconButton
             size="large"

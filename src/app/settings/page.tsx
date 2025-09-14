@@ -139,10 +139,10 @@ export default function SettingsPage() {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, pb: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        BITE Settings
+        PantryIQ Settings
       </Typography>
       <Typography variant="body1" color="textSecondary" paragraph>
-        Configure your Basic Inventory Tracking Engine preferences and household settings
+        Configure your intelligent inventory management system and smart features
       </Typography>
 
       {/* User Profile Card */}
