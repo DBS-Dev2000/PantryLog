@@ -275,15 +275,17 @@ export default function QuickAddPage() {
 
       console.log('🏠 Ensuring household exists for user:', householdId)
 
-      // Ensure household exists with proper error handling
-      const { data: household, error: householdError } = await supabase
+      // Ensure household exists (don't overwrite existing name)
+      const { data: existingHousehold } = await supabase
         .from('households')
-        .upsert([{ id: householdId, name: 'My Household' }], { onConflict: 'id' })
-        .select('id')
+        .select('id, name')
+        .eq('id', householdId)
+        .single()
 
-      if (householdError && householdError.code !== '23505') {
-        console.error('❌ Household creation error:', householdError)
-        throw new Error(`Household setup failed: ${householdError.message}`)
+      if (!existingHousehold) {
+        await supabase
+          .from('households')
+          .insert([{ id: householdId, name: 'My Household' }])
       }
 
       console.log('✅ Household ready:', householdId)

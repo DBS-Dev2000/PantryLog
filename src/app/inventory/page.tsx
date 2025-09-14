@@ -68,10 +68,18 @@ export default function InventoryPage() {
     setError(null)
 
     try {
-      // Ensure household exists
-      await supabase
+      // Ensure household exists (don't overwrite existing name)
+      const { data: existingHousehold } = await supabase
         .from('households')
-        .upsert([{ id: userId, name: 'My Household' }], { onConflict: 'id' })
+        .select('id, name')
+        .eq('id', userId)
+        .single()
+
+      if (!existingHousehold) {
+        await supabase
+          .from('households')
+          .insert([{ id: userId, name: 'My Household' }])
+      }
 
       // First, load all storage locations to build paths
       const { data: allStorageLocations, error: locationsError } = await supabase
