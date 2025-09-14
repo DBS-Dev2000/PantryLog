@@ -346,6 +346,11 @@ export default function AddItemPage() {
       })
 
       console.log('🏗️ [Inventory] Built location options:', locationOptions)
+      console.log('📊 [Inventory] Sample locations with hierarchy:')
+      locationOptions.slice(0, 3).forEach(loc => {
+        console.log(`  - ${loc.fullPath} (level ${loc.level})`)
+      })
+
       setStorageLocations(locationOptions)
       console.log('✅ [Inventory] Storage locations loaded:', locationOptions.length)
     } catch (err: any) {
