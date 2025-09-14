@@ -38,12 +38,14 @@ import {
   Add as AddIcon,
   Remove as RemoveIcon,
   Backspace as BackspaceIcon,
-  ExpandMore as ExpandMoreIcon
+  ExpandMore as ExpandMoreIcon,
+  Visibility as EyeIcon
 } from '@mui/icons-material'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import BarcodeScanner from '@/components/BarcodeScanner'
 import QRScanner from '@/components/QRScanner'
+import VisualItemScanner from '@/components/VisualItemScanner'
 
 interface ProductData {
   name: string
@@ -80,6 +82,7 @@ export default function QuickAddPage() {
   const [success, setSuccess] = useState(false)
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
   const [showQRScanner, setShowQRScanner] = useState(false)
+  const [showVisualScanner, setShowVisualScanner] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -361,6 +364,20 @@ export default function QuickAddPage() {
     handleLocationScan(qrCode)
   }
 
+  const handleVisualItemSelected = (itemData: any) => {
+    console.log('👁️ AI identified item:', itemData)
+    setProductData({
+      name: itemData.name,
+      brand: itemData.brand,
+      category: itemData.category,
+      description: itemData.description,
+      image_url: itemData.image_url,
+      upc: itemData.upc || `VISUAL-${Date.now()}`
+    })
+    setShowVisualScanner(false)
+    setActiveStep(1) // Move to location step
+  }
+
   if (!user) {
     return (
       <Container maxWidth="sm" sx={{ mt: 4 }}>
@@ -531,14 +548,24 @@ export default function QuickAddPage() {
                   }}
                   sx={{ mb: 2 }}
                 />
-                <Button
-                  variant="contained"
-                  onClick={() => lookupProduct(productBarcode)}
-                  disabled={!productBarcode || lookupLoading}
-                  startIcon={lookupLoading ? <CircularProgress size={20} /> : <ScannerIcon />}
-                >
-                  {lookupLoading ? 'Looking up...' : 'Lookup Product'}
-                </Button>
+                <Box display="flex" gap={1} flexWrap="wrap">
+                  <Button
+                    variant="contained"
+                    onClick={() => lookupProduct(productBarcode)}
+                    disabled={!productBarcode || lookupLoading}
+                    startIcon={lookupLoading ? <CircularProgress size={20} /> : <ScannerIcon />}
+                  >
+                    {lookupLoading ? 'Looking up...' : 'Lookup'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setShowVisualScanner(true)}
+                    startIcon={<EyeIcon />}
+                    color="secondary"
+                  >
+                    AI Identify
+                  </Button>
+                </Box>
 
                 {productData && (
                   <Paper sx={{ p: 2, mt: 2, backgroundColor: 'success.light' }}>
@@ -726,6 +753,15 @@ export default function QuickAddPage() {
         onScan={handleQRScanned}
         title="Scan Storage Location QR Code"
         description="Align the storage location QR code within the blue box for automatic scanning"
+      />
+
+      {/* Visual Item Scanner Dialog */}
+      <VisualItemScanner
+        open={showVisualScanner}
+        onClose={() => setShowVisualScanner(false)}
+        onItemSelected={handleVisualItemSelected}
+        title="AI Item Recognition"
+        userId={user?.id}
       />
     </Container>
   )
