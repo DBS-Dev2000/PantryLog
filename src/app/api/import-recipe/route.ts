@@ -19,22 +19,40 @@ export async function POST(request: NextRequest) {
 
     let recipeData: any = {}
 
-    if (isYouTube) {
-      recipeData = await extractYouTubeRecipe(url)
-    } else if (isRecipeSite) {
-      recipeData = await extractWebsiteRecipe(url)
-    } else {
-      // Use AI to extract recipe from any webpage
-      recipeData = await extractRecipeWithAI(url, user_id)
+    try {
+      if (isYouTube) {
+        console.log('📺 Extracting YouTube recipe...')
+        recipeData = await extractYouTubeRecipe(url)
+      } else if (isRecipeSite) {
+        console.log('🌐 Extracting from known recipe site...')
+        recipeData = await extractWebsiteRecipe(url)
+      } else {
+        console.log('🤖 Using AI to extract recipe from webpage...')
+        recipeData = await extractRecipeWithAI(url, user_id)
+      }
+    } catch (extractionError) {
+      console.error('❌ Recipe extraction failed:', extractionError)
+      throw new Error(`Extraction failed: ${extractionError.message}`)
     }
 
     console.log('✅ Recipe extraction complete:', recipeData.title)
     return NextResponse.json(recipeData)
 
   } catch (error: any) {
-    console.error('Recipe import error:', error)
+    console.error('🚨 Recipe import server error:', error)
+    console.error('📍 Error stack:', error.stack)
+
     return NextResponse.json(
-      { error: 'Failed to import recipe: ' + error.message },
+      {
+        error: 'Failed to import recipe: ' + error.message,
+        debug: {
+          error_type: error.constructor.name,
+          error_message: error.message,
+          url: url,
+          has_claude_key: Boolean(process.env.CLAUDE_API_KEY),
+          has_gemini_key: Boolean(process.env.GEMINI_API_KEY)
+        }
+      },
       { status: 500 }
     )
   }
