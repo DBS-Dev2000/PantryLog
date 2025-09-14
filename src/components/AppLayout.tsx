@@ -34,7 +34,8 @@ import {
   Remove,
   Receipt,
   ShoppingCart,
-  Restaurant
+  Restaurant,
+  Help as HelpIcon
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -51,6 +52,7 @@ const navigation = [
   { name: 'Recipes', href: '/recipes', icon: Restaurant },
   { name: 'Shopping List', href: '/shopping', icon: ShoppingCart },
   { name: 'Receipt Scan', href: '/inventory/receipt', icon: Receipt },
+  { name: 'Help', href: '/help', icon: HelpIcon },
   { name: 'Settings', href: '/settings', icon: SettingsIcon },
 ]
 
