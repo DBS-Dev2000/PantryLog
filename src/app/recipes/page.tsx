@@ -31,7 +31,10 @@ import {
   ListItemSecondaryAction,
   Fab,
   CardMedia,
-  CardActions
+  CardActions,
+  useTheme,
+  useMediaQuery,
+  Stack
 } from '@mui/material'
 import {
   Restaurant as RecipeIcon,
@@ -86,6 +89,9 @@ interface RecipeCategory {
 
 export default function RecipesPage() {
   const router = useRouter()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+
   const [user, setUser] = useState<any>(null)
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [categories, setCategories] = useState<RecipeCategory[]>([])
@@ -275,43 +281,84 @@ export default function RecipesPage() {
   const filteredRecipes = getFilteredRecipes()
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Box display="flex" alignItems="center" mb={4}>
-        <RecipeIcon sx={{ mr: 2, fontSize: 32, color: 'primary.main' }} />
-        <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Recipe Manager
-          </Typography>
-          <Typography variant="body1" color="textSecondary">
-            Smart recipes with inventory availability checking
-          </Typography>
+    <Container maxWidth={isMobile ? "sm" : "lg"} sx={{ mt: 4, px: isMobile ? 2 : 3 }}>
+      <Box sx={{ mb: 3 }}>
+        <Box display="flex" alignItems="center" mb={2}>
+          <RecipeIcon sx={{ mr: 2, fontSize: isMobile ? 28 : 32, color: 'primary.main' }} />
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant={isMobile ? "h5" : "h4"} component="h1" gutterBottom>
+              Recipe Manager
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Smart recipes with inventory checking
+            </Typography>
+          </Box>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<CameraIcon />}
-          onClick={() => setPhotoScannerOpen(true)}
-          sx={{ mr: 1 }}
-          color="info"
-        >
-          Scan Recipe
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<LinkIcon />}
-          onClick={() => setImportDialog(true)}
-          sx={{ mr: 1 }}
-          color="secondary"
-        >
-          Import URL
-        </Button>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => router.push('/recipes/create')}
-          color="primary"
-        >
-          Create Recipe
-        </Button>
+
+        {/* Mobile-friendly button layout */}
+        {isMobile ? (
+          <Stack spacing={1}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => router.push('/recipes/create')}
+              color="primary"
+              fullWidth
+              size="large"
+            >
+              Create Recipe
+            </Button>
+            <Box display="flex" gap={1}>
+              <Button
+                variant="outlined"
+                startIcon={<CameraIcon />}
+                onClick={() => setPhotoScannerOpen(true)}
+                color="info"
+                size="small"
+                sx={{ flex: 1 }}
+              >
+                Scan
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<LinkIcon />}
+                onClick={() => setImportDialog(true)}
+                color="secondary"
+                size="small"
+                sx={{ flex: 1 }}
+              >
+                Import
+              </Button>
+            </Box>
+          </Stack>
+        ) : (
+          <Box display="flex" gap={1}>
+            <Button
+              variant="outlined"
+              startIcon={<CameraIcon />}
+              onClick={() => setPhotoScannerOpen(true)}
+              color="info"
+            >
+              Scan Recipe
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<LinkIcon />}
+              onClick={() => setImportDialog(true)}
+              color="secondary"
+            >
+              Import URL
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => router.push('/recipes/create')}
+              color="primary"
+            >
+              Create Recipe
+            </Button>
+          </Box>
+        )}
       </Box>
 
       {error && (
@@ -328,10 +375,13 @@ export default function RecipesPage() {
 
       {/* Filter Controls */}
       <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Grid container spacing={2} alignItems="center">
+        <CardContent sx={{ py: isMobile ? 2 : 3 }}>
+          <Typography variant="h6" gutterBottom sx={{ fontSize: isMobile ? '1rem' : '1.25rem' }}>
+            🔍 Filter Recipes
+          </Typography>
+          <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth size={isMobile ? "medium" : "small"}>
                 <InputLabel>Category</InputLabel>
                 <Select
                   value={selectedCategory}
@@ -348,7 +398,7 @@ export default function RecipesPage() {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth size={isMobile ? "medium" : "small"}>
                 <InputLabel>Availability</InputLabel>
                 <Select
                   value={availabilityFilter}
@@ -401,27 +451,35 @@ export default function RecipesPage() {
           </CardContent>
         </Card>
       ) : (
-        <Grid container spacing={3}>
+        <Grid container spacing={isMobile ? 2 : 3}>
           {filteredRecipes.map((recipe) => (
             <Grid item xs={12} sm={6} lg={4} key={recipe.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 {recipe.image_url && (
                   <CardMedia
                     component="img"
-                    height="200"
+                    height={isMobile ? "160" : "200"}
                     image={recipe.image_url}
                     alt={recipe.title}
                     sx={{ objectFit: 'cover' }}
                   />
                 )}
 
-                <CardContent sx={{ flexGrow: 1 }}>
+                <CardContent sx={{ flexGrow: 1, p: isMobile ? 2 : 3 }}>
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                    <Typography variant="h6" component="h2" sx={{ fontWeight: 'medium' }}>
+                    <Typography
+                      variant={isMobile ? "body1" : "h6"}
+                      component="h2"
+                      sx={{
+                        fontWeight: 'medium',
+                        fontSize: isMobile ? '1rem' : '1.25rem',
+                        lineHeight: 1.3
+                      }}
+                    >
                       {recipe.title}
                     </Typography>
                     {recipe.is_favorite && (
-                      <StarIcon sx={{ color: 'warning.main', ml: 1 }} />
+                      <StarIcon sx={{ color: 'warning.main', ml: 1, fontSize: isMobile ? 20 : 24 }} />
                     )}
                   </Box>
 
