@@ -43,7 +43,7 @@ import {
   Delete as DeleteIcon,
   ShoppingCart as ShoppingIcon,
   Add as AddIcon,
-  Eco
+  Nature as NatureIcon
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -617,7 +617,7 @@ export default function RecipeDetailPage() {
                         }}
                         color="secondary"
                         disabled={ingredient.availability_status === 'available' || loadingSubstitutions[ingredient.ingredient_name]}
-                        startIcon={loadingSubstitutions[ingredient.ingredient_name] ? <CircularProgress size={16} /> : <Eco />}
+                        startIcon={loadingSubstitutions[ingredient.ingredient_name] ? <CircularProgress size={16} /> : <NatureIcon />}
                       >
                         {loadingSubstitutions[ingredient.ingredient_name] ? 'Finding...' : 'Natural Sub'}
                       </Button>
