@@ -242,14 +242,26 @@ IMPORTANT:
 
       if (aiResponse.ok) {
         const result = await aiResponse.json()
-        const recipeInfo = JSON.parse(result.content[0].text)
+        console.log('🤖 Claude API response received:', result)
 
-        return {
-          ...recipeInfo,
-          source_type: 'website',
-          source_url: url,
-          website_domain: new URL(url).hostname
+        try {
+          const recipeInfo = JSON.parse(result.content[0].text)
+          console.log('✅ Parsed recipe info:', recipeInfo.title)
+
+          return {
+            ...recipeInfo,
+            source_type: 'website',
+            source_url: url,
+            website_domain: new URL(url).hostname
+          }
+        } catch (parseError) {
+          console.error('❌ Failed to parse Claude AI response:', parseError)
+          console.log('📝 Raw Claude text:', result.content[0].text)
+          throw new Error('AI response parsing failed')
         }
+      } else {
+        console.error('❌ Claude API request failed:', aiResponse.status, aiResponse.statusText)
+        throw new Error(`Claude API error: ${aiResponse.status}`)
       }
     }
 
