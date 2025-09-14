@@ -16,7 +16,10 @@ import {
   Select,
   MenuItem,
   Chip,
-  IconButton
+  IconButton,
+  Backdrop,
+  CircularProgress,
+  Paper
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -574,6 +577,55 @@ export default function CreateRecipePage() {
           </Grid>
         </CardContent>
       </Card>
+
+      {/* Recipe Import Loading Overlay */}
+      <Backdrop
+        open={importing}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          backgroundColor: 'rgba(135, 169, 107, 0.8)' // Sage green with transparency
+        }}
+      >
+        <Paper
+          sx={{
+            p: 4,
+            textAlign: 'center',
+            backgroundColor: 'white',
+            borderRadius: 2,
+            boxShadow: 3,
+            minWidth: 300
+          }}
+        >
+          <CircularProgress
+            size={60}
+            sx={{ color: 'primary.main', mb: 2 }}
+          />
+          <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
+            🤖 Importing Recipe
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            AI is analyzing the webpage and extracting:
+          </Typography>
+          <Box display="flex" flexDirection="column" gap={0.5}>
+            <Typography variant="caption" color="primary.main">
+              ✓ Recipe title and details
+            </Typography>
+            <Typography variant="caption" color="primary.main">
+              ✓ Ingredients list with quantities
+            </Typography>
+            <Typography variant="caption" color="primary.main">
+              ✓ Cooking instructions and steps
+            </Typography>
+            <Typography variant="caption" color="primary.main">
+              ✓ Nutrition and timing information
+            </Typography>
+          </Box>
+          <Typography variant="caption" color="textSecondary" sx={{ mt: 2, display: 'block' }}>
+            This may take 10-15 seconds...
+          </Typography>
+        </Paper>
+      </Backdrop>
     </Container>
   )
 }
