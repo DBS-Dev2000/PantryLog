@@ -288,6 +288,7 @@ export default function CreateRecipePage() {
         .from('recipes')
         .insert([{
           household_id: user.id,
+          name: recipe.title, // Use name column for recipe title
           title: recipe.title,
           description: recipe.description || 'No description provided',
           category_id: recipe.category_id || null,
