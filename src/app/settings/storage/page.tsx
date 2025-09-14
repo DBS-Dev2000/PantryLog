@@ -463,6 +463,186 @@ export default function StorageConfigPage() {
     }
   }
 
+  const printAllQRCodes = async () => {
+    try {
+      setError(null)
+      console.log('🖨️ Generating batch QR codes for', locations.length, 'storage locations')
+
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) return
+
+      // Flatten all locations (including children) into a single array
+      const allLocations: StorageLocation[] = []
+
+      const flattenLocations = (locationList: StorageLocation[]) => {
+        locationList.forEach(location => {
+          allLocations.push(location)
+          if (location.children && location.children.length > 0) {
+            flattenLocations(location.children)
+          }
+        })
+      }
+
+      flattenLocations(locations)
+
+      // Generate QR codes for each location
+      const qrCodePromises = allLocations.map(async (location) => {
+        const inventoryUrl = `${window.location.origin}/inventory?location=${location.id}`
+        const qrDataUrl = await QRCode.toDataURL(inventoryUrl, {
+          width: 200,
+          margin: 1,
+          color: { dark: '#000000', light: '#FFFFFF' }
+        })
+
+        // Build full path for location
+        const buildPath = (loc: StorageLocation): string => {
+          const parent = allLocations.find(l => l.id === loc.parent_id)
+          if (parent) {
+            return `${buildPath(parent)} > ${loc.name}`
+          }
+          return loc.name
+        }
+
+        return {
+          ...location,
+          qrCode: qrDataUrl,
+          fullPath: buildPath(location)
+        }
+      })
+
+      const locationsWithQR = await Promise.all(qrCodePromises)
+
+      // Create 8.5x11 printable layout (3 columns x 4 rows = 12 per page)
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>PantryIQ Storage Location QR Codes</title>
+            <style>
+              @page {
+                size: letter;
+                margin: 0.5in;
+              }
+              body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 20px;
+                border-bottom: 2px solid #2C3E50;
+                padding-bottom: 10px;
+              }
+              .title {
+                font-size: 24px;
+                font-weight: bold;
+                color: #2C3E50;
+                margin-bottom: 5px;
+              }
+              .subtitle {
+                font-size: 14px;
+                color: #87A96B;
+                font-style: italic;
+              }
+              .grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+                margin-bottom: 20px;
+              }
+              .qr-item {
+                border: 2px solid #2C3E50;
+                padding: 12px;
+                text-align: center;
+                background: white;
+                border-radius: 8px;
+                page-break-inside: avoid;
+                min-height: 220px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+              }
+              .location-name {
+                font-size: 13px;
+                font-weight: bold;
+                color: #2C3E50;
+                margin-bottom: 3px;
+                word-wrap: break-word;
+                line-height: 1.2;
+                min-height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .location-type {
+                font-size: 11px;
+                color: #87A96B;
+                margin-bottom: 8px;
+              }
+              .qr-code {
+                flex-grow: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .footer-info {
+                font-size: 9px;
+                color: #666;
+                margin-top: 5px;
+              }
+              .page-footer {
+                text-align: center;
+                font-size: 10px;
+                color: #999;
+                margin-top: 20px;
+                border-top: 1px solid #E8E8E8;
+                padding-top: 10px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="title">PantryIQ Storage Locations</div>
+              <div class="subtitle">Scan QR codes to instantly view location inventory</div>
+            </div>
+
+            <div class="grid">
+              ${locationsWithQR.map(location => `
+                <div class="qr-item">
+                  <div>
+                    <div class="location-name">${location.fullPath}</div>
+                    <div class="location-type">${location.type}</div>
+                  </div>
+                  <div class="qr-code">
+                    <img src="${location.qrCode}" alt="QR Code for ${location.name}" style="width: 130px; height: 130px;" />
+                  </div>
+                  <div class="footer-info">
+                    Scan with PantryIQ
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="page-footer">
+              PantryIQ - Smart Inventory Management<br>
+              Generated: ${new Date().toLocaleDateString()} • ${allLocations.length} locations • Cut along borders
+            </div>
+          </body>
+        </html>
+      `)
+
+      printWindow.document.close()
+      printWindow.print()
+
+      console.log('✅ Generated batch QR codes for', allLocations.length, 'locations')
+      setSuccess(`Generated ${allLocations.length} QR codes for printing and cutting!`)
+
+    } catch (err: any) {
+      console.error('Error generating batch QR codes:', err)
+      setError('Failed to generate QR codes. Please try again.')
+    }
+  }
+
   const renderLocationTree = (locations: StorageLocation[], depth = 0) => {
     return locations.map((location) => {
       const TypeIcon = getTypeIcon(location.type)
@@ -593,6 +773,15 @@ export default function StorageConfigPage() {
           sx={{ mr: 2 }}
         >
           Add Main Storage Location
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<PrintIcon />}
+          onClick={printAllQRCodes}
+          size="large"
+          disabled={locations.length === 0}
+        >
+          Print All QR Codes
         </Button>
 
         {locations.length === 0 && (
