@@ -132,6 +132,8 @@ export default function CreateRecipePage() {
   }
 
   const populateFromImport = (importedData: any) => {
+    console.log('🔄 Populating form with imported data...')
+
     setRecipe({
       title: importedData.title || '',
       description: importedData.description || '',
@@ -160,19 +162,33 @@ export default function CreateRecipePage() {
       is_favorite: false
     })
 
-    if (importedData.ingredients) {
+    console.log('📋 Setting recipe data:', {
+      title: importedData.title,
+      description: importedData.description,
+      instructions: importedData.instructions?.substring(0, 100) + '...'
+    })
+
+    if (importedData.ingredients && importedData.ingredients.length > 0) {
+      console.log('🥕 Setting ingredients:', importedData.ingredients.length, 'items')
       setIngredients(importedData.ingredients)
+    } else {
+      console.warn('❌ No ingredients found in imported data')
     }
 
-    if (importedData.steps) {
+    if (importedData.steps && importedData.steps.length > 0) {
+      console.log('📊 Setting steps:', importedData.steps.length, 'steps')
       setSteps(importedData.steps)
     } else if (importedData.instructions) {
+      console.log('📝 Parsing steps from instructions text')
       // Parse steps from instructions text if steps not provided
       parseStepsFromInstructions(importedData.instructions)
+    } else {
+      console.warn('❌ No instructions or steps found in imported data')
     }
 
     // Clear import URL after successful import
     setImportUrl('')
+    console.log('✅ Form population complete')
   }
 
   const parseStepsFromInstructions = (instructionsText: string) => {
@@ -220,10 +236,21 @@ export default function CreateRecipePage() {
 
       const importedData = await response.json()
 
+      console.log('📥 Raw imported data:', importedData)
+      console.log('📋 Title:', importedData.title)
+      console.log('🥕 Ingredients:', importedData.ingredients?.length || 0)
+      console.log('👨‍🍳 Instructions:', importedData.instructions?.length || 0)
+      console.log('📊 Steps:', importedData.steps?.length || 0)
+
+      // Check for errors in the response
+      if (importedData.error) {
+        throw new Error(importedData.error)
+      }
+
       // Populate form with imported data
       populateFromImport(importedData)
 
-      console.log('✅ Recipe imported successfully:', importedData.title)
+      console.log('✅ Recipe imported successfully:', importedData.title || 'No title')
 
     } catch (err: any) {
       console.error('Recipe import error:', err)
