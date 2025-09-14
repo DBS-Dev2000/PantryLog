@@ -659,15 +659,16 @@ export default function QuickAddPage() {
         <CardContent>
           <Stepper activeStep={activeStep} orientation="vertical">
             <Step>
-              <StepLabel>Find or Scan Product</StepLabel>
+              <StepLabel>Find or Add Product</StepLabel>
               <StepContent>
-                {/* Searchable Product Dropdown */}
+                {/* Unified Product Input - Search/Scan/Type */}
                 <Autocomplete
+                  freeSolo
                   options={availableProducts}
-                  getOptionLabel={(option) => option.displayName}
-                  value={availableProducts.find(p => p.upc === productBarcode) || null}
+                  getOptionLabel={(option) => typeof option === 'string' ? option : option.displayName}
+                  value={availableProducts.find(p => p.upc === productBarcode) || productBarcode}
                   onChange={(event, newValue) => {
-                    if (newValue) {
+                    if (newValue && typeof newValue === 'object') {
                       setProductBarcode(newValue.upc)
                       setLastInputMethod('search')
                       setProductData({
@@ -680,11 +681,29 @@ export default function QuickAddPage() {
                       setActiveStep(1) // Move to location step
                     }
                   }}
+                  onInputChange={(event, newInputValue) => {
+                    setProductBarcode(newInputValue)
+                  }}
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Search Products"
-                      placeholder="Type product name, brand, or category"
+                      inputRef={productInputRef}
+                      label="Product Search or Barcode"
+                      placeholder="Search products, scan barcode, or use AI"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            {params.InputProps.endAdornment}
+                            <IconButton onClick={() => setShowBarcodeScanner(true)} title="Scan Barcode">
+                              <CameraIcon />
+                            </IconButton>
+                            <IconButton onClick={() => setShowVisualScanner(true)} title="AI Identify" color="secondary">
+                              <EyeIcon />
+                            </IconButton>
+                          </Box>
+                        ),
+                      }}
                       sx={{ mb: 2 }}
                     />
                   )}
@@ -705,36 +724,8 @@ export default function QuickAddPage() {
                       </Box>
                     </li>
                   )}
-                  sx={{ mb: 2 }}
                 />
 
-                {/* Barcode Input */}
-                <TextField
-                  inputRef={productInputRef}
-                  label="Or Enter Barcode"
-                  fullWidth
-                  value={productBarcode}
-                  onChange={(e) => setProductBarcode(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && productBarcode) {
-                      lookupProduct(productBarcode)
-                    }
-                  }}
-                  placeholder="Scan or enter product barcode"
-                  InputProps={{
-                    endAdornment: (
-                      <Box display="flex" gap={0.5}>
-                        <IconButton onClick={() => setShowBarcodeScanner(true)} title="Scan Barcode">
-                          <CameraIcon />
-                        </IconButton>
-                        <IconButton onClick={() => setShowVisualScanner(true)} title="AI Identify" color="secondary">
-                          <EyeIcon />
-                        </IconButton>
-                      </Box>
-                    ),
-                  }}
-                  sx={{ mb: 2 }}
-                />
                 <Box display="flex" gap={1} flexWrap="wrap">
                   <Button
                     variant="contained"
