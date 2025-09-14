@@ -268,11 +268,6 @@ export default function ProductDetailPage() {
               ${product.brand ? `<div class="brand-info">by ${product.brand}</div>` : ''}
               <div class="instructions">Scan to view product details</div>
               <img src="${qrCodeDataUrl}" alt="Product QR Code" style="max-width: 200px;" />
-              <div class="details">
-                ${isCustomItem ? 'Custom Item' : 'Product'} • Total: ${getTotalQuantity()} items<br>
-                ${getUniqueLocations()} storage location${getUniqueLocations() !== 1 ? 's' : ''}<br>
-                ${product.category ? `Category: ${product.category}` : ''}
-              </div>
               <div class="footer">
                 BITE - Basic Inventory Tracking Engine<br>
                 ${isCustomItem ? 'Custom Item' : product.upc ? `UPC: ${product.upc}` : 'Product'} • ID: ${product.id}

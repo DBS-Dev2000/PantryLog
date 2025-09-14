@@ -755,14 +755,9 @@ export default function AddItemPage() {
                 <div class="item-info">${productName}</div>
                 <div class="instructions">Scan to view/edit this item</div>
                 <img src="${qrCodeDataUrl}" alt="Item QR Code" />
-                <div class="details">
-                  Quantity: ${detailsForm.getValues('quantity')} ${detailsForm.getValues('unit')}<br>
-                  Added: ${new Date().toLocaleDateString()}<br>
-                  ${detailsForm.getValues('expirationDate') ? `Expires: ${new Date(detailsForm.getValues('expirationDate')).toLocaleDateString()}` : ''}
-                </div>
-                <div class="instructions">
+                <div class="footer">
                   BITE - Basic Inventory Tracking Engine<br>
-                  Custom Item Code: ${customItemQR}
+                  Custom Item • ID: ${customItemQR}
                 </div>
               </div>
             </body>
