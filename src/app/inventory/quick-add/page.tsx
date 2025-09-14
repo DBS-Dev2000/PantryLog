@@ -257,8 +257,8 @@ export default function QuickAddPage() {
         quantity: quantity
       })
 
-      // Add inventory item
-      const { error: inventoryError } = await supabase
+      // Add inventory item with audit tracking
+      const { data: newInventoryItem, error: inventoryError } = await supabase
         .from('inventory_items')
         .insert([{
           product_id: productId,
@@ -266,10 +266,39 @@ export default function QuickAddPage() {
           household_id: householdId,
           quantity: quantity,
           unit: 'pieces',
-          purchase_date: new Date().toISOString().split('T')[0]
+          purchase_date: new Date().toISOString().split('T')[0],
+          created_by: user.id,
+          last_modified_by: user.id,
+          last_modified_at: new Date().toISOString()
         }])
+        .select('id')
+        .single()
 
       if (inventoryError) throw inventoryError
+
+      // Log the addition in audit trail
+      if (newInventoryItem) {
+        const { error: auditError } = await supabase
+          .from('inventory_audit_log')
+          .insert([{
+            inventory_item_id: newInventoryItem.id,
+            household_id: householdId,
+            user_id: user.id,
+            action_type: 'add',
+            quantity_before: 0,
+            quantity_after: quantity,
+            quantity_delta: quantity,
+            notes: `Quick Add: ${productData?.name || 'Unknown Product'}`,
+            source_action: 'quick_add'
+          }])
+
+        if (auditError) {
+          console.warn('Failed to log audit trail:', auditError)
+          // Don't fail the operation if audit logging fails
+        } else {
+          console.log('✅ Audit logged: Added', quantity, 'items')
+        }
+      }
 
       setSuccess(true)
 

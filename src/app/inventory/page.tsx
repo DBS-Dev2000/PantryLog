@@ -27,7 +27,8 @@ import {
   Inventory as InventoryIcon,
   LocationOn as LocationIcon,
   CalendarToday as CalendarIcon,
-  Launch as LaunchIcon
+  Launch as LaunchIcon,
+  Edit as EditIcon
 } from '@mui/icons-material'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from '@/hooks/redux'
@@ -323,6 +324,7 @@ export default function InventoryPage() {
                 <TableCell>Purchase Date</TableCell>
                 <TableCell>Expiration</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -425,6 +427,15 @@ export default function InventoryPage() {
                         color={getExpirationColor(item.expiration_date)}
                       />
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      onClick={() => router.push(`/inventory/edit/${item.id}`)}
+                      title="Edit item details"
+                    >
+                      <EditIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}

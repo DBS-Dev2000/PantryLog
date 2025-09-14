@@ -343,7 +343,12 @@ export default function QuickUsePage() {
       const itemToUpdate = availableItems.find(item => item.id === selectedItem)
       if (!itemToUpdate) throw new Error('Item not found')
 
-      const newQuantity = Math.max(0, itemToUpdate.quantity - removeQuantity)
+      const oldQuantity = itemToUpdate.quantity
+      const newQuantity = Math.max(0, oldQuantity - removeQuantity)
+
+      // Calculate FIFO cost for removed items
+      const costPerUnit = itemToUpdate.cost ? itemToUpdate.cost / oldQuantity : 0
+      const totalRemovedValue = removeQuantity * costPerUnit
 
       if (newQuantity === 0) {
         // Mark as consumed
@@ -352,7 +357,9 @@ export default function QuickUsePage() {
           .update({
             is_consumed: true,
             consumed_date: new Date().toISOString(),
-            quantity: 0
+            quantity: 0,
+            last_modified_by: user.id,
+            last_modified_at: new Date().toISOString()
           })
           .eq('id', selectedItem)
 
@@ -362,11 +369,42 @@ export default function QuickUsePage() {
         // Update quantity
         const { error } = await supabase
           .from('inventory_items')
-          .update({ quantity: newQuantity })
+          .update({
+            quantity: newQuantity,
+            last_modified_by: user.id,
+            last_modified_at: new Date().toISOString()
+          })
           .eq('id', selectedItem)
 
         if (error) throw error
         console.log('✅ Item quantity updated:', newQuantity)
+      }
+
+      // Log the removal in audit trail
+      const actionType = newQuantity === 0 ? 'consume' : 'remove'
+      const productName = (itemToUpdate as any).products?.name || productData?.name || 'Unknown Product'
+
+      const { error: auditError } = await supabase
+        .from('inventory_audit_log')
+        .insert([{
+          inventory_item_id: selectedItem,
+          household_id: user.id,
+          user_id: user.id,
+          action_type: actionType,
+          quantity_before: oldQuantity,
+          quantity_after: newQuantity,
+          quantity_delta: -removeQuantity,
+          unit_cost: costPerUnit,
+          total_value: totalRemovedValue,
+          notes: `Quick Use: ${productName} (${removeQuantity} ${itemToUpdate.unit})`,
+          source_action: 'quick_use'
+        }])
+
+      if (auditError) {
+        console.warn('Failed to log audit trail:', auditError)
+        // Don't fail the operation if audit logging fails
+      } else {
+        console.log('✅ Audit logged: Removed', removeQuantity, 'items, value:', totalRemovedValue)
       }
 
       setSuccess(true)
