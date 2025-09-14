@@ -85,12 +85,14 @@ export default function QuickAddPage() {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
   const [showQRScanner, setShowQRScanner] = useState(false)
   const [showVisualScanner, setShowVisualScanner] = useState(false)
+  const [storageLocations, setStorageLocations] = useState<any[]>([])
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         setUser(session.user)
+        await loadStorageLocations(session.user.id)
       } else {
         router.push('/auth')
       }
@@ -102,6 +104,43 @@ export default function QuickAddPage() {
       productInputRef.current.focus()
     }
   }, [router])
+
+  const loadStorageLocations = async (userId: string) => {
+    try {
+      const { data: locations, error } = await supabase
+        .from('storage_locations')
+        .select('*')
+        .eq('household_id', userId)
+        .eq('is_active', true)
+        .order('level')
+        .order('sort_order')
+
+      if (error) throw error
+
+      // Build full paths for each location
+      const locationsWithPaths = (locations || []).map(location => {
+        const buildPath = (loc: any): string => {
+          const parent = locations?.find(l => l.id === loc.parent_id)
+          if (parent) {
+            return `${buildPath(parent)} > ${loc.name}`
+          }
+          return loc.name
+        }
+
+        return {
+          id: location.id,
+          label: location.name,
+          fullPath: buildPath(location),
+          level: (location as any).level || 0
+        }
+      })
+
+      setStorageLocations(locationsWithPaths)
+      console.log('📦 Stock Up: Loaded storage locations:', locationsWithPaths.length)
+    } catch (err: any) {
+      console.error('Error loading storage locations in Stock Up:', err)
+    }
+  }
 
   // Look up product by barcode
   const lookupProduct = async (barcode: string) => {

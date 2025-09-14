@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Container,
@@ -44,9 +44,27 @@ export default function AuthPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [householdName, setHouseholdName] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
+  const [joiningHousehold, setJoiningHousehold] = useState(false)
   const dispatch = useAppDispatch()
   const { loading, error } = useAppSelector((state) => state.auth)
   const router = useRouter()
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+
+  useEffect(() => {
+    // Check for invite code and tab from URL parameters
+    const urlTab = searchParams.get('tab')
+    const urlInvite = searchParams.get('invite')
+
+    if (urlTab) {
+      setTab(parseInt(urlTab))
+    }
+
+    if (urlInvite) {
+      setInviteCode(urlInvite)
+      setJoiningHousehold(true)
+    }
+  }, [])
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTab(newValue)

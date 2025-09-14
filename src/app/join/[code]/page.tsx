@@ -220,16 +220,25 @@ export default function JoinHouseholdPage() {
           {!user ? (
             <Box>
               <Typography variant="body2" color="textSecondary" paragraph>
-                Please sign in to accept this invitation.
+                Sign in to your account or create a new one to join this household.
               </Typography>
-              <Button
-                variant="contained"
-                startIcon={<LoginIcon />}
-                onClick={() => router.push('/auth')}
-                size="large"
-              >
-                Sign In to Join
-              </Button>
+              <Box display="flex" flexDirection="column" gap={2}>
+                <Button
+                  variant="contained"
+                  startIcon={<LoginIcon />}
+                  onClick={() => router.push(`/auth?tab=0&invite=${inviteCode}`)}
+                  size="large"
+                >
+                  Sign In
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => router.push(`/auth?tab=1&invite=${inviteCode}`)}
+                  size="large"
+                >
+                  Create New Account
+                </Button>
+              </Box>
             </Box>
           ) : (
             <Box>
