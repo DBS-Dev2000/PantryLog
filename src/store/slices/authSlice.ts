@@ -32,11 +32,13 @@ export const signUp = createAsyncThunk(
   async ({
     email,
     password,
-    householdName
+    householdName,
+    inviteCode
   }: {
     email: string
     password: string
     householdName: string
+    inviteCode?: string
   }) => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -44,6 +46,7 @@ export const signUp = createAsyncThunk(
       options: {
         data: {
           household_name: householdName,
+          invite_code: inviteCode,
         },
       },
     })

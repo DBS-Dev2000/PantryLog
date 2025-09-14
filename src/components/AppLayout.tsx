@@ -18,7 +18,9 @@ import {
   ListItemText,
   Divider,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Button,
+  Chip
 } from '@mui/material'
 import {
   Menu as MenuIcon,
@@ -35,10 +37,14 @@ import {
   Receipt,
   ShoppingCart,
   Restaurant,
-  Help as HelpIcon
+  Help as HelpIcon,
+  KeyboardArrowDown as ArrowDownIcon,
+  Check as CheckIcon,
+  Star as StarIcon
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useHousehold } from '@/contexts/HouseholdContext'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -58,13 +64,14 @@ const navigation = [
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<any>(null)
-  const [householdName, setHouseholdName] = useState<string>('')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [householdMenuEl, setHouseholdMenuEl] = useState<null | HTMLElement>(null)
   const router = useRouter()
   const pathname = usePathname()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const { currentHousehold, households, switchHousehold, setDefaultHousehold } = useHousehold()
 
   useEffect(() => {
     const getSession = async () => {
@@ -78,36 +85,27 @@ export default function AppLayout({ children }: AppLayoutProps) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user)
-      if (session?.user) {
-        loadHouseholdNameSafely(session.user.id)
-      } else {
-        setHouseholdName('')
-      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  const loadHouseholdNameSafely = async (userId: string) => {
-    try {
-      const { data: householdData, error } = await supabase
-        .from('households')
-        .select('name')
-        .eq('id', userId)
-        .single()
+  const handleHouseholdMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setHouseholdMenuEl(event.currentTarget)
+  }
 
-      if (error) {
-        console.log('No household found, using default')
-        return
-      }
+  const handleHouseholdMenuClose = () => {
+    setHouseholdMenuEl(null)
+  }
 
-      if (householdData?.name && householdData.name !== 'My Household') {
-        setHouseholdName(householdData.name)
-      }
-    } catch (err) {
-      // Silently handle errors to prevent app crashes
-      console.log('Error loading household name:', err)
-    }
+  const handleHouseholdSwitch = async (householdId: string) => {
+    await switchHousehold(householdId)
+    handleHouseholdMenuClose()
+  }
+
+  const handleSetDefaultHousehold = async (householdId: string) => {
+    await setDefaultHousehold(householdId)
+    handleHouseholdMenuClose()
   }
 
   const handleDrawerToggle = () => {
@@ -190,9 +188,29 @@ export default function AppLayout({ children }: AppLayoutProps) {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            {householdName ? `${householdName} | PantryIQ` : 'PantryIQ'}
-          </Typography>
+          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+            {currentHousehold && households.length > 1 ? (
+              <Button
+                onClick={handleHouseholdMenuOpen}
+                sx={{
+                  color: 'inherit',
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  fontSize: '1.25rem',
+                }}
+                endIcon={<ArrowDownIcon />}
+              >
+                {currentHousehold.name}
+              </Button>
+            ) : (
+              <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+                {currentHousehold?.name || 'PantryIQ'}
+              </Typography>
+            )}
+            <Typography variant="h6" sx={{ ml: 1, fontWeight: 'normal', opacity: 0.7 }}>
+              | PantryIQ
+            </Typography>
+          </Box>
           <IconButton
             size="large"
             edge="end"
@@ -233,6 +251,71 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <MenuItem onClick={handleSignOut}>
               <LogoutIcon sx={{ mr: 1 }} />
               Sign Out
+            </MenuItem>
+          </Menu>
+
+          {/* Household Switching Menu */}
+          <Menu
+            id="household-menu"
+            anchorEl={householdMenuEl}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'left',
+            }}
+            keepMounted
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+            open={Boolean(householdMenuEl)}
+            onClose={handleHouseholdMenuClose}
+          >
+            <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider' }}>
+              <Typography variant="subtitle2" color="textSecondary">
+                Switch Household
+              </Typography>
+            </Box>
+            {households.map((household) => (
+              <MenuItem
+                key={household.household_id}
+                onClick={() => handleHouseholdSwitch(household.household_id)}
+                selected={currentHousehold?.id === household.household_id}
+                sx={{ py: 1.5 }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                      {household.household_name}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                      <Chip
+                        label={household.role}
+                        size="small"
+                        variant="outlined"
+                        sx={{ mr: 1, height: 20, fontSize: '0.75rem' }}
+                      />
+                      {household.is_default && (
+                        <Chip
+                          label="Default"
+                          size="small"
+                          color="primary"
+                          sx={{ height: 20, fontSize: '0.75rem' }}
+                        />
+                      )}
+                    </Box>
+                  </Box>
+                  {currentHousehold?.id === household.household_id && (
+                    <CheckIcon color="primary" sx={{ ml: 1 }} />
+                  )}
+                </Box>
+              </MenuItem>
+            ))}
+            <Divider />
+            <MenuItem onClick={() => { handleNavigation('/settings/profile'); handleHouseholdMenuClose() }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <SettingsIcon sx={{ mr: 1, fontSize: 20 }} />
+                <Typography variant="body2">Manage Households</Typography>
+              </Box>
             </MenuItem>
           </Menu>
         </Toolbar>

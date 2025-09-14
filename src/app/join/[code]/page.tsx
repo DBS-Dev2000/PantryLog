@@ -224,19 +224,19 @@ export default function JoinHouseholdPage() {
               </Typography>
               <Box display="flex" flexDirection="column" gap={2}>
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   startIcon={<LoginIcon />}
                   onClick={() => router.push(`/auth?tab=0&invite=${inviteCode}`)}
                   size="large"
                 >
-                  Sign In
+                  Sign In to Existing Account
                 </Button>
                 <Button
-                  variant="outlined"
-                  onClick={() => router.push(`/auth?tab=1&invite=${inviteCode}`)}
+                  variant="contained"
+                  onClick={() => router.push(`/auth?tab=1&invite=${inviteCode}&join=true`)}
                   size="large"
                 >
-                  Create New Account
+                  Create New Account & Join
                 </Button>
               </Box>
             </Box>

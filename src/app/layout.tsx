@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { StoreProvider } from '@/store/StoreProvider'
+import { HouseholdProvider } from '@/contexts/HouseholdContext'
 import AppLayout from '@/components/AppLayout'
 import './globals.css'
 
@@ -21,9 +22,11 @@ export default function RootLayout({
       <body className={inter.className}>
         <StoreProvider>
           <ThemeProvider>
-            <AppLayout>
-              {children}
-            </AppLayout>
+            <HouseholdProvider>
+              <AppLayout>
+                {children}
+              </AppLayout>
+            </HouseholdProvider>
           </ThemeProvider>
         </StoreProvider>
       </body>

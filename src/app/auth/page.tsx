@@ -55,12 +55,20 @@ export default function AuthPage() {
     // Check for invite code and tab from URL parameters
     const urlTab = searchParams.get('tab')
     const urlInvite = searchParams.get('invite')
+    const urlJoin = searchParams.get('join')
 
     if (urlTab) {
       setTab(parseInt(urlTab))
     }
 
     if (urlInvite) {
+      setInviteCode(urlInvite)
+      setJoiningHousehold(true)
+    }
+
+    // If joining via QR code, automatically go to signup tab
+    if (urlJoin === 'true' && urlInvite) {
+      setTab(1) // Switch to signup tab
       setInviteCode(urlInvite)
       setJoiningHousehold(true)
     }
@@ -84,8 +92,15 @@ export default function AuthPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await dispatch(signUp({ email, password, householdName })).unwrap()
-      router.push('/')
+      if (joiningHousehold && inviteCode) {
+        // Create account and immediately redirect to join household
+        await dispatch(signUp({ email, password, householdName: '', inviteCode })).unwrap()
+        router.push(`/join/${inviteCode}`)
+      } else {
+        // Create new household
+        await dispatch(signUp({ email, password, householdName })).unwrap()
+        router.push('/')
+      }
     } catch (error) {
       // Error is handled by the reducer
     }
