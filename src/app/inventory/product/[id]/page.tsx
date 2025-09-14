@@ -48,7 +48,10 @@ import {
   Restaurant as NutritionIcon,
   Store as StoreIcon,
   Image as ImageIcon,
-  Print as PrintIcon
+  Print as PrintIcon,
+  Edit as EditIcon,
+  History as HistoryIcon,
+  Save as SaveIcon
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -94,14 +97,19 @@ export default function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('')
+  const [editingProduct, setEditingProduct] = useState(false)
+  const [editedProduct, setEditedProduct] = useState<ProductDetail | null>(null)
+  const [productHistory, setProductHistory] = useState<any[]>([])
   const [expandedAccordions, setExpandedAccordions] = useState<{
     details: boolean
     price: boolean
     images: boolean
+    history: boolean
   }>({
     details: false,
     price: false,
-    images: false
+    images: false,
+    history: false
   })
 
   useEffect(() => {
@@ -351,14 +359,26 @@ export default function ProductDetailPage() {
             Product Details
           </Typography>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<PrintIcon />}
-          onClick={() => generateItemQRCode()}
-          sx={{ ml: 2 }}
-        >
-          Print QR Code
-        </Button>
+        <Box display="flex" gap={1}>
+          <Button
+            variant="outlined"
+            startIcon={<EditIcon />}
+            onClick={() => {
+              setEditedProduct({ ...product! })
+              setEditingProduct(true)
+            }}
+            color="secondary"
+          >
+            Edit Product
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={() => generateItemQRCode()}
+          >
+            Print QR Code
+          </Button>
+        </Box>
       </Box>
 
       {/* Mobile-Optimized Product Information */}
