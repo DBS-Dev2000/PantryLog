@@ -153,14 +153,19 @@ async function extractRecipeWithAI(url: string, userId?: string) {
     const response = await fetch(url)
     const html = await response.text()
 
-    // Clean HTML and extract text content
+    // Clean HTML and extract text content with better instruction preservation
     const textContent = html
       .replace(/<script[^>]*>.*?<\/script>/gis, '')
       .replace(/<style[^>]*>.*?<\/style>/gis, '')
+      .replace(/<nav[^>]*>.*?<\/nav>/gis, '') // Remove navigation
+      .replace(/<header[^>]*>.*?<\/header>/gis, '') // Remove headers
+      .replace(/<footer[^>]*>.*?<\/footer>/gis, '') // Remove footers
+      .replace(/<aside[^>]*>.*?<\/aside>/gis, '') // Remove sidebars
+      .replace(/<\/(div|p|li|h[1-6])>/gi, '\n') // Preserve line breaks for important elements
       .replace(/<[^>]*>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
-      .substring(0, 10000) // Limit to avoid token limits
+      .substring(0, 15000) // Increased limit for better instruction extraction
 
     // Use Claude API to extract recipe information
     const claudeApiKey = process.env.CLAUDE_API_KEY
@@ -175,11 +180,11 @@ async function extractRecipeWithAI(url: string, userId?: string) {
         },
         body: JSON.stringify({
           model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 2000,
+          max_tokens: 3000, // Increased for better instruction extraction
           messages: [
             {
               role: 'user',
-              content: `Extract recipe information from this webpage content and return a JSON object:
+              content: `Extract recipe information from this webpage content and return a JSON object. Pay special attention to cooking instructions and steps.
 
 Website URL: ${url}
 Content: ${textContent}
@@ -202,11 +207,17 @@ Return JSON format:
       "preparation": "diced, chopped, etc"
     }
   ],
+  "instructions": "Complete cooking instructions as a single text block with all steps",
   "steps": [
     {
       "step_number": 1,
-      "instruction": "Detailed instruction",
+      "instruction": "Detailed step-by-step instruction - be very specific about what to do",
       "time_minutes": 10
+    },
+    {
+      "step_number": 2,
+      "instruction": "Next detailed step with specific actions and techniques",
+      "time_minutes": 15
     }
   ],
   "calories_per_serving": 350,
@@ -217,7 +228,13 @@ Return JSON format:
   }
 }
 
-Extract as much detail as possible. If nutrition info not available, omit those fields.`
+IMPORTANT:
+- Extract ALL cooking steps and instructions in detail
+- Include both "instructions" (complete text) and "steps" (numbered array)
+- Look for cooking directions, preparation steps, baking instructions
+- Include specific temperatures, times, and techniques
+- Be thorough with step-by-step cooking process
+- If nutrition info not available, omit those fields`
             }
           ]
         })
@@ -299,18 +316,60 @@ function formatStructuredRecipe(structuredData: any, sourceUrl: string) {
     })
   }
 
+  const extractInstructionsText = (instructions: any): string => {
+    if (Array.isArray(instructions)) {
+      return instructions.map((inst, index) => {
+        let instruction = ''
+        if (typeof inst === 'string') {
+          instruction = inst
+        } else if (inst.text) {
+          instruction = inst.text
+        } else if (inst.name) {
+          instruction = inst.name
+        } else if (inst.instruction) {
+          instruction = inst.instruction
+        }
+        return `${index + 1}. ${instruction.trim()}`
+      }).join('\n\n')
+    } else if (typeof instructions === 'string') {
+      return instructions
+    }
+    return ''
+  }
+
   const formatInstructions = (instructions: any) => {
     if (Array.isArray(instructions)) {
-      return instructions.map((inst, index) => ({
-        step_number: index + 1,
-        instruction: typeof inst === 'string' ? inst : inst.text || inst.name || 'Step instruction',
-        time_minutes: 0
-      }))
+      return instructions.map((inst, index) => {
+        let instruction = ''
+
+        if (typeof inst === 'string') {
+          instruction = inst
+        } else if (inst.text) {
+          instruction = inst.text
+        } else if (inst.name) {
+          instruction = inst.name
+        } else if (inst.instruction) {
+          instruction = inst.instruction
+        } else {
+          instruction = 'Step instruction'
+        }
+
+        return {
+          step_number: index + 1,
+          instruction: instruction.trim(),
+          time_minutes: 0
+        }
+      })
     } else if (typeof instructions === 'string') {
-      // Split by periods or newlines and create steps
-      return instructions.split(/[.\n]/).filter(step => step.trim().length > 10).map((step, index) => ({
+      // Better parsing for instruction strings
+      const steps = instructions
+        .split(/(?:\d+\.|\n|Step \d+[:.]?)/)
+        .map(step => step.trim())
+        .filter(step => step.length > 15) // Filter out very short fragments
+
+      return steps.map((step, index) => ({
         step_number: index + 1,
-        instruction: step.trim(),
+        instruction: step.replace(/^[^\w]*/, '').trim(), // Remove leading punctuation
         time_minutes: 0
       }))
     }
@@ -330,6 +389,7 @@ function formatStructuredRecipe(structuredData: any, sourceUrl: string) {
     image_url: structuredData.image?.[0] || structuredData.image,
     cuisine: structuredData.recipeCuisine || 'unknown',
     ingredients: formatIngredients(structuredData.recipeIngredient || []),
+    instructions: extractInstructionsText(structuredData.recipeInstructions || []),
     steps: formatInstructions(structuredData.recipeInstructions || []),
     calories_per_serving: structuredData.nutrition?.calories ? parseInt(structuredData.nutrition.calories) : undefined,
     protein_grams: structuredData.nutrition?.proteinContent ? parseFloat(structuredData.nutrition.proteinContent) : undefined,
