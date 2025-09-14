@@ -562,44 +562,50 @@ export default function RecipeDetailPage() {
 
                   {/* Ingredient Controls */}
                   <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
-                    {/* Substitution Dropdown */}
-                    {ingredient.availability_status !== 'available' && !omittedIngredients.includes(ingredient.ingredient_name) && (
-                      <FormControl size="small" sx={{ minWidth: 120 }}>
-                        <InputLabel>Substitute</InputLabel>
-                        <Select
-                          value={ingredientSubstitutions[ingredient.ingredient_name] || ''}
-                          label="Substitute"
-                          onChange={(e) => setIngredientSubstitutions(prev => ({
-                            ...prev,
-                            [ingredient.ingredient_name]: e.target.value
-                          }))}
-                        >
-                          <MenuItem value="">Use as written</MenuItem>
-                          {/* Common substitutions based on ingredient type */}
-                          {ingredient.ingredient_name.toLowerCase().includes('salt') && (
-                            <>
-                              <MenuItem value="sea salt">Sea salt</MenuItem>
-                              <MenuItem value="kosher salt">Kosher salt</MenuItem>
-                              <MenuItem value="table salt">Table salt</MenuItem>
-                            </>
-                          )}
-                          {ingredient.ingredient_name.toLowerCase().includes('sugar') && (
-                            <>
-                              <MenuItem value="brown sugar">Brown sugar</MenuItem>
-                              <MenuItem value="honey">Honey (use less)</MenuItem>
-                              <MenuItem value="maple syrup">Maple syrup</MenuItem>
-                            </>
-                          )}
-                          {ingredient.ingredient_name.toLowerCase().includes('flour') && (
-                            <>
-                              <MenuItem value="whole wheat flour">Whole wheat flour</MenuItem>
-                              <MenuItem value="almond flour">Almond flour</MenuItem>
-                              <MenuItem value="coconut flour">Coconut flour</MenuItem>
-                            </>
-                          )}
-                          <MenuItem value="custom">Custom substitution...</MenuItem>
-                        </Select>
-                      </FormControl>
+                    {/* AI-Powered Substitution Dropdown */}
+                    {!omittedIngredients.includes(ingredient.ingredient_name) && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={async () => {
+                          try {
+                            console.log('🤖 Getting AI substitutions for:', ingredient.ingredient_name)
+                            const response = await fetch('/api/get-substitutions', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                ingredient: ingredient.ingredient_name,
+                                category: (ingredient as any).category,
+                                recipe_context: recipe?.title,
+                                user_id: user?.id
+                              })
+                            })
+
+                            if (response.ok) {
+                              const data = await response.json()
+                              console.log('✅ AI substitutions received:', data.substitutions?.length || 0)
+
+                              // For now, just set the first excellent substitution
+                              const bestSub = data.substitutions?.find((sub: any) => sub.quality === 'excellent')
+                              if (bestSub) {
+                                setIngredientSubstitutions(prev => ({
+                                  ...prev,
+                                  [ingredient.ingredient_name]: bestSub.substitute
+                                }))
+                                console.log(`🔄 Auto-substituted: ${ingredient.ingredient_name} → ${bestSub.substitute}`)
+                              }
+                            }
+                          } catch (err) {
+                            console.error('Substitution error:', err)
+                          }
+                        }}
+                        color="secondary"
+                        disabled={ingredient.availability_status === 'available'}
+                      >
+                        🤖 Smart Sub
+                      </Button>
                     )}
 
                     {/* Omit Ingredient Button */}
@@ -689,57 +695,77 @@ export default function RecipeDetailPage() {
                 : 'You have all ingredients needed'
               }
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={async () => {
-                setMakingRecipe(true)
-                try {
-                  // Call make recipe function that consumes ingredients
-                  const { error } = await supabase
-                    .rpc('make_recipe', {
-                      p_recipe_id: recipe!.id,
-                      p_household_id: user!.id,
-                      p_user_id: user!.id,
-                      p_servings_made: recipe!.servings // Use full recipe servings
-                    })
+            <Box display="flex" gap={1} flexWrap="wrap">
+              <Button
+                variant="contained"
+                size={isMobile ? "medium" : "large"}
+                onClick={async () => {
+                  setMakingRecipe(true)
+                  try {
+                    // Call make recipe function that consumes ingredients
+                    const { error } = await supabase
+                      .rpc('make_recipe', {
+                        p_recipe_id: recipe!.id,
+                        p_household_id: user!.id,
+                        p_user_id: user!.id,
+                        p_servings_made: recipe!.servings
+                      })
 
-                  if (error) throw error
+                    if (error) throw error
 
-                  // Update recipe usage stats
-                  const { error: updateError } = await supabase
-                    .from('recipes')
-                    .update({
-                      times_made: (recipe!.times_made || 0) + 1,
-                      last_made_date: new Date().toISOString().split('T')[0]
-                    })
-                    .eq('id', recipe!.id)
+                    // Update recipe usage stats
+                    const { error: updateError } = await supabase
+                      .from('recipes')
+                      .update({
+                        times_made: (recipe!.times_made || 0) + 1,
+                        last_made_date: new Date().toISOString().split('T')[0]
+                      })
+                      .eq('id', recipe!.id)
 
-                  if (updateError) console.warn('Failed to update recipe stats:', updateError)
+                    if (updateError) console.warn('Failed to update recipe stats:', updateError)
 
-                  // Show success and reload data
-                  setError(`🎉 Recipe completed! Ingredients removed from inventory. Times made: ${(recipe!.times_made || 0) + 1}`)
+                    setError(`🎉 Recipe completed! Ingredients removed from inventory. Times made: ${(recipe!.times_made || 0) + 1}`)
+                    await loadRecipeData(user!.id)
 
-                  // Reload recipe and inventory data
-                  await loadRecipeData(user!.id)
+                  } catch (err: any) {
+                    setError(`Failed to complete recipe: ${err.message}`)
+                  } finally {
+                    setMakingRecipe(false)
+                  }
+                }}
+                disabled={makingRecipe}
+                sx={{
+                  backgroundColor: 'white',
+                  color: 'success.main',
+                  '&:hover': { backgroundColor: 'grey.100' }
+                }}
+                startIcon={makingRecipe ? <CircularProgress size={20} /> : <CheckIcon />}
+              >
+                {makingRecipe ? 'Cooking...' : 'Cook Once'}
+              </Button>
 
-                } catch (err: any) {
-                  setError(`Failed to complete recipe: ${err.message}`)
-                } finally {
-                  setMakingRecipe(false)
-                }
-              }}
-              disabled={makingRecipe}
-              sx={{
-                backgroundColor: 'white',
-                color: 'success.main',
-                '&:hover': { backgroundColor: 'grey.100' },
-                '&:disabled': { backgroundColor: 'grey.200' }
-              }}
-              startIcon={makingRecipe ? <CircularProgress size={20} /> : <CheckIcon />}
-            >
-              {makingRecipe ? 'Cooking...' : 'Make This Recipe'}
-            </Button>
+              {(Object.keys(ingredientSubstitutions).length > 0 || omittedIngredients.length > 0) && (
+                <Button
+                  variant="outlined"
+                  size={isMobile ? "medium" : "large"}
+                  onClick={() => {
+                    // Create personalized recipe version
+                    const versionName = prompt('Name for your version:', `${recipe?.name} - My Version`)
+                    if (versionName) {
+                      console.log('💾 Creating recipe version with substitutions')
+                      // Implementation for recipe versioning
+                    }
+                  }}
+                  sx={{
+                    borderColor: 'white',
+                    color: 'white',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' }
+                  }}
+                >
+                  Save My Version
+                </Button>
+              )}
+            </Box>
           </CardContent>
         </Card>
       )}
