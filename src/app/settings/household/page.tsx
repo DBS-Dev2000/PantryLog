@@ -256,6 +256,28 @@ export default function HouseholdPage() {
     setSuccess('Invite link copied to clipboard!')
   }
 
+  const regenerateQRCode = async (code: string) => {
+    try {
+      const inviteUrl = `${window.location.origin}/join/${code}`
+
+      const qrDataUrl = await QRCode.toDataURL(inviteUrl, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      })
+
+      setInviteCode(code)
+      setQrCodeDataUrl(qrDataUrl)
+      setInviteQrDialogOpen(true)
+
+    } catch (err: any) {
+      setError('Failed to generate QR code')
+    }
+  }
+
   if (!user || loading) {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -422,6 +444,13 @@ export default function HouseholdPage() {
                         <CopyIcon />
                       </IconButton>
                     </Tooltip>
+                    {invite.invited_email === 'QR_INVITE' && (
+                      <Tooltip title="Show QR Code">
+                        <IconButton onClick={() => regenerateQRCode(invite.invite_code)} color="primary">
+                          <QrCodeIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                     <Tooltip title="Cancel invitation">
                       <IconButton onClick={() => removeInvite(invite.id)} color="error">
                         <DeleteIcon />

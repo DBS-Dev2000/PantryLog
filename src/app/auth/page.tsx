@@ -160,15 +160,56 @@ export default function AuthPage() {
 
         <TabPanel value={tab} index={1}>
           <form onSubmit={handleSignUp}>
-            <TextField
-              fullWidth
-              label="Household Name"
-              value={householdName}
-              onChange={(e) => setHouseholdName(e.target.value)}
-              required
-              sx={{ mb: 2 }}
-              helperText="Give your household a name (e.g., 'The Smith Family')"
-            />
+            {/* Household Options */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Household Setup
+              </Typography>
+
+              {joiningHousehold ? (
+                <Box>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    ✅ Joining existing household with invite code: <strong>{inviteCode}</strong>
+                  </Alert>
+                  <TextField
+                    fullWidth
+                    label="Invite Code"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    placeholder="Enter 8-character invite code"
+                    helperText="Get this code from a household member"
+                    sx={{ mb: 2 }}
+                  />
+                  <Button
+                    variant="text"
+                    onClick={() => setJoiningHousehold(false)}
+                    size="small"
+                  >
+                    Create New Household Instead
+                  </Button>
+                </Box>
+              ) : (
+                <Box>
+                  <TextField
+                    fullWidth
+                    label="Household Name"
+                    value={householdName}
+                    onChange={(e) => setHouseholdName(e.target.value)}
+                    required
+                    sx={{ mb: 2 }}
+                    placeholder="e.g., The Smith Family"
+                    helperText="Create your own household - you can invite others later"
+                  />
+                  <Button
+                    variant="text"
+                    onClick={() => setJoiningHousehold(true)}
+                    size="small"
+                  >
+                    Join Existing Household Instead
+                  </Button>
+                </Box>
+              )}
+            </Box>
             <TextField
               fullWidth
               label="Email"
