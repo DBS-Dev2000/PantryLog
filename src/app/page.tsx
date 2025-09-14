@@ -94,7 +94,7 @@ export default function HomePage() {
         <Grid item xs={6}>
           <Card sx={{ height: '100%' }}>
             <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <AddIcon sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
+              <AddIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
               <Typography variant="h6" gutterBottom>
                 Quick Add
               </Typography>
@@ -102,7 +102,7 @@ export default function HomePage() {
                 variant="contained"
                 fullWidth
                 size="large"
-                color="success"
+                color="primary"
                 onClick={() => router.push('/inventory/quick-add')}
               >
                 Quick Add
@@ -114,7 +114,7 @@ export default function HomePage() {
         <Grid item xs={6}>
           <Card sx={{ height: '100%' }}>
             <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <RemoveIcon sx={{ fontSize: 48, color: 'error.main', mb: 1 }} />
+              <RemoveIcon sx={{ fontSize: 48, color: 'secondary.main', mb: 1 }} />
               <Typography variant="h6" gutterBottom>
                 Quick Use
               </Typography>
@@ -122,7 +122,7 @@ export default function HomePage() {
                 variant="contained"
                 fullWidth
                 size="large"
-                color="error"
+                color="secondary"
                 onClick={() => router.push('/inventory/quick-use')}
               >
                 Quick Use
