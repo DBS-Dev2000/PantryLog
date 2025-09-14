@@ -89,10 +89,18 @@ export default function ReceiptScanPage() {
 
   const loadStorageLocations = async (userId: string) => {
     try {
-      // Ensure household exists
-      await supabase
+      // Ensure household exists (don't overwrite existing name)
+      const { data: existingHousehold } = await supabase
         .from('households')
-        .upsert([{ id: userId, name: 'My Household' }], { onConflict: 'id' })
+        .select('id, name')
+        .eq('id', userId)
+        .single()
+
+      if (!existingHousehold) {
+        await supabase
+          .from('households')
+          .insert([{ id: userId, name: 'My Household' }])
+      }
 
       // Load storage locations
       const { data: locations, error } = await supabase
