@@ -201,7 +201,7 @@ export default function JoinHouseholdPage() {
           {invite && (
             <Box sx={{ mt: 3, mb: 3 }}>
               <Typography variant="h6" gutterBottom>
-                "{invite.household?.name || 'Household'}"
+                "{(invite as any).households?.name || invite.household?.name || 'Unknown Household'}"
               </Typography>
               <Typography variant="body2" color="textSecondary" paragraph>
                 You've been invited to join this household and share the pantry inventory.
