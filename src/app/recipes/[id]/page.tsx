@@ -17,7 +17,16 @@ import {
   ListItemText,
   Divider,
   Paper,
-  IconButton
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -28,7 +37,10 @@ import {
   Link as LinkIcon,
   Check as CheckIcon,
   Warning as WarningIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  Delete as DeleteIcon,
+  ShoppingCart as ShoppingIcon,
+  Add as AddIcon
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -77,6 +89,12 @@ export default function RecipeDetailPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleteDialog, setDeleteDialog] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [shoppingDialog, setShoppingDialog] = useState(false)
+  const [shoppingLists, setShoppingLists] = useState<any[]>([])
+  const [selectedShoppingList, setSelectedShoppingList] = useState('')
 
   useEffect(() => {
     const getUser = async () => {
@@ -166,6 +184,92 @@ export default function RecipeDetailPage() {
     return ingredients.every(ing => ing.availability_status === 'available')
   }
 
+  const getMissingIngredients = () => {
+    return ingredients.filter(ing => ing.availability_status === 'missing' || ing.availability_status === 'partial')
+  }
+
+  const deleteRecipe = async () => {
+    if (deleteConfirmation.toLowerCase() !== 'delete') {
+      setError('Please type "DELETE" to confirm recipe deletion')
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const { error } = await supabase
+        .from('recipes')
+        .delete()
+        .eq('id', recipeId)
+
+      if (error) throw error
+
+      console.log('✅ Recipe deleted successfully')
+      router.push('/recipes')
+
+    } catch (err: any) {
+      setError(err.message)
+      setDeleting(false)
+    }
+  }
+
+  const loadShoppingLists = async () => {
+    try {
+      const { data: lists, error } = await supabase
+        .from('shopping_lists')
+        .select('*')
+        .eq('household_id', user?.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      setShoppingLists(lists || [])
+
+      // Auto-select the first list if available
+      if (lists && lists.length > 0) {
+        setSelectedShoppingList(lists[0].id)
+      }
+
+    } catch (err: any) {
+      console.error('Error loading shopping lists:', err)
+    }
+  }
+
+  const addMissingToShoppingList = async () => {
+    if (!selectedShoppingList) return
+
+    try {
+      const missingIngredients = getMissingIngredients()
+
+      const shoppingItems = missingIngredients.map(ingredient => ({
+        shopping_list_id: selectedShoppingList,
+        item_name: ingredient.ingredient_name,
+        quantity: ingredient.quantity,
+        unit: ingredient.unit,
+        priority: 3, // Medium priority
+        notes: `From recipe: ${recipe?.name || recipe?.title}`,
+        added_by: user?.id
+      }))
+
+      const { error } = await supabase
+        .from('shopping_list_items')
+        .insert(shoppingItems)
+
+      if (error) throw error
+
+      setShoppingDialog(false)
+      setError(null)
+      console.log('✅ Added', missingIngredients.length, 'ingredients to shopping list')
+
+      // Show success message
+      const listName = shoppingLists.find(l => l.id === selectedShoppingList)?.name || 'shopping list'
+      setError(`Added ${missingIngredients.length} missing ingredients to ${listName}!`)
+
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
   if (!user || loading) {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -214,9 +318,19 @@ export default function RecipeDetailPage() {
         >
           Back to Recipes
         </Button>
-        <Typography variant="h4" component="h1">
-          {recipe.name || recipe.title}
-        </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="h4" component="h1">
+            {recipe.name || recipe.title}
+          </Typography>
+        </Box>
+        <Button
+          startIcon={<DeleteIcon />}
+          onClick={() => setDeleteDialog(true)}
+          color="error"
+          variant="outlined"
+        >
+          Delete Recipe
+        </Button>
       </Box>
 
       {/* Recipe Header */}
@@ -282,12 +396,41 @@ export default function RecipeDetailPage() {
             </Grid>
 
             <Grid item xs={12} md={4}>
-              {recipe.image_url && (
-                <Avatar
-                  src={recipe.image_url}
-                  sx={{ width: '100%', height: 200 }}
-                  variant="rounded"
-                />
+              {recipe.image_url ? (
+                <Box>
+                  <img
+                    src={recipe.image_url}
+                    alt={recipe.name || recipe.title}
+                    style={{
+                      width: '100%',
+                      height: 200,
+                      objectFit: 'cover',
+                      borderRadius: 8,
+                      border: '1px solid #ddd'
+                    }}
+                    onError={(e) => {
+                      console.log('❌ Recipe image failed to load:', recipe.image_url)
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: 200,
+                    backgroundColor: 'grey.100',
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px dashed #ccc'
+                  }}
+                >
+                  <Typography variant="body2" color="textSecondary">
+                    No image available
+                  </Typography>
+                </Box>
               )}
             </Grid>
           </Grid>
@@ -301,9 +444,29 @@ export default function RecipeDetailPage() {
             🥕 Ingredients ({ingredients.length})
           </Typography>
 
-          {canMakeRecipe() && (
+          {canMakeRecipe() ? (
             <Alert severity="success" sx={{ mb: 2 }}>
               ✅ You have all ingredients to make this recipe!
+            </Alert>
+          ) : (
+            <Alert
+              severity="warning"
+              sx={{ mb: 2 }}
+              action={
+                <Button
+                  size="small"
+                  startIcon={<ShoppingIcon />}
+                  onClick={() => {
+                    loadShoppingLists()
+                    setShoppingDialog(true)
+                  }}
+                  color="inherit"
+                >
+                  Add to Shopping List
+                </Button>
+              }
+            >
+              Missing {getMissingIngredients().length} ingredients for this recipe
             </Alert>
           )}
 
@@ -369,6 +532,111 @@ export default function RecipeDetailPage() {
           </Button>
         </Box>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ color: 'error.main' }}>
+          🗑️ Delete Recipe
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" gutterBottom>
+            Are you sure you want to delete "{recipe.name || recipe.title}"?
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+            This action cannot be undone. All recipe data, ingredients, and cooking steps will be permanently removed.
+          </Typography>
+
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              <strong>Type "DELETE" to confirm:</strong>
+            </Typography>
+          </Alert>
+
+          <TextField
+            label="Confirmation"
+            fullWidth
+            value={deleteConfirmation}
+            onChange={(e) => setDeleteConfirmation(e.target.value)}
+            placeholder="Type DELETE to confirm"
+            error={deleteConfirmation.length > 0 && deleteConfirmation.toLowerCase() !== 'delete'}
+            helperText={deleteConfirmation.length > 0 && deleteConfirmation.toLowerCase() !== 'delete' ? 'Must type DELETE exactly' : ''}
+            autoFocus
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setDeleteDialog(false)
+            setDeleteConfirmation('')
+          }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={deleteRecipe}
+            variant="contained"
+            color="error"
+            disabled={deleteConfirmation.toLowerCase() !== 'delete' || deleting}
+          >
+            {deleting ? 'Deleting...' : 'Delete Recipe'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Missing Ingredients to Shopping List Dialog */}
+      <Dialog open={shoppingDialog} onClose={() => setShoppingDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          🛒 Add Missing Ingredients to Shopping List
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Add {getMissingIngredients().length} missing ingredients from this recipe to your shopping list.
+          </Typography>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body2" fontWeight="medium" gutterBottom>
+              Missing ingredients:
+            </Typography>
+            <List dense>
+              {getMissingIngredients().map((ingredient, index) => (
+                <ListItem key={index} sx={{ py: 0.5 }}>
+                  <ListItemText
+                    primary={`${ingredient.quantity} ${ingredient.unit} ${ingredient.ingredient_name}`}
+                    secondary={ingredient.preparation ? `(${ingredient.preparation})` : ''}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+
+          <FormControl fullWidth>
+            <InputLabel>Shopping List</InputLabel>
+            <Select
+              value={selectedShoppingList}
+              label="Shopping List"
+              onChange={(e) => setSelectedShoppingList(e.target.value)}
+            >
+              {shoppingLists.map((list) => (
+                <MenuItem key={list.id} value={list.id}>
+                  {list.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShoppingDialog(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={addMissingToShoppingList}
+            variant="contained"
+            disabled={!selectedShoppingList}
+            startIcon={<AddIcon />}
+            color="secondary"
+          >
+            Add to Shopping List
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   )
 }
