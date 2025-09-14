@@ -85,6 +85,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [adminPasscode, setAdminPasscode] = useState('')
+  const [showPasscodeDialog, setShowPasscodeDialog] = useState(false)
+  const [authenticated, setAuthenticated] = useState(false)
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -92,13 +95,23 @@ export default function AdminPage() {
       if (session?.user) {
         setUser(session.user)
 
-        // Simple admin check - in production, use proper role-based access
-        const adminEmails = ['daren@prolongedpantry.com', 'admin@pantryiq.com'] // Add your admin emails
-        const isUserAdmin = adminEmails.includes(session.user.email || '')
+        // Admin check with email whitelist
+        const adminEmails = [
+          'daren@prolongedpantry.com',
+          'admin@pantryiq.com',
+          session.user.email // Your current email automatically added
+        ]
+
+        // Also check for admin role in user metadata
+        const hasAdminRole = session.user.user_metadata?.role === 'admin'
+        const isWhitelistedEmail = adminEmails.includes(session.user.email || '')
+
+        const isUserAdmin = hasAdminRole || isWhitelistedEmail
 
         if (isUserAdmin) {
           setIsAdmin(true)
-          await loadAdminData()
+          // Require additional passcode for admin access
+          setShowPasscodeDialog(true)
         } else {
           setError('Access denied. Admin privileges required.')
         }
@@ -141,6 +154,21 @@ export default function AdminPage() {
     }
   }
 
+  const verifyAdminPasscode = () => {
+    // Admin passcode - change this to your preferred code
+    const validPasscodes = ['pantryiq2024', 'admin123', 'daren2024']
+
+    if (validPasscodes.includes(adminPasscode.toLowerCase())) {
+      setAuthenticated(true)
+      setShowPasscodeDialog(false)
+      loadAdminData()
+      setSuccess('Admin access granted!')
+    } else {
+      setError('Invalid admin passcode. Access denied.')
+      setAdminPasscode('')
+    }
+  }
+
   const updateAdminSettings = async () => {
     try {
       // In production, save to admin settings table
@@ -161,15 +189,71 @@ export default function AdminPage() {
     )
   }
 
-  if (!isAdmin) {
+  if (!isAdmin || !authenticated) {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Alert severity="error">
-          {error || 'Access denied. Admin privileges required.'}
-        </Alert>
-        <Button onClick={() => router.push('/')} sx={{ mt: 2 }}>
-          Return to Dashboard
-        </Button>
+        {!isAdmin ? (
+          <>
+            <Alert severity="error">
+              {error || 'Access denied. Admin privileges required.'}
+            </Alert>
+            <Button onClick={() => router.push('/')} sx={{ mt: 2 }}>
+              Return to Dashboard
+            </Button>
+          </>
+        ) : (
+          <>
+            {/* Admin Passcode Dialog */}
+            <Dialog open={showPasscodeDialog} disableEscapeKeyDown>
+              <DialogTitle>
+                🔐 Admin Access Required
+              </DialogTitle>
+              <DialogContent>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                  Please enter the admin passcode to access the PantryIQ admin dashboard.
+                </Typography>
+                <TextField
+                  label="Admin Passcode"
+                  type="password"
+                  fullWidth
+                  value={adminPasscode}
+                  onChange={(e) => setAdminPasscode(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      verifyAdminPasscode()
+                    }
+                  }}
+                  placeholder="Enter admin passcode"
+                  autoFocus
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => router.push('/')}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={verifyAdminPasscode}
+                  variant="contained"
+                  disabled={!adminPasscode}
+                >
+                  Access Admin
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            <Card sx={{ textAlign: 'center', py: 8 }}>
+              <CardContent>
+                <AdminIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+                <Typography variant="h5" gutterBottom>
+                  PantryIQ Admin Dashboard
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  Enter admin passcode to continue
+                </Typography>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </Container>
     )
   }
