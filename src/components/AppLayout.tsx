@@ -56,6 +56,7 @@ const navigation = [
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<any>(null)
+  const [household, setHousehold] = useState<any>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const router = useRouter()
@@ -66,19 +67,48 @@ export default function AppLayout({ children }: AppLayoutProps) {
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user)
+      if (session?.user) {
+        setUser(session.user)
+        await loadHouseholdName(session.user.id)
+      } else {
+        setUser(null)
+        setHousehold(null)
+      }
     }
 
     getSession()
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user)
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+        await loadHouseholdName(session.user.id)
+      } else {
+        setUser(null)
+        setHousehold(null)
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  const loadHouseholdName = async (userId: string) => {
+    try {
+      const { data: householdData } = await supabase
+        .from('households')
+        .select('name')
+        .eq('id', userId)
+        .single()
+
+      if (householdData) {
+        setHousehold(householdData)
+      }
+    } catch (err) {
+      // Household might not exist yet, that's ok
+      console.log('Household not found, using default')
+    }
+  }
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -109,7 +139,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <Box>
       <Toolbar>
         <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-          PantryIQ
+          {household?.name ? `${household.name} | PantryIQ` : 'PantryIQ'}
         </Typography>
       </Toolbar>
       <Divider />
@@ -161,7 +191,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            PantryIQ
+            {household?.name ? `${household.name} | PantryIQ` : 'PantryIQ'}
           </Typography>
           <IconButton
             size="large"
