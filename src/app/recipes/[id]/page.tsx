@@ -490,27 +490,8 @@ export default function RecipeDetailPage() {
               ✅ You have all ingredients to make this recipe!
             </Alert>
           ) : (
-            <Alert
-              severity="warning"
-              sx={{ mb: 2 }}
-              action={
-                <Button
-                  size="small"
-                  startIcon={<ShoppingIcon />}
-                  onClick={() => {
-                    loadShoppingLists()
-                    // Auto-select all missing ingredients
-                    const missingIngredients = getMissingIngredients()
-                    setSelectedIngredients(missingIngredients.map(ing => ing.ingredient_name))
-                    setShoppingDialog(true)
-                  }}
-                  color="inherit"
-                >
-                  Add to Shopping List
-                </Button>
-              }
-            >
-              Missing {getMissingIngredients().length} ingredients for this recipe
+            <Alert severity="info" sx={{ mb: 2 }}>
+              ℹ️ Check ingredients you need to buy, then add them to your shopping list
             </Alert>
           )}
 
@@ -654,26 +635,26 @@ export default function RecipeDetailPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Shopping List Selection Dialog */}
+      {/* Simple Shopping List Selection Dialog */}
       <Dialog open={shoppingDialog} onClose={() => setShoppingDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
-          🛒 Add Ingredients to Shopping List
+          🛒 Choose Shopping List
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-            Add {selectedIngredients.length} selected ingredients from "{recipe?.name || recipe?.title}" to your shopping list.
+            Add {selectedIngredients.length} selected ingredients to which shopping list?
           </Typography>
 
           <FormControl fullWidth>
-            <InputLabel>Choose Shopping List</InputLabel>
+            <InputLabel>Shopping List</InputLabel>
             <Select
               value={selectedShoppingList}
-              label="Choose Shopping List"
+              label="Shopping List"
               onChange={(e) => setSelectedShoppingList(e.target.value)}
             >
               {shoppingLists.map((list) => (
                 <MenuItem key={list.id} value={list.id}>
-                  {list.name} ({list.status})
+                  {list.name}
                 </MenuItem>
               ))}
             </Select>
@@ -686,11 +667,11 @@ export default function RecipeDetailPage() {
           <Button
             onClick={addMissingToShoppingList}
             variant="contained"
-            disabled={!selectedShoppingList || selectedIngredients.length === 0}
+            disabled={!selectedShoppingList}
             startIcon={<AddIcon />}
             color="secondary"
           >
-            Add {selectedIngredients.length} Ingredient{selectedIngredients.length !== 1 ? 's' : ''}
+            Add to List
           </Button>
         </DialogActions>
       </Dialog>
