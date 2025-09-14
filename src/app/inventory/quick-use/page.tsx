@@ -302,6 +302,13 @@ export default function QuickUsePage() {
 
       setAvailableItems(items || [])
       console.log('📦 Product found in', items?.length || 0, 'locations')
+
+      // Auto-advance if only one location found (item-first workflow)
+      if (workflowMode === 'item-first' && items && items.length === 1) {
+        console.log('🚀 Auto-advancing: Only 1 location found')
+        setSelectedItem(items[0].id)
+        setActiveStep(2) // Move to quantity step
+      }
     } catch (err) {
       console.error('Error loading product locations:', err)
       setError('Failed to find product in inventory')

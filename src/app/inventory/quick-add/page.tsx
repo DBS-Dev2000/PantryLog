@@ -24,7 +24,8 @@ import {
   LinearProgress,
   Accordion,
   AccordionSummary,
-  AccordionDetails
+  AccordionDetails,
+  Autocomplete
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -574,7 +575,7 @@ export default function QuickAddPage() {
                 </Box>
 
                 {productData && (
-                  <Paper sx={{ p: 2, mt: 2, backgroundColor: 'success.light' }}>
+                  <Paper sx={{ p: 2, mt: 2, backgroundColor: 'success.light', color: 'success.contrastText' }}>
                     <Box display="flex" alignItems="center" gap={2}>
                       {productData.image_url && (
                         <Avatar src={productData.image_url} sx={{ width: 50, height: 50 }} />
@@ -595,26 +596,46 @@ export default function QuickAddPage() {
             <Step>
               <StepLabel>Scan Storage Location QR Code</StepLabel>
               <StepContent>
-                <TextField
-                  label="Storage Location QR Code"
-                  fullWidth
-                  value={locationCode}
-                  onChange={(e) => setLocationCode(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && locationCode) {
-                      handleLocationScan(locationCode)
-                    }
-                  }}
-                  placeholder="Scan location QR code or paste URL"
-                  InputProps={{
-                    endAdornment: (
-                      <IconButton onClick={() => setShowQRScanner(true)}>
-                        <CameraIcon />
-                      </IconButton>
-                    ),
-                  }}
-                  sx={{ mb: 2 }}
-                />
+                <Box sx={{ mb: 2 }}>
+                  <Autocomplete
+                    options={storageLocations}
+                    getOptionLabel={(option) => option.fullPath || option.label}
+                    value={storageLocations.find(loc => loc.id === locationCode) || null}
+                    onChange={(event, newValue) => {
+                      if (newValue) {
+                        setLocationCode(newValue.id)
+                        handleLocationScan(newValue.id)
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Choose Storage Location"
+                        placeholder="Search for location or scan QR code"
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              {params.InputProps.endAdornment}
+                              <IconButton onClick={() => setShowQRScanner(true)} title="Scan QR Code">
+                                <CameraIcon />
+                              </IconButton>
+                            </Box>
+                          ),
+                        }}
+                      />
+                    )}
+                    renderOption={(props, option) => (
+                      <li {...props} style={{
+                        paddingLeft: (option.level * 16) + 16,
+                        fontSize: option.level === 0 ? '1rem' : '0.9rem',
+                        fontWeight: option.level === 0 ? 500 : 400
+                      }}>
+                        {option.fullPath || option.label}
+                      </li>
+                    )}
+                  />
+                </Box>
                 <Button
                   variant="contained"
                   onClick={() => handleLocationScan(locationCode)}
