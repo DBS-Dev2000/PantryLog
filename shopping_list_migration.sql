@@ -159,12 +159,14 @@ DECLARE
     household_id_var UUID;
 BEGIN
     -- Get shopping list item details
-    SELECT
-        sli.*,
-        sl.household_id
-    INTO item_record, household_id_var
+    SELECT sli.* INTO item_record
     FROM shopping_list_items sli
-    INNER JOIN shopping_lists sl ON sli.shopping_list_id = sl.id
+    WHERE sli.id = p_item_id;
+
+    -- Get household ID separately
+    SELECT sl.household_id INTO household_id_var
+    FROM shopping_lists sl
+    INNER JOIN shopping_list_items sli ON sl.id = sli.shopping_list_id
     WHERE sli.id = p_item_id;
 
     -- Mark as purchased
