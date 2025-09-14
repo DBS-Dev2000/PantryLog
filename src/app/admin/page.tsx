@@ -150,13 +150,19 @@ export default function AdminPage() {
 
     try {
       // Load users via server-side admin API
+      console.log('📡 Fetching admin data for user:', user.id)
       const response = await fetch(`/api/admin/users?user_id=${user.id}`)
 
+      console.log('📡 Admin API response status:', response.status)
+
       if (!response.ok) {
-        throw new Error(`Failed to load admin data: ${response.status}`)
+        const errorText = await response.text()
+        console.error('❌ Admin API error response:', errorText)
+        throw new Error(`Failed to load admin data: ${response.status} - ${errorText}`)
       }
 
       const adminData = await response.json()
+      console.log('📦 Received admin data:', adminData)
 
       if (adminData.error) {
         throw new Error(adminData.error)
@@ -179,6 +185,9 @@ export default function AdminPage() {
       }
 
       console.log('✅ Admin data loaded:', adminData.users?.length || 0, 'users')
+      console.log('📊 Admin data structure:', adminData)
+      console.log('👥 Users array:', adminData.users)
+      console.log('🤖 Admin users:', adminData.admin_users)
 
     } catch (err: any) {
       console.error('Error loading admin data:', err)
