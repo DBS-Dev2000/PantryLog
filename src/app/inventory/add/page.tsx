@@ -34,7 +34,8 @@ import {
   Edit as EditIcon,
   Print as PrintIcon,
   Search as SearchIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  Visibility as EyeIcon
 } from '@mui/icons-material'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm, Controller } from 'react-hook-form'
@@ -42,6 +43,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
 import BarcodeScanner from '@/components/BarcodeScanner'
+import VisualItemScanner from '@/components/VisualItemScanner'
 import QRCode from 'qrcode'
 
 const barcodeSchema = z.object({
@@ -224,6 +226,7 @@ export default function AddItemPage() {
   const [storageLocations, setStorageLocations] = useState<StorageLocationOption[]>([])
   const [loadingLocations, setLoadingLocations] = useState(true)
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
+  const [showVisualScanner, setShowVisualScanner] = useState(false)
 
   const barcodeForm = useForm<BarcodeForm>({
     resolver: zodResolver(barcodeSchema),
@@ -721,6 +724,18 @@ export default function AddItemPage() {
     lookupProduct(barcode)
   }
 
+  const handleVisualItemSelected = (itemData: any) => {
+    console.log('👁️ AI identified item:', itemData)
+    setProductData({
+      name: itemData.name,
+      brand: itemData.brand,
+      category: itemData.category,
+      upc: itemData.upc
+    })
+    setShowVisualScanner(false)
+    setStep('details')
+  }
+
   const printBarcode = async () => {
     const printWindow = window.open('', '_blank')
     if (!printWindow) return
@@ -937,6 +952,15 @@ export default function AddItemPage() {
                   size="large"
                 >
                   Scan Barcode
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<EyeIcon />}
+                  onClick={() => setShowVisualScanner(true)}
+                  size="large"
+                  color="secondary"
+                >
+                  AI Recognition
                 </Button>
               </Box>
             </form>
@@ -1387,6 +1411,14 @@ export default function AddItemPage() {
         onScan={handleBarcodeScanned}
         title="Scan Product Barcode"
         description="Align the product barcode within the green box for automatic scanning"
+      />
+
+      {/* Visual Item Scanner Dialog */}
+      <VisualItemScanner
+        open={showVisualScanner}
+        onClose={() => setShowVisualScanner(false)}
+        onItemSelected={handleVisualItemSelected}
+        title="AI Item Recognition"
       />
     </Container>
   )
