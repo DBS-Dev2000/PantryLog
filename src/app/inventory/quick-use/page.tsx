@@ -83,7 +83,7 @@ export default function QuickUsePage() {
   const locationInputRef = useRef<HTMLInputElement>(null)
 
   const [user, setUser] = useState<any>(null)
-  const [workflowMode, setWorkflowMode] = useState<WorkflowMode>('location-first')
+  const [workflowMode, setWorkflowMode] = useState<WorkflowMode>('item-first')
   const [activeStep, setActiveStep] = useState(0)
   const [productData, setProductData] = useState<ProductData | null>(null)
   const [storageLocation, setStorageLocation] = useState<StorageLocationData | null>(null)
@@ -517,16 +517,16 @@ export default function QuickUsePage() {
             <Typography variant="h6">Workflow Mode:</Typography>
             <ButtonGroup variant="outlined" size="small">
               <Button
-                onClick={() => setWorkflowMode('location-first')}
-                variant={workflowMode === 'location-first' ? 'contained' : 'outlined'}
-              >
-                📍 Location First
-              </Button>
-              <Button
                 onClick={() => setWorkflowMode('item-first')}
                 variant={workflowMode === 'item-first' ? 'contained' : 'outlined'}
               >
                 📦 Item First
+              </Button>
+              <Button
+                onClick={() => setWorkflowMode('location-first')}
+                variant={workflowMode === 'location-first' ? 'contained' : 'outlined'}
+              >
+                📍 Location First
               </Button>
             </ButtonGroup>
           </Box>
