@@ -30,7 +30,8 @@ import {
   Logout as LogoutIcon,
   Storage as StorageIcon,
   Person as PersonIcon,
-  QrCodeScanner
+  QrCodeScanner,
+  Remove
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -44,6 +45,7 @@ const navigation = [
   { name: 'Inventory', href: '/inventory', icon: InventoryIcon },
   { name: 'Add Items', href: '/inventory/add', icon: AddIcon },
   { name: 'Quick Add', href: '/inventory/quick-add', icon: QrCodeScanner },
+  { name: 'Quick Use', href: '/inventory/quick-use', icon: Remove },
   { name: 'Settings', href: '/settings', icon: SettingsIcon },
 ]
 
