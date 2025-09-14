@@ -218,7 +218,15 @@ export default function RecipePhotoScanner({
                     <Button
                       variant="contained"
                       size="large"
-                      onClick={() => cameraInputRef.current?.click()}
+                      onClick={() => {
+                        console.log('📷 Camera button clicked')
+                        console.log('📱 Camera input ref:', cameraInputRef.current)
+                        if (cameraInputRef.current) {
+                          cameraInputRef.current.click()
+                        } else {
+                          console.error('❌ Camera input ref not available')
+                        }
+                      }}
                       sx={{ backgroundColor: 'white', color: 'primary.main', '&:hover': { backgroundColor: 'grey.100' } }}
                     >
                       Open Camera

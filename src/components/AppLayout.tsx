@@ -56,6 +56,7 @@ const navigation = [
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<any>(null)
+  const [householdName, setHouseholdName] = useState<string>('')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const router = useRouter()
@@ -75,10 +76,37 @@ export default function AppLayout({ children }: AppLayoutProps) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user)
+      if (session?.user) {
+        loadHouseholdNameSafely(session.user.id)
+      } else {
+        setHouseholdName('')
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  const loadHouseholdNameSafely = async (userId: string) => {
+    try {
+      const { data: householdData, error } = await supabase
+        .from('households')
+        .select('name')
+        .eq('id', userId)
+        .single()
+
+      if (error) {
+        console.log('No household found, using default')
+        return
+      }
+
+      if (householdData?.name && householdData.name !== 'My Household') {
+        setHouseholdName(householdData.name)
+      }
+    } catch (err) {
+      // Silently handle errors to prevent app crashes
+      console.log('Error loading household name:', err)
+    }
+  }
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -109,7 +137,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <Box>
       <Toolbar>
         <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-          PantryIQ
+          {householdName ? `${householdName} | PantryIQ` : 'PantryIQ'}
         </Typography>
       </Toolbar>
       <Divider />
@@ -161,7 +189,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            PantryIQ
+            {householdName ? `${householdName} | PantryIQ` : 'PantryIQ'}
           </Typography>
           <IconButton
             size="large"
