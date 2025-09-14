@@ -26,7 +26,10 @@ import {
   CameraAlt as CameraIcon,
   Visibility as EyeIcon,
   Check as CheckIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  ThumbUp as ThumbUpIcon,
+  ThumbDown as ThumbDownIcon,
+  Edit as EditIcon
 } from '@mui/icons-material'
 
 interface VisualItemScannerProps {
@@ -63,6 +66,12 @@ export default function VisualItemScanner({
   const [processing, setProcessing] = useState(false)
   const [identifiedItems, setIdentifiedItems] = useState<IdentifiedItem[]>([])
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
+  const [showManualEntry, setShowManualEntry] = useState(false)
+  const [manualItem, setManualItem] = useState({
+    name: '',
+    brand: '',
+    category: ''
+  })
 
   useEffect(() => {
     if (open && isBrowser) {
@@ -245,12 +254,65 @@ export default function VisualItemScanner({
   const selectItem = (item: IdentifiedItem) => {
     console.log('✅ User selected identified item:', item.name)
 
+    // Log positive feedback for AI learning
+    logAIFeedback(item, 'correct')
+
     // Convert to product data format
     const productData = {
       name: item.name,
       brand: item.brand,
       category: item.category,
       upc: item.possible_barcodes?.[0] || `VISUAL-${Date.now()}`
+    }
+
+    onItemSelected(productData)
+    handleClose()
+  }
+
+  const rejectItem = (item: IdentifiedItem) => {
+    console.log('❌ User rejected AI identification:', item.name)
+
+    // Log negative feedback for AI learning
+    logAIFeedback(item, 'incorrect')
+
+    // Show manual entry option
+    setShowManualEntry(true)
+  }
+
+  const logAIFeedback = async (item: IdentifiedItem, feedback: 'correct' | 'incorrect') => {
+    try {
+      // Log feedback for AI improvement (future: train custom models)
+      await fetch('/api/ai-feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          identified_item: item,
+          feedback: feedback,
+          image_data: capturedImage,
+          timestamp: new Date().toISOString()
+        })
+      })
+
+      console.log(`📝 AI feedback logged: ${feedback} for ${item.name}`)
+    } catch (err) {
+      console.warn('Failed to log AI feedback:', err)
+    }
+  }
+
+  const submitManualItem = () => {
+    if (!manualItem.name.trim()) return
+
+    console.log('✅ User provided manual correction:', manualItem.name)
+
+    // Convert manual entry to product data
+    const productData = {
+      name: manualItem.name,
+      brand: manualItem.brand,
+      category: manualItem.category,
+      upc: `MANUAL-${Date.now()}`
     }
 
     onItemSelected(productData)
@@ -432,11 +494,21 @@ export default function VisualItemScanner({
         </Box>
 
         {/* Identified Items Results */}
-        {identifiedItems.length > 0 && (
-          <Box sx={{ p: 2, backgroundColor: 'grey.50', maxHeight: 200, overflow: 'auto' }}>
-            <Typography variant="h6" gutterBottom>
-              🎯 Items Identified
-            </Typography>
+        {identifiedItems.length > 0 && !showManualEntry && (
+          <Box sx={{ p: 2, backgroundColor: 'grey.50', maxHeight: 300, overflow: 'auto' }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="h6">
+                🎯 Items Identified
+              </Typography>
+              <Button
+                size="small"
+                startIcon={<EditIcon />}
+                onClick={() => setShowManualEntry(true)}
+                color="secondary"
+              >
+                Manual Entry
+              </Button>
+            </Box>
             <List dense>
               {identifiedItems.map((item, index) => (
                 <ListItem
@@ -445,11 +517,8 @@ export default function VisualItemScanner({
                     border: '1px solid #ddd',
                     borderRadius: 1,
                     mb: 1,
-                    backgroundColor: 'white',
-                    cursor: 'pointer',
-                    '&:hover': { backgroundColor: 'action.hover' }
+                    backgroundColor: 'white'
                   }}
-                  onClick={() => selectItem(item)}
                 >
                   <ListItemText
                     primary={
@@ -478,13 +547,92 @@ export default function VisualItemScanner({
                     }
                   />
                   <ListItemSecondaryAction>
-                    <Button size="small" variant="outlined">
-                      Select
-                    </Button>
+                    <Box display="flex" gap={0.5}>
+                      <IconButton
+                        size="small"
+                        onClick={() => selectItem(item)}
+                        color="success"
+                        title="This is correct"
+                      >
+                        <ThumbUpIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => rejectItem(item)}
+                        color="error"
+                        title="This is wrong"
+                      >
+                        <ThumbDownIcon />
+                      </IconButton>
+                    </Box>
                   </ListItemSecondaryAction>
                 </ListItem>
               ))}
             </List>
+          </Box>
+        )}
+
+        {/* Manual Entry Form */}
+        {showManualEntry && (
+          <Box sx={{ p: 2, backgroundColor: 'warning.light' }}>
+            <Typography variant="h6" gutterBottom sx={{ color: 'warning.contrastText' }}>
+              ✏️ Manual Item Entry
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'warning.contrastText', mb: 2, opacity: 0.9 }}>
+              AI got it wrong? Enter the correct item details:
+            </Typography>
+            <Grid container spacing={1}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Item Name"
+                  fullWidth
+                  value={manualItem.name}
+                  onChange={(e) => setManualItem({ ...manualItem, name: e.target.value })}
+                  placeholder="e.g., Red Apple, Coca-Cola"
+                  size="small"
+                  autoFocus
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="Brand"
+                  fullWidth
+                  value={manualItem.brand}
+                  onChange={(e) => setManualItem({ ...manualItem, brand: e.target.value })}
+                  placeholder="Optional"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="Category"
+                  fullWidth
+                  value={manualItem.category}
+                  onChange={(e) => setManualItem({ ...manualItem, category: e.target.value })}
+                  placeholder="e.g., Fresh Produce"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Box display="flex" gap={1} justifyContent="flex-end">
+                  <Button
+                    size="small"
+                    onClick={() => setShowManualEntry(false)}
+                  >
+                    Back to AI Results
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={submitManualItem}
+                    disabled={!manualItem.name.trim()}
+                    color="secondary"
+                  >
+                    Use This Item
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
           </Box>
         )}
       </DialogContent>
