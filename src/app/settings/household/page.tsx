@@ -36,7 +36,8 @@ import {
   AdminPanelSettings as AdminIcon,
   Person as PersonIcon,
   Share as ShareIcon,
-  QrCode as QrCodeIcon
+  QrCode as QrCodeIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
