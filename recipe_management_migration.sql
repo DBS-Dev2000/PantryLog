@@ -253,10 +253,28 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Add foreign key constraints after tables are created
+-- Add foreign key constraint after tables are created
 ALTER TABLE recipes
 ADD CONSTRAINT fk_recipes_category
 FOREIGN KEY (category_id) REFERENCES recipe_categories(id);
+
+-- Update existing recipes to link with categories if needed
+-- (This is safe to run multiple times)
+UPDATE recipes
+SET category_id = (
+    SELECT rc.id
+    FROM recipe_categories rc
+    WHERE LOWER(rc.name) = CASE
+        WHEN LOWER(recipes.title) LIKE '%salad%' THEN 'salads'
+        WHEN LOWER(recipes.title) LIKE '%soup%' OR LOWER(recipes.title) LIKE '%stew%' THEN 'soups & stews'
+        WHEN LOWER(recipes.title) LIKE '%dessert%' OR LOWER(recipes.title) LIKE '%cake%' OR LOWER(recipes.title) LIKE '%cookie%' THEN 'desserts'
+        WHEN LOWER(recipes.title) LIKE '%breakfast%' OR LOWER(recipes.title) LIKE '%pancake%' THEN 'breakfast'
+        WHEN LOWER(recipes.title) LIKE '%bread%' OR LOWER(recipes.title) LIKE '%baking%' THEN 'bread & baking'
+        ELSE 'main dishes'
+    END
+    LIMIT 1
+)
+WHERE category_id IS NULL;
 
 -- Disable RLS for recipe tables
 ALTER TABLE recipe_categories DISABLE ROW LEVEL SECURITY;
