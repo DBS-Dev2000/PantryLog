@@ -44,7 +44,7 @@ interface AppLayoutProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Kitchen', href: '/', icon: HomeIcon },
   { name: 'My Pantry', href: '/inventory', icon: PantryIcon },
   { name: 'Stock Up', href: '/inventory/quick-add', icon: QrCodeScanner },
   { name: 'Grab & Go', href: '/inventory/quick-use', icon: Remove },
