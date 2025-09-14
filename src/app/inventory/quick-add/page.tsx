@@ -43,6 +43,7 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import BarcodeScanner from '@/components/BarcodeScanner'
+import QRScanner from '@/components/QRScanner'
 
 interface ProductData {
   name: string
@@ -78,6 +79,7 @@ export default function QuickAddPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
+  const [showQRScanner, setShowQRScanner] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -322,6 +324,14 @@ export default function QuickAddPage() {
     lookupProduct(barcode)
   }
 
+  const handleQRScanned = (qrCode: string) => {
+    console.log('📱 Camera scanned QR code:', qrCode)
+    setLocationCode(qrCode)
+    setShowQRScanner(false)
+    // Automatically process the location
+    handleLocationScan(qrCode)
+  }
+
   if (!user) {
     return (
       <Container maxWidth="sm" sx={{ mt: 4 }}>
@@ -534,6 +544,13 @@ export default function QuickAddPage() {
                     }
                   }}
                   placeholder="Scan location QR code or paste URL"
+                  InputProps={{
+                    endAdornment: (
+                      <IconButton onClick={() => setShowQRScanner(true)}>
+                        <CameraIcon />
+                      </IconButton>
+                    ),
+                  }}
                   sx={{ mb: 2 }}
                 />
                 <Button
@@ -671,6 +688,15 @@ export default function QuickAddPage() {
         onScan={handleBarcodeScanned}
         title="Scan Product Barcode"
         description="Align the product barcode within the green box for automatic scanning"
+      />
+
+      {/* QR Code Scanner Dialog */}
+      <QRScanner
+        open={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScan={handleQRScanned}
+        title="Scan Storage Location QR Code"
+        description="Align the storage location QR code within the blue box for automatic scanning"
       />
     </Container>
   )
