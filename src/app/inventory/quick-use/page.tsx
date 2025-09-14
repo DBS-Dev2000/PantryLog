@@ -43,7 +43,8 @@ import {
   Refresh as RefreshIcon,
   Add as AddIcon,
   Backspace as BackspaceIcon,
-  SwapHoriz as SwapIcon
+  SwapHoriz as SwapIcon,
+  Visibility as EyeIcon
 } from '@mui/icons-material'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
