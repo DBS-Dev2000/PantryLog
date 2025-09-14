@@ -32,7 +32,8 @@ import {
   Person as PersonIcon,
   QrCodeScanner,
   Remove,
-  Receipt
+  Receipt,
+  ShoppingCart
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -44,9 +45,10 @@ interface AppLayoutProps {
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Inventory', href: '/inventory', icon: InventoryIcon },
-  { name: 'Add Items', href: '/inventory/add', icon: AddIcon },
   { name: 'Quick Add', href: '/inventory/quick-add', icon: QrCodeScanner },
   { name: 'Quick Use', href: '/inventory/quick-use', icon: Remove },
+  { name: 'Shopping List', href: '/shopping', icon: ShoppingCart },
+  { name: 'Add Items', href: '/inventory/add', icon: AddIcon },
   { name: 'Receipt Scan', href: '/inventory/receipt', icon: Receipt },
   { name: 'Settings', href: '/settings', icon: SettingsIcon },
 ]
