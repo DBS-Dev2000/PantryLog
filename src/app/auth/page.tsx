@@ -78,10 +78,10 @@ export default function AuthPage() {
       <Paper elevation={3} sx={{ p: 0 }}>
         <Box sx={{ textAlign: 'center', pt: 4, pb: 2 }}>
           <Typography variant="h4" component="h1" gutterBottom>
-            PantryLog
+            PantryIQ
           </Typography>
           <Typography variant="body1" color="textSecondary">
-            Smart Kitchen Inventory Management
+            Where modern efficiency meets traditional preparedness
           </Typography>
         </Box>
 

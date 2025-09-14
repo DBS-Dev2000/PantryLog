@@ -771,7 +771,7 @@ export default function AddItemPage() {
                 <div class="instructions">Scan to view/edit this item</div>
                 <img src="${qrCodeDataUrl}" alt="Item QR Code" />
                 <div class="footer">
-                  BITE - Basic Inventory Tracking Engine<br>
+                  PantryIQ - Smart Inventory Management<br>
                   Custom Item • ID: ${customItemQR}
                 </div>
               </div>

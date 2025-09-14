@@ -285,7 +285,7 @@ export default function ProductDetailPage() {
             <div class="instructions">Scan to view product details</div>
             <img src="${qrCodeDataUrl}" alt="Product QR Code" style="max-width: 200px;" />
             <div class="footer">
-              BITE - Basic Inventory Tracking Engine<br>
+              PantryIQ - Smart Inventory Management<br>
               ${isCustomItem ? 'Custom Item' : product.upc ? `UPC: ${product.upc}` : 'Product'} • ID: ${product.id}
             </div>
           </div>

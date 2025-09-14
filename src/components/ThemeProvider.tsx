@@ -5,18 +5,45 @@ import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline } from '@mu
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#2e7d32', // Green theme for food/pantry
-      light: '#60ad5e',
-      dark: '#005005',
+      main: '#2C3E50', // Deep Navy - trust, security, technological sophistication
+      light: '#546E7A',
+      dark: '#1A252F',
     },
     secondary: {
-      main: '#ff9800', // Orange for warnings/expiration
-      light: '#ffb74d',
-      dark: '#f57c00',
+      main: '#87A96B', // Sage Green - freshness, sustainability, food preservation
+      light: '#A8C68F',
+      dark: '#6B8E4A',
+    },
+    warning: {
+      main: '#FFC947', // Warm Amber - optimization, savings, smart balance
+      light: '#FFD369',
+      dark: '#E6B142',
+    },
+    error: {
+      main: '#E74C3C', // Alert Red - expiration warnings and urgent notifications
+      light: '#EC7063',
+      dark: '#C0392B',
+    },
+    success: {
+      main: '#27AE60', // Success Green - savings achieved and fresh items
+      light: '#52C882',
+      dark: '#229954',
     },
     background: {
-      default: '#f5f5f5',
+      default: '#E8E8E8', // Soft Gray - backgrounds and neutral spaces
       paper: '#ffffff',
+    },
+    grey: {
+      50: '#FAFAFA',
+      100: '#F5F5F5',
+      200: '#EEEEEE',
+      300: '#E0E0E0',
+      400: '#BDBDBD',
+      500: '#9E9E9E',
+      600: '#757575',
+      700: '#616161',
+      800: '#424242',
+      900: '#212121',
     },
   },
   typography: {
