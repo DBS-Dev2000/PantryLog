@@ -23,7 +23,9 @@ import {
   Save as SaveIcon,
   Restaurant as RecipeIcon,
   Add as AddIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Link as LinkIcon,
+  Download as ImportIcon
 } from '@mui/icons-material'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -48,6 +50,8 @@ export default function CreateRecipePage() {
   const [categories, setCategories] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [importUrl, setImportUrl] = useState('')
+  const [importing, setImporting] = useState(false)
 
   const [recipe, setRecipe] = useState({
     title: '',
@@ -132,6 +136,48 @@ export default function CreateRecipePage() {
     if (importedData.steps) {
       setSteps(importedData.steps)
     }
+
+    // Clear import URL after successful import
+    setImportUrl('')
+  }
+
+  const importFromUrl = async () => {
+    if (!importUrl.trim()) return
+
+    setImporting(true)
+    setError(null)
+
+    try {
+      console.log('📥 Importing recipe from URL:', importUrl)
+
+      const response = await fetch('/api/import-recipe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: importUrl,
+          user_id: user?.id
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to import recipe from URL')
+      }
+
+      const importedData = await response.json()
+
+      // Populate form with imported data
+      populateFromImport(importedData)
+
+      console.log('✅ Recipe imported successfully:', importedData.title)
+
+    } catch (err: any) {
+      console.error('Recipe import error:', err)
+      setError(err.message)
+    } finally {
+      setImporting(false)
+    }
   }
 
   const addIngredient = () => {
@@ -163,6 +209,11 @@ export default function CreateRecipePage() {
     setSteps(updated)
   }
 
+  const extractYouTubeId = (url: string): string | null => {
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)
+    return match?.[1] || null
+  }
+
   const saveRecipe = async () => {
     if (!user || !recipe.title.trim()) {
       setError('Recipe title is required')
@@ -173,7 +224,13 @@ export default function CreateRecipePage() {
     setError(null)
 
     try {
-      // Create recipe
+      // Determine source info
+      const isImported = Boolean(importUrl || searchParams.get('import'))
+      const sourceType = importUrl.includes('youtube') ? 'youtube' :
+                        importUrl.includes('allrecipes') || importUrl.includes('foodnetwork') ? 'website' :
+                        isImported ? 'imported' : 'manual'
+
+      // Create recipe with source tracking
       const { data: newRecipe, error: recipeError } = await supabase
         .from('recipes')
         .insert([{
@@ -189,6 +246,11 @@ export default function CreateRecipePage() {
           cuisine: recipe.cuisine,
           tags: recipe.tags,
           image_url: recipe.image_url,
+          source_type: sourceType,
+          source_url: importUrl || null,
+          source_title: recipe.title,
+          youtube_video_id: sourceType === 'youtube' ? extractYouTubeId(importUrl) : null,
+          website_domain: sourceType === 'website' ? new URL(importUrl || '').hostname : null,
           created_by: user.id
         }])
         .select()
@@ -278,6 +340,43 @@ export default function CreateRecipePage() {
           {error}
         </Alert>
       )}
+
+      {/* URL Import Section */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            🔗 Import from URL
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Import recipe from YouTube, AllRecipes, Food Network, or any recipe website
+          </Typography>
+
+          <Box display="flex" gap={1} alignItems="flex-start">
+            <TextField
+              label="Recipe URL"
+              fullWidth
+              value={importUrl}
+              onChange={(e) => setImportUrl(e.target.value)}
+              placeholder="https://youtube.com/watch?v=... or https://allrecipes.com/..."
+              size="small"
+            />
+            <Button
+              variant="contained"
+              onClick={importFromUrl}
+              disabled={!importUrl.trim() || importing}
+              startIcon={importing ? <ImportIcon /> : <LinkIcon />}
+              color="secondary"
+              sx={{ minWidth: 120 }}
+            >
+              {importing ? 'Importing...' : 'Import'}
+            </Button>
+          </Box>
+
+          <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+            Supports: YouTube, AllRecipes, Food Network, Tasty, and most recipe websites
+          </Typography>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent>
