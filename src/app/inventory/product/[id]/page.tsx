@@ -28,7 +28,11 @@ import {
   ListItem,
   ListItemText,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -88,6 +92,8 @@ export default function ProductDetailPage() {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [qrDialogOpen, setQrDialogOpen] = useState(false)
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('')
   const [expandedAccordions, setExpandedAccordions] = useState<{
     details: boolean
     price: boolean
@@ -230,60 +236,65 @@ export default function ProductDetailPage() {
     }))
   }
 
-  const printItemQRCode = async () => {
+  const generateItemQRCode = async () => {
     if (!product) return
 
     try {
       // Generate QR code that links to this product's detail page
       const productUrl = `${window.location.origin}/inventory/product/${product.id}`
       const qrCodeDataUrl = await QRCode.toDataURL(productUrl, {
-        width: 250,
+        width: 300,
         margin: 2,
         color: { dark: '#000000', light: '#FFFFFF' }
       })
 
-      const printWindow = window.open('', '_blank')
-      if (!printWindow) return
-
-      // Determine if this is a custom item
-      const isCustomItem = !product.upc || product.upc.startsWith('CUSTOM-')
-
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Print Item QR Code</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-              .qr-container { border: 2px solid #000; padding: 20px; display: inline-block; margin: 20px; max-width: 350px; }
-              .item-info { margin: 10px 0; font-size: 18px; font-weight: bold; word-wrap: break-word; }
-              .brand-info { margin: 5px 0; font-size: 14px; color: #666; }
-              .instructions { margin: 10px 0; font-size: 12px; color: #666; }
-              .details { margin: 10px 0; font-size: 14px; }
-              .footer { margin-top: 15px; font-size: 10px; color: #999; }
-            </style>
-          </head>
-          <body>
-            <div class="qr-container">
-              <div class="item-info">${product.name}</div>
-              ${product.brand ? `<div class="brand-info">by ${product.brand}</div>` : ''}
-              <div class="instructions">Scan to view product details</div>
-              <img src="${qrCodeDataUrl}" alt="Product QR Code" style="max-width: 200px;" />
-              <div class="footer">
-                BITE - Basic Inventory Tracking Engine<br>
-                ${isCustomItem ? 'Custom Item' : product.upc ? `UPC: ${product.upc}` : 'Product'} • ID: ${product.id}
-              </div>
-            </div>
-          </body>
-        </html>
-      `)
-
-      printWindow.document.close()
-      printWindow.print()
+      setQrCodeDataUrl(qrCodeDataUrl)
+      setQrDialogOpen(true)
 
       console.log('✅ Generated QR code for product:', product.name)
     } catch (err) {
       console.error('Error generating product QR code:', err)
     }
+  }
+
+  const printQRCode = () => {
+    if (!product || !qrCodeDataUrl) return
+
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) return
+
+    const isCustomItem = !product.upc || product.upc.startsWith('CUSTOM-')
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Item QR Code</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+            .qr-container { border: 2px solid #000; padding: 20px; display: inline-block; margin: 20px; max-width: 350px; }
+            .item-info { margin: 10px 0; font-size: 18px; font-weight: bold; word-wrap: break-word; }
+            .brand-info { margin: 5px 0; font-size: 14px; color: #666; }
+            .instructions { margin: 10px 0; font-size: 12px; color: #666; }
+            .footer { margin-top: 15px; font-size: 10px; color: #999; }
+          </style>
+        </head>
+        <body>
+          <div class="qr-container">
+            <div class="item-info">${product.name}</div>
+            ${product.brand ? `<div class="brand-info">by ${product.brand}</div>` : ''}
+            <div class="instructions">Scan to view product details</div>
+            <img src="${qrCodeDataUrl}" alt="Product QR Code" style="max-width: 200px;" />
+            <div class="footer">
+              BITE - Basic Inventory Tracking Engine<br>
+              ${isCustomItem ? 'Custom Item' : product.upc ? `UPC: ${product.upc}` : 'Product'} • ID: ${product.id}
+            </div>
+          </div>
+        </body>
+      </html>
+    `)
+
+    printWindow.document.close()
+    printWindow.print()
   }
 
   if (!user || loading) {
@@ -343,7 +354,7 @@ export default function ProductDetailPage() {
         <Button
           variant="outlined"
           startIcon={<PrintIcon />}
-          onClick={() => printItemQRCode()}
+          onClick={() => generateItemQRCode()}
           sx={{ ml: 2 }}
         >
           Print QR Code
@@ -780,6 +791,50 @@ export default function ProductDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Item QR Code Dialog */}
+      <Dialog open={qrDialogOpen} onClose={() => setQrDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Item QR Code
+          {product && (
+            <Typography variant="subtitle2" color="textSecondary">
+              {product.name}
+            </Typography>
+          )}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            {qrCodeDataUrl && (
+              <Box>
+                <img
+                  src={qrCodeDataUrl}
+                  alt="Item QR Code"
+                  style={{ maxWidth: '100%', height: 'auto', border: '1px solid #ddd', borderRadius: '8px' }}
+                />
+                <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+                  Scan this QR code to quickly access this product's details and inventory
+                </Typography>
+                {product && (
+                  <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                    Links to: /inventory/product/{product.id}
+                  </Typography>
+                )}
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setQrDialogOpen(false)}>Close</Button>
+          <Button
+            onClick={printQRCode}
+            variant="contained"
+            startIcon={<PrintIcon />}
+            disabled={!qrCodeDataUrl}
+          >
+            Print QR Code
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   )
 }
