@@ -28,7 +28,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material'
 import {
   ShoppingCart as ShoppingIcon,
@@ -39,7 +40,8 @@ import {
   Store as StoreIcon,
   AttachMoney as MoneyIcon,
   Check as CheckIcon,
-  List as ListIcon
+  List as ListIcon,
+  SmartToy as AIIcon
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -83,6 +85,9 @@ export default function ShoppingPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [predictiveItems, setPredictiveItems] = useState<any[]>([])
+  const [loadingPredictions, setLoadingPredictions] = useState(false)
+  const [hasFeatureAccess, setHasFeatureAccess] = useState<{[key: string]: boolean}>({})
 
   const [addItemDialog, setAddItemDialog] = useState(false)
   const [newItem, setNewItem] = useState({
@@ -102,6 +107,7 @@ export default function ShoppingPage() {
       if (session?.user) {
         setUser(session.user)
         await loadShoppingList(session.user.id)
+        await checkFeatureAccess(session.user.id)
       } else {
         router.push('/auth')
       }
@@ -109,6 +115,71 @@ export default function ShoppingPage() {
 
     getUser()
   }, [router])
+
+  const checkFeatureAccess = async (userId: string) => {
+    try {
+      const { data: features, error } = await supabase
+        .rpc('get_household_features', { p_household_id: userId })
+
+      if (error) {
+        console.warn('Feature access check failed:', error)
+        // Default to free tier features
+        setHasFeatureAccess({
+          predictive_shopping: false,
+          household_sharing: false,
+          ai_recognition: false
+        })
+      } else {
+        const featureMap = {}
+        features?.forEach((feature: any) => {
+          featureMap[feature.feature_name] = feature.is_available
+        })
+        setHasFeatureAccess(featureMap)
+        console.log('✅ Feature access loaded:', Object.keys(featureMap).length, 'features')
+      }
+    } catch (err: any) {
+      console.error('Error checking feature access:', err)
+    }
+  }
+
+  const generatePredictiveList = async () => {
+    if (!hasFeatureAccess.predictive_shopping) {
+      setError('Predictive shopping lists require Basic Plan or higher. Upgrade in Settings → Subscription.')
+      return
+    }
+
+    setLoadingPredictions(true)
+    try {
+      const response = await fetch('/api/generate-predictive-list', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+          prediction_days: 14
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate predictions')
+      }
+
+      const data = await response.json()
+      setPredictiveItems(data.predicted_items || [])
+
+      if (data.predicted_items?.length > 0) {
+        setSuccess(`🔮 AI predicted ${data.predicted_items.length} items you'll need based on your consumption patterns!`)
+      } else {
+        setError('No predictions available yet. Use PantryIQ for a few weeks to build consumption patterns.')
+      }
+
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoadingPredictions(false)
+    }
+  }
 
   const loadShoppingList = async (userId: string) => {
     setLoading(true)
@@ -302,15 +373,28 @@ export default function ShoppingPage() {
             Smart shopping list with inventory integration
           </Typography>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<AutoIcon />}
-          onClick={generateLowInventoryList}
-          disabled={saving}
-          color="secondary"
-        >
-          Add Low Items
-        </Button>
+        <Box display="flex" gap={1} flexWrap="wrap">
+          <Button
+            variant="outlined"
+            startIcon={<AutoIcon />}
+            onClick={generateLowInventoryList}
+            disabled={saving}
+            color="secondary"
+          >
+            Add Low Items
+          </Button>
+          {hasFeatureAccess.predictive_shopping && (
+            <Button
+              variant="outlined"
+              startIcon={loadingPredictions ? <CircularProgress size={20} /> : <AIIcon />}
+              onClick={generatePredictiveList}
+              disabled={loadingPredictions}
+              color="primary"
+            >
+              🔮 AI Predictions
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {error && (
