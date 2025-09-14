@@ -29,7 +29,8 @@ import {
   ChevronRight as ChevronRightIcon,
   Email as EmailIcon,
   CalendarToday as CalendarIcon,
-  Home as HouseholdIcon
+  Home as HouseholdIcon,
+  SmartToy as AIIcon
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'

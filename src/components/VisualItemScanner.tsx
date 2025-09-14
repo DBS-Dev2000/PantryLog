@@ -34,6 +34,7 @@ interface VisualItemScannerProps {
   onClose: () => void
   onItemSelected: (item: any) => void
   title?: string
+  userId?: string
 }
 
 interface IdentifiedItem {
@@ -51,7 +52,8 @@ export default function VisualItemScanner({
   open,
   onClose,
   onItemSelected,
-  title = "Visual Item Recognition"
+  title = "Visual Item Recognition",
+  userId
 }: VisualItemScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -200,6 +202,7 @@ export default function VisualItemScanner({
         },
         body: JSON.stringify({
           image: imageData,
+          user_id: userId,
           prompt: `Analyze this grocery item image and identify the product. Return a JSON object with:
           {
             "items": [

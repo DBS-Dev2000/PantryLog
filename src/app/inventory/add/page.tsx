@@ -1419,6 +1419,7 @@ export default function AddItemPage() {
         onClose={() => setShowVisualScanner(false)}
         onItemSelected={handleVisualItemSelected}
         title="AI Item Recognition"
+        userId={user?.id}
       />
     </Container>
   )
