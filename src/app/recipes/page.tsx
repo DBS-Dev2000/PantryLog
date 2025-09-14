@@ -46,10 +46,12 @@ import {
   Star as StarIcon,
   Inventory as InventoryIcon,
   PlayArrow as PlayIcon,
-  Warning as WarningIcon
+  Warning as WarningIcon,
+  CameraAlt as CameraIcon
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import RecipePhotoScanner from '@/components/RecipePhotoScanner'
 
 interface Recipe {
   id: string
@@ -96,6 +98,7 @@ export default function RecipesPage() {
   const [importDialog, setImportDialog] = useState(false)
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
+  const [photoScannerOpen, setPhotoScannerOpen] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -223,6 +226,12 @@ export default function RecipesPage() {
     }
   }
 
+  const handlePhotoRecipeExtracted = (recipeData: any) => {
+    console.log('📸 Recipe extracted from photo:', recipeData.title)
+    // Navigate to create page with photo-extracted data
+    router.push(`/recipes/create?import=${encodeURIComponent(JSON.stringify(recipeData))}`)
+  }
+
   const getFilteredRecipes = () => {
     let filtered = recipes
 
@@ -279,12 +288,21 @@ export default function RecipesPage() {
         </Box>
         <Button
           variant="outlined"
+          startIcon={<CameraIcon />}
+          onClick={() => setPhotoScannerOpen(true)}
+          sx={{ mr: 1 }}
+          color="info"
+        >
+          Scan Recipe
+        </Button>
+        <Button
+          variant="outlined"
           startIcon={<LinkIcon />}
           onClick={() => setImportDialog(true)}
           sx={{ mr: 1 }}
           color="secondary"
         >
-          Import Recipe
+          Import URL
         </Button>
         <Button
           variant="contained"
@@ -542,6 +560,14 @@ export default function RecipesPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Recipe Photo Scanner Dialog */}
+      <RecipePhotoScanner
+        open={photoScannerOpen}
+        onClose={() => setPhotoScannerOpen(false)}
+        onRecipeExtracted={handlePhotoRecipeExtracted}
+        userId={user?.id}
+      />
 
       {/* Floating Action Button */}
       <Fab
