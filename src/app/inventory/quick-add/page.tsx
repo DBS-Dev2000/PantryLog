@@ -87,6 +87,9 @@ export default function QuickAddPage() {
   const [showVisualScanner, setShowVisualScanner] = useState(false)
   const [storageLocations, setStorageLocations] = useState<any[]>([])
   const [availableProducts, setAvailableProducts] = useState<any[]>([])
+  const [continuousMode, setContinuousMode] = useState(false)
+  const [lastLocation, setLastLocation] = useState<string>('')
+  const [lastInputMethod, setLastInputMethod] = useState<'barcode' | 'ai' | 'search'>('barcode')
 
   useEffect(() => {
     const getUser = async () => {
@@ -370,9 +373,21 @@ export default function QuickAddPage() {
 
       setSuccess(true)
 
-      setTimeout(() => {
-        resetQuickAdd()
-      }, 2000)
+      // Remember location for continuous mode
+      if (storageLocation) {
+        setLastLocation(storageLocation.id)
+      }
+
+      if (continuousMode) {
+        // Shorter delay for continuous mode
+        setTimeout(() => {
+          resetForContinuous()
+        }, 1500)
+      } else {
+        setTimeout(() => {
+          resetQuickAdd()
+        }, 2000)
+      }
 
     } catch (err: any) {
       setError(err.message)
@@ -390,11 +405,38 @@ export default function QuickAddPage() {
     setQuantity(1)
     setError(null)
     setSuccess(false)
+    setContinuousMode(false)
+    setLastLocation('')
+    setLastInputMethod('barcode')
     setTimeout(() => {
       if (productInputRef.current) {
         productInputRef.current.focus()
       }
     }, 100)
+  }
+
+  const resetForContinuous = () => {
+    setActiveStep(0)
+    setProductData(null)
+    setProductBarcode('')
+    setLocationCode(lastLocation) // Remember last location
+    setQuantity(1)
+    setError(null)
+    setSuccess(false)
+
+    // Auto-reopen based on last input method
+    setTimeout(() => {
+      if (lastInputMethod === 'barcode') {
+        setShowBarcodeScanner(true)
+      } else if (lastInputMethod === 'ai') {
+        setShowVisualScanner(true)
+      } else {
+        // For search method, just focus on product search
+        if (productInputRef.current) {
+          productInputRef.current.focus()
+        }
+      }
+    }, 200)
   }
 
   // Number pad functions
@@ -417,6 +459,7 @@ export default function QuickAddPage() {
     console.log('📱 Camera scanned barcode:', barcode)
     setProductBarcode(barcode)
     setShowBarcodeScanner(false)
+    setLastInputMethod('barcode')
     // Automatically lookup the product
     lookupProduct(barcode)
   }
@@ -440,6 +483,7 @@ export default function QuickAddPage() {
       upc: itemData.upc || `VISUAL-${Date.now()}`
     })
     setShowVisualScanner(false)
+    setLastInputMethod('ai')
     setActiveStep(1) // Move to location step
   }
 
@@ -586,6 +630,31 @@ export default function QuickAddPage() {
         </Box>
       )}
 
+      {/* Continuous Mode Toggle */}
+      <Card sx={{ mb: 2 }}>
+        <CardContent sx={{ py: 2 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Box>
+              <Typography variant="h6">🛍️ Put Groceries Away Mode</Typography>
+              <Typography variant="caption" color="textSecondary">
+                {continuousMode
+                  ? 'Auto-restart after each item for continuous stocking'
+                  : 'Enable for bulk grocery put-away sessions'
+                }
+              </Typography>
+            </Box>
+            <Button
+              variant={continuousMode ? 'contained' : 'outlined'}
+              onClick={() => setContinuousMode(!continuousMode)}
+              color="secondary"
+              size="small"
+            >
+              {continuousMode ? 'Stop Mode' : 'Start Mode'}
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardContent>
           <Stepper activeStep={activeStep} orientation="vertical">
@@ -600,6 +669,7 @@ export default function QuickAddPage() {
                   onChange={(event, newValue) => {
                     if (newValue) {
                       setProductBarcode(newValue.upc)
+                      setLastInputMethod('search')
                       setProductData({
                         name: newValue.name,
                         brand: newValue.brand,
@@ -710,7 +780,7 @@ export default function QuickAddPage() {
                   <Autocomplete
                     options={storageLocations}
                     getOptionLabel={(option) => option.fullPath || option.label}
-                    value={storageLocations.find(loc => loc.id === locationCode) || null}
+                    value={storageLocations.find(loc => loc.id === (locationCode || lastLocation)) || null}
                     onChange={(event, newValue) => {
                       if (newValue) {
                         setLocationCode(newValue.id)
