@@ -98,6 +98,9 @@ export default function RecipeDetailPage() {
   const [shoppingLists, setShoppingLists] = useState<any[]>([])
   const [selectedShoppingList, setSelectedShoppingList] = useState('')
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
+  const [ingredientSubstitutions, setIngredientSubstitutions] = useState<{[key: string]: string}>({})
+  const [omittedIngredients, setOmittedIngredients] = useState<string[]>([])
+  const [makingRecipe, setMakingRecipe] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -539,43 +542,105 @@ export default function RecipeDetailPage() {
                   disabled={ingredient.availability_status === 'available'}
                   sx={{ ml: 1 }}
                 />
-                <ListItemText
-                  primary={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          textDecoration: ingredient.availability_status === 'available' ? 'line-through' : 'none',
-                          color: ingredient.availability_status === 'available' ? 'text.secondary' : 'text.primary'
-                        }}
-                      >
-                        {ingredient.quantity} {ingredient.unit} {ingredient.ingredient_name}
+                <Box sx={{ flexGrow: 1 }}>
+                  <Box display="flex" alignItems="center" gap={1} sx={{ mb: 1 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        textDecoration: ingredient.availability_status === 'available' || omittedIngredients.includes(ingredient.ingredient_name) ? 'line-through' : 'none',
+                        color: ingredient.availability_status === 'available' || omittedIngredients.includes(ingredient.ingredient_name) ? 'text.secondary' : 'text.primary'
+                      }}
+                    >
+                      {ingredient.quantity} {ingredient.unit} {ingredient.ingredient_name}
+                    </Typography>
+                    {ingredient.preparation && (
+                      <Typography variant="caption" color="textSecondary">
+                        ({ingredient.preparation})
                       </Typography>
-                      {ingredient.preparation && (
-                        <Typography variant="caption" color="textSecondary">
-                          ({ingredient.preparation})
-                        </Typography>
-                      )}
-                    </Box>
-                  }
-                  secondary={
-                    <Box>
-                      {ingredient.availability_status !== 'available' && ingredient.availability_status !== 'unknown' && (
-                        <Typography variant="caption" color="textSecondary">
-                          {ingredient.availability_status === 'partial'
-                            ? `Need more - only have ${ingredient.available_quantity || 0} ${ingredient.required_unit || 'units'}`
-                            : 'Need to buy'
-                          }
-                        </Typography>
-                      )}
-                      {(ingredient as any).matched_product_name && (ingredient as any).match_type !== 'exact' && (
-                        <Typography variant="caption" color="primary.main" sx={{ display: 'block', mt: 0.5 }}>
-                          🔍 Found: {(ingredient as any).matched_product_name} ({(ingredient as any).match_type} match)
-                        </Typography>
-                      )}
-                    </Box>
-                  }
-                />
+                    )}
+                  </Box>
+
+                  {/* Ingredient Controls */}
+                  <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+                    {/* Substitution Dropdown */}
+                    {ingredient.availability_status !== 'available' && !omittedIngredients.includes(ingredient.ingredient_name) && (
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <InputLabel>Substitute</InputLabel>
+                        <Select
+                          value={ingredientSubstitutions[ingredient.ingredient_name] || ''}
+                          label="Substitute"
+                          onChange={(e) => setIngredientSubstitutions(prev => ({
+                            ...prev,
+                            [ingredient.ingredient_name]: e.target.value
+                          }))}
+                        >
+                          <MenuItem value="">Use as written</MenuItem>
+                          {/* Common substitutions based on ingredient type */}
+                          {ingredient.ingredient_name.toLowerCase().includes('salt') && (
+                            <>
+                              <MenuItem value="sea salt">Sea salt</MenuItem>
+                              <MenuItem value="kosher salt">Kosher salt</MenuItem>
+                              <MenuItem value="table salt">Table salt</MenuItem>
+                            </>
+                          )}
+                          {ingredient.ingredient_name.toLowerCase().includes('sugar') && (
+                            <>
+                              <MenuItem value="brown sugar">Brown sugar</MenuItem>
+                              <MenuItem value="honey">Honey (use less)</MenuItem>
+                              <MenuItem value="maple syrup">Maple syrup</MenuItem>
+                            </>
+                          )}
+                          {ingredient.ingredient_name.toLowerCase().includes('flour') && (
+                            <>
+                              <MenuItem value="whole wheat flour">Whole wheat flour</MenuItem>
+                              <MenuItem value="almond flour">Almond flour</MenuItem>
+                              <MenuItem value="coconut flour">Coconut flour</MenuItem>
+                            </>
+                          )}
+                          <MenuItem value="custom">Custom substitution...</MenuItem>
+                        </Select>
+                      </FormControl>
+                    )}
+
+                    {/* Omit Ingredient Button */}
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => {
+                        if (omittedIngredients.includes(ingredient.ingredient_name)) {
+                          setOmittedIngredients(prev => prev.filter(name => name !== ingredient.ingredient_name))
+                        } else {
+                          setOmittedIngredients(prev => [...prev, ingredient.ingredient_name])
+                        }
+                      }}
+                      color={omittedIngredients.includes(ingredient.ingredient_name) ? 'success' : 'warning'}
+                    >
+                      {omittedIngredients.includes(ingredient.ingredient_name) ? 'Include' : 'Skip'}
+                    </Button>
+                  </Box>
+
+                  {/* Status and Match Info */}
+                  <Box sx={{ mt: 1 }}>
+                    {ingredient.availability_status !== 'available' && ingredient.availability_status !== 'unknown' && !omittedIngredients.includes(ingredient.ingredient_name) && (
+                      <Typography variant="caption" color="textSecondary">
+                        {ingredient.availability_status === 'partial'
+                          ? `Need more - only have ${ingredient.available_quantity || 0} ${ingredient.required_unit || 'units'}`
+                          : 'Need to buy'
+                        }
+                      </Typography>
+                    )}
+                    {(ingredient as any).matched_product_name && (ingredient as any).match_type !== 'exact' && (
+                      <Typography variant="caption" color="primary.main" sx={{ display: 'block', mt: 0.5 }}>
+                        🔍 Found: {(ingredient as any).matched_product_name} ({(ingredient as any).match_type} match)
+                      </Typography>
+                    )}
+                    {omittedIngredients.includes(ingredient.ingredient_name) && (
+                      <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
+                        ⚠️ This ingredient will be skipped
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
               </ListItem>
             ))}
           </List>
@@ -612,17 +677,71 @@ export default function RecipeDetailPage() {
       </Card>
 
       {/* Make Recipe Button */}
-      {canMakeRecipe() && (
-        <Box sx={{ position: 'fixed', bottom: 16, right: 16 }}>
-          <Button
-            variant="contained"
-            size="large"
-            color="success"
-            onClick={() => router.push(`/recipes/${recipe.id}/make`)}
-          >
-            Make This Recipe
-          </Button>
-        </Box>
+      {(canMakeRecipe() || omittedIngredients.length > 0) && (
+        <Card sx={{ mt: 3, backgroundColor: 'success.light' }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ color: 'success.contrastText', mb: 2 }}>
+              🍳 Ready to Cook
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'success.contrastText', mb: 2, opacity: 0.9 }}>
+              {omittedIngredients.length > 0
+                ? `Cooking with ${omittedIngredients.length} ingredient(s) skipped`
+                : 'You have all ingredients needed'
+              }
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={async () => {
+                setMakingRecipe(true)
+                try {
+                  // Call make recipe function that consumes ingredients
+                  const { error } = await supabase
+                    .rpc('make_recipe', {
+                      p_recipe_id: recipe!.id,
+                      p_household_id: user!.id,
+                      p_user_id: user!.id,
+                      p_servings_made: recipe!.servings // Use full recipe servings
+                    })
+
+                  if (error) throw error
+
+                  // Update recipe usage stats
+                  const { error: updateError } = await supabase
+                    .from('recipes')
+                    .update({
+                      times_made: (recipe!.times_made || 0) + 1,
+                      last_made_date: new Date().toISOString().split('T')[0]
+                    })
+                    .eq('id', recipe!.id)
+
+                  if (updateError) console.warn('Failed to update recipe stats:', updateError)
+
+                  // Show success and reload data
+                  setError(`🎉 Recipe completed! Ingredients removed from inventory. Times made: ${(recipe!.times_made || 0) + 1}`)
+
+                  // Reload recipe and inventory data
+                  await loadRecipeData(user!.id)
+
+                } catch (err: any) {
+                  setError(`Failed to complete recipe: ${err.message}`)
+                } finally {
+                  setMakingRecipe(false)
+                }
+              }}
+              disabled={makingRecipe}
+              sx={{
+                backgroundColor: 'white',
+                color: 'success.main',
+                '&:hover': { backgroundColor: 'grey.100' },
+                '&:disabled': { backgroundColor: 'grey.200' }
+              }}
+              startIcon={makingRecipe ? <CircularProgress size={20} /> : <CheckIcon />}
+            >
+              {makingRecipe ? 'Cooking...' : 'Make This Recipe'}
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {/* Delete Confirmation Dialog */}
