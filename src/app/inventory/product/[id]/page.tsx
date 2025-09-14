@@ -345,29 +345,38 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Box display="flex" alignItems="center" mb={4}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => router.back()}
-          sx={{ mr: 2 }}
-        >
-          Back to Inventory
-        </Button>
-        <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="h4" component="h1">
+    <Container maxWidth={isMobile ? "sm" : "lg"} sx={{ mt: 4, px: isMobile ? 2 : 3 }}>
+      <Box sx={{ mb: 4 }}>
+        <Box display="flex" alignItems="center" mb={2}>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => router.back()}
+            sx={{ mr: 2 }}
+          >
+            Back
+          </Button>
+          <Typography variant={isMobile ? "h5" : "h4"} component="h1" sx={{ flexGrow: 1 }}>
             Product Details
           </Typography>
         </Box>
-        <Box display="flex" gap={1}>
+
+        {/* Mobile-friendly button layout */}
+        <Box display="flex" gap={1} flexWrap="wrap">
           <Button
             variant="outlined"
             startIcon={<EditIcon />}
             onClick={() => {
-              setEditedProduct({ ...product! })
-              setEditingProduct(true)
+              console.log('🔧 Edit Product clicked, current product:', product)
+              if (product) {
+                setEditedProduct({ ...product })
+                setEditingProduct(true)
+                console.log('📝 Editing mode enabled')
+              } else {
+                console.error('❌ No product data available for editing')
+              }
             }}
             color="secondary"
+            size={isMobile ? "small" : "medium"}
           >
             Edit Product
           </Button>
@@ -375,6 +384,7 @@ export default function ProductDetailPage() {
             variant="outlined"
             startIcon={<PrintIcon />}
             onClick={() => generateItemQRCode()}
+            size={isMobile ? "small" : "medium"}
           >
             Print QR Code
           </Button>
@@ -852,6 +862,99 @@ export default function ProductDetailPage() {
             disabled={!qrCodeDataUrl}
           >
             Print QR Code
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Product Dialog */}
+      <Dialog open={editingProduct} onClose={() => setEditingProduct(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          Edit Product Details
+        </DialogTitle>
+        <DialogContent>
+          {editedProduct && (
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Product Name"
+                  fullWidth
+                  value={editedProduct.name}
+                  onChange={(e) => setEditedProduct({ ...editedProduct, name: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Brand"
+                  fullWidth
+                  value={editedProduct.brand || ''}
+                  onChange={(e) => setEditedProduct({ ...editedProduct, brand: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Category"
+                  fullWidth
+                  value={editedProduct.category || ''}
+                  onChange={(e) => setEditedProduct({ ...editedProduct, category: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="UPC/Barcode"
+                  fullWidth
+                  value={editedProduct.upc || ''}
+                  onChange={(e) => setEditedProduct({ ...editedProduct, upc: e.target.value })}
+                  helperText="Leave empty for custom items"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Image URL"
+                  fullWidth
+                  value={editedProduct.image_url || ''}
+                  onChange={(e) => setEditedProduct({ ...editedProduct, image_url: e.target.value })}
+                  helperText="URL to product image"
+                />
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditingProduct(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={async () => {
+              if (!editedProduct || !user) return
+
+              try {
+                const { error } = await supabase
+                  .from('products')
+                  .update({
+                    name: editedProduct.name,
+                    brand: editedProduct.brand || null,
+                    category: editedProduct.category || null,
+                    upc: editedProduct.upc || null,
+                    image_url: editedProduct.image_url || null
+                  })
+                  .eq('id', product!.id)
+
+                if (error) throw error
+
+                // Reload product data
+                await loadProductData(user.id)
+                setEditingProduct(false)
+                console.log('✅ Product updated successfully')
+              } catch (err: any) {
+                console.error('❌ Error updating product:', err)
+              }
+            }}
+            variant="contained"
+            color="primary"
+            startIcon={<SaveIcon />}
+          >
+            Save Changes
           </Button>
         </DialogActions>
       </Dialog>
