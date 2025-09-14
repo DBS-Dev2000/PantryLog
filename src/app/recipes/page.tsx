@@ -1,0 +1,561 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import {
+  Container,
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  Button,
+  Grid,
+  Alert,
+  Chip,
+  Avatar,
+  IconButton,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tabs,
+  Tab,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Fab,
+  CardMedia,
+  CardActions
+} from '@mui/material'
+import {
+  Restaurant as RecipeIcon,
+  Add as AddIcon,
+  Link as LinkIcon,
+  YouTube as YouTubeIcon,
+  Web as WebIcon,
+  Check as CheckIcon,
+  Close as CloseIcon,
+  Timer as TimerIcon,
+  Group as ServingsIcon,
+  Star as StarIcon,
+  Inventory as InventoryIcon,
+  PlayArrow as PlayIcon,
+  Warning as WarningIcon
+} from '@mui/icons-material'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+
+interface Recipe {
+  id: string
+  title: string
+  description?: string
+  category_id?: string
+  category_name?: string
+  prep_time_minutes?: number
+  cook_time_minutes?: number
+  servings: number
+  difficulty: string
+  source_type: string
+  source_url?: string
+  youtube_video_id?: string
+  image_url?: string
+  rating?: number
+  times_made: number
+  is_favorite: boolean
+  tags: string[]
+  cuisine?: string
+  availability_status?: 'can_make' | 'partial' | 'missing_ingredients'
+  available_ingredients?: number
+  total_ingredients?: number
+}
+
+interface RecipeCategory {
+  id: string
+  name: string
+  icon_name: string
+  color: string
+}
+
+export default function RecipesPage() {
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [categories, setCategories] = useState<RecipeCategory[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [availabilityFilter, setAvailabilityFilter] = useState<string>('all')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  const [importDialog, setImportDialog] = useState(false)
+  const [importUrl, setImportUrl] = useState('')
+  const [importing, setImporting] = useState(false)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setUser(session.user)
+        await loadRecipeData(session.user.id)
+      } else {
+        router.push('/auth')
+      }
+    }
+
+    getUser()
+  }, [router])
+
+  const loadRecipeData = async (userId: string) => {
+    setLoading(true)
+    try {
+      // Load categories
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('recipe_categories')
+        .select('*')
+        .order('sort_order')
+
+      if (categoriesError) throw categoriesError
+      setCategories(categoriesData || [])
+
+      // Load recipes with availability check
+      const { data: recipesData, error: recipesError } = await supabase
+        .from('recipes')
+        .select(`
+          *,
+          recipe_categories(name)
+        `)
+        .eq('household_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (recipesError) throw recipesError
+
+      // For each recipe, check ingredient availability
+      const recipesWithAvailability = await Promise.all(
+        (recipesData || []).map(async (recipe) => {
+          try {
+            const { data: availability } = await supabase
+              .rpc('check_recipe_availability', {
+                p_recipe_id: recipe.id,
+                p_household_id: userId
+              })
+
+            const availableCount = availability?.filter((ing: any) => ing.availability_status === 'available').length || 0
+            const totalCount = availability?.length || 0
+
+            let status: 'can_make' | 'partial' | 'missing_ingredients' = 'missing_ingredients'
+            if (availableCount === totalCount && totalCount > 0) {
+              status = 'can_make'
+            } else if (availableCount > 0) {
+              status = 'partial'
+            }
+
+            return {
+              ...recipe,
+              category_name: recipe.recipe_categories?.name,
+              availability_status: status,
+              available_ingredients: availableCount,
+              total_ingredients: totalCount
+            }
+          } catch (err) {
+            console.warn('Error checking availability for recipe:', recipe.title, err)
+            return {
+              ...recipe,
+              category_name: recipe.recipe_categories?.name,
+              availability_status: 'missing_ingredients' as const,
+              available_ingredients: 0,
+              total_ingredients: 0
+            }
+          }
+        })
+      )
+
+      setRecipes(recipesWithAvailability)
+      console.log('🍳 Loaded', recipesWithAvailability.length, 'recipes')
+
+    } catch (err: any) {
+      console.error('Error loading recipes:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const importRecipe = async () => {
+    if (!importUrl.trim()) return
+
+    setImporting(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/import-recipe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: importUrl,
+          user_id: user?.id
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to import recipe')
+      }
+
+      const recipeData = await response.json()
+      console.log('📥 Recipe imported:', recipeData.title)
+
+      // Navigate to create/edit page with imported data
+      router.push(`/recipes/create?import=${encodeURIComponent(JSON.stringify(recipeData))}`)
+
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setImporting(false)
+      setImportDialog(false)
+      setImportUrl('')
+    }
+  }
+
+  const getFilteredRecipes = () => {
+    let filtered = recipes
+
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(recipe => recipe.category_id === selectedCategory)
+    }
+
+    if (availabilityFilter !== 'all') {
+      filtered = filtered.filter(recipe => recipe.availability_status === availabilityFilter)
+    }
+
+    return filtered
+  }
+
+  const getAvailabilityColor = (status: string) => {
+    switch (status) {
+      case 'can_make': return 'success'
+      case 'partial': return 'warning'
+      case 'missing_ingredients': return 'error'
+      default: return 'default'
+    }
+  }
+
+  const getAvailabilityLabel = (status: string) => {
+    switch (status) {
+      case 'can_make': return 'Can Make Now'
+      case 'partial': return 'Missing Some'
+      case 'missing_ingredients': return 'Need Ingredients'
+      default: return 'Unknown'
+    }
+  }
+
+  if (!user || loading) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Typography>Loading recipes...</Typography>
+      </Container>
+    )
+  }
+
+  const filteredRecipes = getFilteredRecipes()
+
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4 }}>
+      <Box display="flex" alignItems="center" mb={4}>
+        <RecipeIcon sx={{ mr: 2, fontSize: 32, color: 'primary.main' }} />
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Recipe Manager
+          </Typography>
+          <Typography variant="body1" color="textSecondary">
+            Smart recipes with inventory availability checking
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          startIcon={<LinkIcon />}
+          onClick={() => setImportDialog(true)}
+          sx={{ mr: 1 }}
+          color="secondary"
+        >
+          Import Recipe
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => router.push('/recipes/create')}
+          color="primary"
+        >
+          Create Recipe
+        </Button>
+      </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
+          {success}
+        </Alert>
+      )}
+
+      {/* Filter Controls */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  label="Category"
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                >
+                  <MenuItem value="all">All Categories</MenuItem>
+                  {categories.map((cat) => (
+                    <MenuItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Availability</InputLabel>
+                <Select
+                  value={availabilityFilter}
+                  label="Availability"
+                  onChange={(e) => setAvailabilityFilter(e.target.value)}
+                >
+                  <MenuItem value="all">All Recipes</MenuItem>
+                  <MenuItem value="can_make">Can Make Now</MenuItem>
+                  <MenuItem value="partial">Missing Some Ingredients</MenuItem>
+                  <MenuItem value="missing_ingredients">Need Ingredients</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Recipes Grid */}
+      {filteredRecipes.length === 0 ? (
+        <Card>
+          <CardContent sx={{ textAlign: 'center', py: 6 }}>
+            <RecipeIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <Typography variant="h6" color="textSecondary" gutterBottom>
+              No recipes found
+            </Typography>
+            <Typography variant="body2" color="textSecondary" paragraph>
+              {recipes.length === 0
+                ? 'Start by creating a recipe or importing from YouTube/recipe websites'
+                : 'Try adjusting your filters to see more recipes'
+              }
+            </Typography>
+            <Box display="flex" gap={2} justifyContent="center">
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => router.push('/recipes/create')}
+                color="primary"
+              >
+                Create Recipe
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<LinkIcon />}
+                onClick={() => setImportDialog(true)}
+                color="secondary"
+              >
+                Import Recipe
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      ) : (
+        <Grid container spacing={3}>
+          {filteredRecipes.map((recipe) => (
+            <Grid item xs={12} sm={6} lg={4} key={recipe.id}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                {recipe.image_url && (
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={recipe.image_url}
+                    alt={recipe.title}
+                    sx={{ objectFit: 'cover' }}
+                  />
+                )}
+
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                    <Typography variant="h6" component="h2" sx={{ fontWeight: 'medium' }}>
+                      {recipe.title}
+                    </Typography>
+                    {recipe.is_favorite && (
+                      <StarIcon sx={{ color: 'warning.main', ml: 1 }} />
+                    )}
+                  </Box>
+
+                  <Box display="flex" gap={1} mb={2} flexWrap="wrap">
+                    <Chip
+                      size="small"
+                      label={getAvailabilityLabel(recipe.availability_status || 'missing_ingredients')}
+                      color={getAvailabilityColor(recipe.availability_status || 'missing_ingredients') as any}
+                    />
+                    {recipe.category_name && (
+                      <Chip size="small" label={recipe.category_name} variant="outlined" />
+                    )}
+                    {recipe.source_type === 'youtube' && (
+                      <Chip size="small" icon={<YouTubeIcon />} label="YouTube" color="error" variant="outlined" />
+                    )}
+                  </Box>
+
+                  <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                    {recipe.description || 'No description available'}
+                  </Typography>
+
+                  <Box display="flex" gap={2} mb={2}>
+                    {recipe.prep_time_minutes && (
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <TimerIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                        <Typography variant="caption">
+                          {recipe.prep_time_minutes + (recipe.cook_time_minutes || 0)} min
+                        </Typography>
+                      </Box>
+                    )}
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <ServingsIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                      <Typography variant="caption">
+                        {recipe.servings} servings
+                      </Typography>
+                    </Box>
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <InventoryIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                      <Typography variant="caption">
+                        {recipe.available_ingredients}/{recipe.total_ingredients} ingredients
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {recipe.tags && recipe.tags.length > 0 && (
+                    <Box display="flex" gap={0.5} flexWrap="wrap">
+                      {recipe.tags.slice(0, 3).map((tag, index) => (
+                        <Chip key={index} size="small" label={tag} variant="outlined" sx={{ fontSize: '0.7rem' }} />
+                      ))}
+                      {recipe.tags.length > 3 && (
+                        <Typography variant="caption" color="textSecondary">
+                          +{recipe.tags.length - 3} more
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                </CardContent>
+
+                <CardActions>
+                  <Button
+                    size="small"
+                    onClick={() => router.push(`/recipes/${recipe.id}`)}
+                    color="primary"
+                  >
+                    View Recipe
+                  </Button>
+                  {recipe.source_type === 'youtube' && recipe.youtube_video_id && (
+                    <Button
+                      size="small"
+                      startIcon={<PlayIcon />}
+                      onClick={() => window.open(`https://youtube.com/watch?v=${recipe.youtube_video_id}`, '_blank')}
+                      color="error"
+                    >
+                      Watch
+                    </Button>
+                  )}
+                  {recipe.availability_status === 'can_make' && (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="success"
+                      onClick={() => router.push(`/recipes/${recipe.id}/make`)}
+                    >
+                      Make This
+                    </Button>
+                  )}
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {/* Import Recipe Dialog */}
+      <Dialog open={importDialog} onClose={() => setImportDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Import Recipe from URL
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Import recipes from YouTube videos or popular recipe websites
+          </Typography>
+
+          <TextField
+            label="Recipe URL"
+            fullWidth
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            placeholder="https://youtube.com/watch?v=... or https://allrecipes.com/..."
+            sx={{ mb: 2 }}
+          />
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" color="textSecondary" gutterBottom>
+              Supported sources:
+            </Typography>
+            <Box display="flex" gap={1} flexWrap="wrap">
+              <Chip size="small" icon={<YouTubeIcon />} label="YouTube" color="error" variant="outlined" />
+              <Chip size="small" label="AllRecipes" variant="outlined" />
+              <Chip size="small" label="Food Network" variant="outlined" />
+              <Chip size="small" label="Tasty" variant="outlined" />
+              <Chip size="small" label="Any Recipe Site" variant="outlined" />
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setImportDialog(false)}>Cancel</Button>
+          <Button
+            onClick={importRecipe}
+            variant="contained"
+            disabled={!importUrl.trim() || importing}
+            startIcon={importing ? <InventoryIcon /> : <LinkIcon />}
+            color="secondary"
+          >
+            {importing ? 'Importing...' : 'Import Recipe'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Floating Action Button */}
+      <Fab
+        color="primary"
+        aria-label="add recipe"
+        sx={{
+          position: 'fixed',
+          bottom: 16,
+          right: 16
+        }}
+        onClick={() => router.push('/recipes/create')}
+      >
+        <AddIcon />
+      </Fab>
+    </Container>
+  )
+}

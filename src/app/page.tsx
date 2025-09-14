@@ -144,7 +144,7 @@ export default function HomePage() {
               <Typography variant="body2" color="textSecondary" paragraph>
                 Find recipes based on available ingredients
               </Typography>
-              <Button variant="outlined" fullWidth onClick={() => alert('Recipes feature coming soon!')}>
+              <Button variant="outlined" fullWidth onClick={() => router.push('/recipes')}>
                 View Recipes
               </Button>
             </CardContent>
