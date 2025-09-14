@@ -93,18 +93,23 @@ export default function HomePage() {
       <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid item xs={6}>
           <Card sx={{ height: '100%' }}>
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <AddIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
-              <Typography variant="h6" gutterBottom>
-                Stock Up
-              </Typography>
+            <CardContent sx={{ p: 2 }}>
               <Button
                 variant="contained"
                 fullWidth
                 size="large"
                 color="primary"
                 onClick={() => router.push('/inventory/quick-add')}
+                sx={{
+                  py: 4,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold'
+                }}
               >
+                <AddIcon sx={{ fontSize: 60 }} />
                 Stock Up
               </Button>
             </CardContent>
@@ -113,18 +118,23 @@ export default function HomePage() {
 
         <Grid item xs={6}>
           <Card sx={{ height: '100%' }}>
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <RemoveIcon sx={{ fontSize: 48, color: 'secondary.main', mb: 1 }} />
-              <Typography variant="h6" gutterBottom>
-                Grab & Go
-              </Typography>
+            <CardContent sx={{ p: 2 }}>
               <Button
                 variant="contained"
                 fullWidth
                 size="large"
                 color="secondary"
                 onClick={() => router.push('/inventory/quick-use')}
+                sx={{
+                  py: 4,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold'
+                }}
               >
+                <RemoveIcon sx={{ fontSize: 60 }} />
                 Grab & Go
               </Button>
             </CardContent>
