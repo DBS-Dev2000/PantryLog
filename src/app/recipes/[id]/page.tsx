@@ -145,27 +145,50 @@ export default function RecipeDetailPage() {
       console.log('🥕 Loaded recipe ingredients:', ingredientsData?.length || 0)
 
       if (ingredientsData && ingredientsData.length > 0) {
-        // Try availability check if function exists
+        // Try smart availability check first, then fall back to basic check
         try {
-          const { data: availabilityData, error: availabilityError } = await supabase
-            .rpc('check_recipe_availability', {
+          const { data: smartAvailability, error: smartError } = await supabase
+            .rpc('check_recipe_availability_smart', {
               p_recipe_id: recipeId,
               p_household_id: userId
             })
 
-          if (availabilityError) {
-            console.warn('Availability check function not available:', availabilityError)
-            // Use ingredients without availability check
-            setIngredients(ingredientsData.map(ing => ({
-              ...ing,
-              availability_status: 'missing' // Default to missing for shopping list functionality
-            })))
+          if (smartError) {
+            console.log('Smart availability check not available, trying basic check:', smartError)
+
+            // Fall back to basic availability check
+            const { data: basicAvailability, error: basicError } = await supabase
+              .rpc('check_recipe_availability', {
+                p_recipe_id: recipeId,
+                p_household_id: userId
+              })
+
+            if (basicError) {
+              console.warn('Basic availability check also failed:', basicError)
+              // Use ingredients without availability check
+              setIngredients(ingredientsData.map(ing => ({
+                ...ing,
+                availability_status: 'missing'
+              })))
+            } else {
+              console.log('✅ Basic availability check complete:', basicAvailability?.length || 0)
+              setIngredients(basicAvailability || [])
+            }
           } else {
-            console.log('✅ Availability check complete:', availabilityData?.length || 0)
-            setIngredients(availabilityData || [])
+            console.log('✅ Smart ingredient matching complete:', smartAvailability?.length || 0)
+            console.log('🧠 Ingredient matches found:', smartAvailability?.filter((ing: any) => ing.match_type !== null).length || 0)
+
+            // Log some example matches for debugging
+            smartAvailability?.slice(0, 3).forEach((ing: any) => {
+              if (ing.matched_product_name) {
+                console.log(`🔍 "${ing.ingredient_name}" → "${ing.matched_product_name}" (${ing.match_type}, ${ing.match_strength})`)
+              }
+            })
+
+            setIngredients(smartAvailability || [])
           }
         } catch (rpcError) {
-          console.warn('RPC function error, using basic ingredients:', rpcError)
+          console.warn('All availability checks failed, using basic ingredients:', rpcError)
           // Fallback: Mark all ingredients as missing so shopping list works
           setIngredients(ingredientsData.map(ing => ({
             ...ing,
@@ -536,14 +559,21 @@ export default function RecipeDetailPage() {
                     </Box>
                   }
                   secondary={
-                    ingredient.availability_status !== 'available' && ingredient.availability_status !== 'unknown' && (
-                      <Typography variant="caption" color="textSecondary">
-                        {ingredient.availability_status === 'partial'
-                          ? `Need more - only have ${ingredient.available_quantity || 0} ${ingredient.required_unit || 'units'}`
-                          : 'Need to buy'
-                        }
-                      </Typography>
-                    )
+                    <Box>
+                      {ingredient.availability_status !== 'available' && ingredient.availability_status !== 'unknown' && (
+                        <Typography variant="caption" color="textSecondary">
+                          {ingredient.availability_status === 'partial'
+                            ? `Need more - only have ${ingredient.available_quantity || 0} ${ingredient.required_unit || 'units'}`
+                            : 'Need to buy'
+                          }
+                        </Typography>
+                      )}
+                      {(ingredient as any).matched_product_name && (ingredient as any).match_type !== 'exact' && (
+                        <Typography variant="caption" color="primary.main" sx={{ display: 'block', mt: 0.5 }}>
+                          🔍 Found: {(ingredient as any).matched_product_name} ({(ingredient as any).match_type} match)
+                        </Typography>
+                      )}
+                    </Box>
                   }
                 />
               </ListItem>
