@@ -29,7 +29,8 @@ import {
   ListItemSecondaryAction,
   Radio,
   RadioGroup,
-  FormControlLabel
+  FormControlLabel,
+  Autocomplete
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -98,6 +99,8 @@ export default function QuickUsePage() {
   const [success, setSuccess] = useState(false)
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
   const [showQRScanner, setShowQRScanner] = useState(false)
+  const [inventoryProducts, setInventoryProducts] = useState<any[]>([])
+  const [inventoryLocations, setInventoryLocations] = useState<any[]>([])
 
   useEffect(() => {
     const getUser = async () => {

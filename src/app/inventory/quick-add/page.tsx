@@ -86,6 +86,7 @@ export default function QuickAddPage() {
   const [showQRScanner, setShowQRScanner] = useState(false)
   const [showVisualScanner, setShowVisualScanner] = useState(false)
   const [storageLocations, setStorageLocations] = useState<any[]>([])
+  const [availableProducts, setAvailableProducts] = useState<any[]>([])
 
   useEffect(() => {
     const getUser = async () => {
@@ -93,6 +94,7 @@ export default function QuickAddPage() {
       if (session?.user) {
         setUser(session.user)
         await loadStorageLocations(session.user.id)
+        await loadAvailableProducts(session.user.id)
       } else {
         router.push('/auth')
       }
@@ -139,6 +141,28 @@ export default function QuickAddPage() {
       console.log('📦 Stock Up: Loaded storage locations:', locationsWithPaths.length)
     } catch (err: any) {
       console.error('Error loading storage locations in Stock Up:', err)
+    }
+  }
+
+  const loadAvailableProducts = async (userId: string) => {
+    try {
+      const { data: products, error } = await supabase
+        .from('products')
+        .select('id, name, brand, upc, category, image_url')
+        .order('name')
+
+      if (error) throw error
+
+      const productsWithDisplay = (products || []).map(product => ({
+        ...product,
+        displayName: `${product.name}${product.brand ? ` (${product.brand})` : ''}`,
+        searchText: `${product.name} ${product.brand || ''} ${product.category || ''} ${product.upc || ''}`
+      }))
+
+      setAvailableProducts(productsWithDisplay)
+      console.log('📦 Stock Up: Loaded products:', productsWithDisplay.length)
+    } catch (err: any) {
+      console.error('Error loading products in Stock Up:', err)
     }
   }
 
@@ -566,11 +590,58 @@ export default function QuickAddPage() {
         <CardContent>
           <Stepper activeStep={activeStep} orientation="vertical">
             <Step>
-              <StepLabel>Scan Product Barcode</StepLabel>
+              <StepLabel>Find or Scan Product</StepLabel>
               <StepContent>
+                {/* Searchable Product Dropdown */}
+                <Autocomplete
+                  options={availableProducts}
+                  getOptionLabel={(option) => option.displayName}
+                  value={availableProducts.find(p => p.upc === productBarcode) || null}
+                  onChange={(event, newValue) => {
+                    if (newValue) {
+                      setProductBarcode(newValue.upc)
+                      setProductData({
+                        name: newValue.name,
+                        brand: newValue.brand,
+                        category: newValue.category,
+                        image_url: newValue.image_url,
+                        upc: newValue.upc
+                      })
+                      setActiveStep(1) // Move to location step
+                    }
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Search Products"
+                      placeholder="Type product name, brand, or category"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                  renderOption={(props, option) => (
+                    <li {...props}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                        {option.image_url && (
+                          <Avatar src={option.image_url} sx={{ width: 32, height: 32 }} />
+                        )}
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography variant="body2">{option.name}</Typography>
+                          {option.brand && (
+                            <Typography variant="caption" color="textSecondary">
+                              {option.brand} • {option.category}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </li>
+                  )}
+                  sx={{ mb: 2 }}
+                />
+
+                {/* Barcode Input */}
                 <TextField
                   inputRef={productInputRef}
-                  label="Product UPC/Barcode"
+                  label="Or Enter Barcode"
                   fullWidth
                   value={productBarcode}
                   onChange={(e) => setProductBarcode(e.target.value)}
