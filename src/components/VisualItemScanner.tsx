@@ -93,16 +93,58 @@ export default function VisualItemScanner({
       console.log('✅ Camera stream obtained for visual recognition')
       setStream(mediaStream)
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream
+      // Wait for video element to be available, then assign stream
+      const assignStreamToVideo = () => {
+        if (videoRef.current) {
+          console.log('📹 Assigning stream to visual recognition video element')
+          videoRef.current.srcObject = mediaStream
 
-        videoRef.current.onloadedmetadata = () => {
-          console.log('📹 Visual recognition video ready')
-          setCameraActive(true)
+          // Add event listeners
+          videoRef.current.onloadedmetadata = () => {
+            console.log('📹 Visual recognition video metadata loaded')
+            setCameraActive(true)
+          }
+
+          videoRef.current.oncanplay = () => {
+            console.log('📹 Visual recognition video can play')
+            setCameraActive(true)
+          }
+
+          videoRef.current.onplaying = () => {
+            console.log('📹 Visual recognition video is playing')
+            setCameraActive(true)
+          }
+
+          videoRef.current.onerror = (e) => {
+            console.error('📹 Visual recognition video error:', e)
+            setError('Video playback failed')
+            setCameraActive(false)
+          }
+
+          // Force play the video
+          videoRef.current.play()
+            .then(() => {
+              console.log('📹 Visual recognition video play started')
+              setCameraActive(true)
+            })
+            .catch((e) => {
+              console.error('📹 Visual recognition play error:', e)
+              setError('Could not start video playback')
+              setCameraActive(false)
+            })
+
+          // Fallback timer
+          setTimeout(() => {
+            console.log('⏰ Visual scanner fallback: Setting camera active')
+            setCameraActive(true)
+          }, 1000)
+        } else {
+          console.log('⏳ Visual recognition video element not ready, retrying...')
+          setTimeout(assignStreamToVideo, 100)
         }
-
-        videoRef.current.play().catch(console.error)
       }
+
+      assignStreamToVideo()
 
     } catch (err: any) {
       console.error('❌ Visual recognition camera error:', err)
@@ -268,109 +310,119 @@ export default function VisualItemScanner({
             minHeight: 300
           }}
         >
-          {!cameraActive ? (
-            <Box sx={{
-              textAlign: 'center',
-              color: 'white',
-              p: 3,
-              flexGrow: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center'
-            }}>
-              <CircularProgress sx={{ color: 'white', mb: 2 }} />
-              <Typography>Starting camera...</Typography>
-            </Box>
-          ) : (
-            <Box sx={{ position: 'relative', flexGrow: 1 }}>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
+          <Box sx={{ position: 'relative', flexGrow: 1 }}>
+            {/* Always render video element for ref availability */}
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              webkit-playsinline="true"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                backgroundColor: 'black'
+              }}
+            />
+
+            {/* Loading overlay when camera not active */}
+            {!cameraActive && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(0,0,0,0.8)',
+                  color: 'white'
                 }}
-              />
+              >
+                <CircularProgress sx={{ color: 'white', mb: 2 }} />
+                <Typography>Starting camera...</Typography>
+              </Box>
+            )}
 
-              {/* Capture Button */}
-              {!processing && (
-                <Box
+            {/* Capture Button - only when camera is active */}
+            {cameraActive && !processing && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 20,
+                  left: '50%',
+                  transform: 'translateX(-50%)'
+                }}
+              >
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={captureAndAnalyze}
+                  startIcon={<EyeIcon />}
                   sx={{
-                    position: 'absolute',
-                    bottom: 20,
-                    left: '50%',
-                    transform: 'translateX(-50%)'
+                    backgroundColor: 'rgba(25, 118, 210, 0.9)',
+                    '&:hover': { backgroundColor: 'rgba(25, 118, 210, 1)' },
+                    fontSize: '1.1rem',
+                    py: 1.5,
+                    px: 3
                   }}
                 >
-                  <Button
-                    variant="contained"
-                    size="large"
-                    onClick={captureAndAnalyze}
-                    startIcon={<EyeIcon />}
-                    sx={{
-                      backgroundColor: 'rgba(25, 118, 210, 0.9)',
-                      '&:hover': { backgroundColor: 'rgba(25, 118, 210, 1)' },
-                      fontSize: '1.1rem',
-                      py: 1.5,
-                      px: 3
-                    }}
-                  >
-                    Identify Item
-                  </Button>
-                </Box>
-              )}
+                  Identify Item
+                </Button>
+              </Box>
+            )}
 
-              {/* Processing Overlay */}
-              {processing && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    color: 'white'
-                  }}
-                >
-                  <CircularProgress sx={{ color: 'white', mb: 2 }} />
-                  <Typography variant="h6">🤖 AI Analyzing Image...</Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    Identifying grocery items
-                  </Typography>
-                </Box>
-              )}
+            {/* Processing Overlay */}
+            {processing && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(0,0,0,0.8)',
+                  color: 'white'
+                }}
+              >
+                <CircularProgress sx={{ color: 'white', mb: 2 }} />
+                <Typography variant="h6">🤖 AI Analyzing Image...</Typography>
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  Identifying grocery items
+                </Typography>
+              </Box>
+            )}
 
-              {/* Instructions Overlay */}
-              {!processing && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 16,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    color: 'white',
-                    px: 2,
-                    py: 1,
-                    borderRadius: 1,
-                    textAlign: 'center'
-                  }}
-                >
-                  <Typography variant="body2">
-                    📱 Center grocery item in view and tap "Identify"
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          )}
+            {/* Instructions Overlay */}
+            {cameraActive && !processing && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 16,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  backgroundColor: 'rgba(0,0,0,0.8)',
+                  color: 'white',
+                  px: 2,
+                  py: 1,
+                  borderRadius: 1,
+                  textAlign: 'center'
+                }}
+              >
+                <Typography variant="body2">
+                  📱 Center grocery item in view and tap "Identify"
+                </Typography>
+              </Box>
+            )}
+          </Box>
 
           {/* Hidden canvas for image capture */}
           <canvas ref={canvasRef} style={{ display: 'none' }} />
