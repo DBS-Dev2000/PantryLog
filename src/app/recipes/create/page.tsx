@@ -62,12 +62,26 @@ export default function CreateRecipePage() {
     category_id: '',
     prep_time_minutes: 30,
     cook_time_minutes: 60,
+    total_time_minutes: 90,
     servings: 4,
     difficulty: 'medium',
     instructions: '',
     cuisine: '',
     tags: [] as string[],
-    image_url: ''
+    image_url: '',
+    thumbnail_url: '',
+    video_url: '',
+    source_type: 'manual',
+    source_url: '',
+    source_title: '',
+    youtube_video_id: '',
+    website_domain: '',
+    calories_per_serving: 0,
+    protein_grams: 0,
+    carbs_grams: 0,
+    fat_grams: 0,
+    rating: 0,
+    is_favorite: false
   })
 
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([
@@ -124,12 +138,26 @@ export default function CreateRecipePage() {
       category_id: '',
       prep_time_minutes: importedData.prep_time_minutes || 30,
       cook_time_minutes: importedData.cook_time_minutes || 60,
+      total_time_minutes: (importedData.prep_time_minutes || 30) + (importedData.cook_time_minutes || 60),
       servings: importedData.servings || 4,
       difficulty: importedData.difficulty || 'medium',
       instructions: importedData.instructions || '',
       cuisine: importedData.cuisine || '',
       tags: importedData.tags || [],
-      image_url: importedData.image_url || ''
+      image_url: importedData.image_url || '',
+      thumbnail_url: importedData.thumbnail_url || '',
+      video_url: importedData.video_url || '',
+      source_type: importedData.source_type || 'imported',
+      source_url: importUrl,
+      source_title: importedData.title || '',
+      youtube_video_id: importedData.youtube_video_id || '',
+      website_domain: importedData.website_domain || '',
+      calories_per_serving: importedData.calories_per_serving || 0,
+      protein_grams: importedData.nutrition?.protein_grams || 0,
+      carbs_grams: importedData.nutrition?.carbs_grams || 0,
+      fat_grams: importedData.nutrition?.fat_grams || 0,
+      rating: 0,
+      is_favorite: false
     })
 
     if (importedData.ingredients) {
@@ -138,10 +166,32 @@ export default function CreateRecipePage() {
 
     if (importedData.steps) {
       setSteps(importedData.steps)
+    } else if (importedData.instructions) {
+      // Parse steps from instructions text if steps not provided
+      parseStepsFromInstructions(importedData.instructions)
     }
 
     // Clear import URL after successful import
     setImportUrl('')
+  }
+
+  const parseStepsFromInstructions = (instructionsText: string) => {
+    // Extract numbered steps from instruction text
+    const stepMatches = instructionsText.match(/(?:^|\n)\s*(?:Step\s*)?(\d+)[\.\):\-\s]+([^\n]+)/gi)
+
+    if (stepMatches && stepMatches.length > 0) {
+      const parsedSteps = stepMatches.map((match, index) => {
+        const cleanStep = match.replace(/(?:^|\n)\s*(?:Step\s*)?\d+[\.\):\-\s]+/, '').trim()
+        return {
+          step_number: index + 1,
+          instruction: cleanStep,
+          time_minutes: 0
+        }
+      })
+
+      setSteps(parsedSteps)
+      console.log('📋 Parsed', parsedSteps.length, 'steps from instructions')
+    }
   }
 
   const importFromUrl = async () => {
@@ -233,27 +283,36 @@ export default function CreateRecipePage() {
                         importUrl.includes('allrecipes') || importUrl.includes('foodnetwork') ? 'website' :
                         isImported ? 'imported' : 'manual'
 
-      // Create recipe with source tracking
+      // Create recipe with all required fields
       const { data: newRecipe, error: recipeError } = await supabase
         .from('recipes')
         .insert([{
           household_id: user.id,
           title: recipe.title,
-          description: recipe.description,
+          description: recipe.description || 'No description provided',
           category_id: recipe.category_id || null,
-          instructions: recipe.instructions,
-          prep_time_minutes: recipe.prep_time_minutes,
-          cook_time_minutes: recipe.cook_time_minutes,
-          servings: recipe.servings,
-          difficulty: recipe.difficulty,
-          cuisine: recipe.cuisine,
-          tags: recipe.tags,
-          image_url: recipe.image_url,
-          source_type: sourceType,
-          source_url: importUrl || null,
-          source_title: recipe.title,
-          youtube_video_id: sourceType === 'youtube' ? extractYouTubeId(importUrl) : null,
-          website_domain: sourceType === 'website' ? new URL(importUrl || '').hostname : null,
+          instructions: recipe.instructions || 'No instructions provided',
+          prep_time_minutes: recipe.prep_time_minutes || 30,
+          cook_time_minutes: recipe.cook_time_minutes || 60,
+          total_time_minutes: recipe.total_time_minutes || (recipe.prep_time_minutes + recipe.cook_time_minutes),
+          servings: recipe.servings || 4,
+          difficulty: recipe.difficulty || 'medium',
+          source_type: recipe.source_type || sourceType,
+          source_url: recipe.source_url || importUrl || null,
+          source_title: recipe.source_title || recipe.title,
+          youtube_video_id: recipe.youtube_video_id || (sourceType === 'youtube' ? extractYouTubeId(importUrl) : null),
+          website_domain: recipe.website_domain || (sourceType === 'website' && importUrl ? new URL(importUrl).hostname : null),
+          calories_per_serving: recipe.calories_per_serving || null,
+          protein_grams: recipe.protein_grams || null,
+          carbs_grams: recipe.carbs_grams || null,
+          fat_grams: recipe.fat_grams || null,
+          image_url: recipe.image_url || null,
+          thumbnail_url: recipe.thumbnail_url || null,
+          video_url: recipe.video_url || null,
+          is_favorite: recipe.is_favorite || false,
+          rating: recipe.rating || null,
+          tags: recipe.tags || [],
+          cuisine: recipe.cuisine || null,
           created_by: user.id
         }])
         .select()
@@ -430,6 +489,30 @@ export default function CreateRecipePage() {
                 placeholder="Brief description of the recipe"
               />
             </Grid>
+
+            {/* Source URL Display */}
+            {recipe.source_url && (
+              <Grid item xs={12}>
+                <Card sx={{ backgroundColor: 'info.light', p: 2 }}>
+                  <Typography variant="body2" sx={{ color: 'info.contrastText', mb: 1 }}>
+                    📋 Imported from:
+                  </Typography>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Typography variant="body2" sx={{ color: 'info.contrastText', flexGrow: 1 }}>
+                      {recipe.source_url}
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => window.open(recipe.source_url, '_blank')}
+                      sx={{ color: 'info.contrastText', borderColor: 'info.contrastText' }}
+                    >
+                      View Original
+                    </Button>
+                  </Box>
+                </Card>
+              </Grid>
+            )}
 
             <Grid item xs={6} sm={3}>
               <TextField
