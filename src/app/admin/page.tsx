@@ -144,15 +144,21 @@ export default function AdminPage() {
 
   const loadAdminData = async () => {
     try {
-      // Load all users (limited info for privacy)
-      const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers()
+      // Load users via server-side admin API
+      const response = await fetch(`/api/admin/users?user_id=${user.id}`)
 
-      if (usersError) throw usersError
+      if (!response.ok) {
+        throw new Error(`Failed to load admin data: ${response.status}`)
+      }
 
-      setUsers(usersData.users || [])
+      const adminData = await response.json()
 
-      // Load admin users
-      await loadAdminUsers()
+      if (adminData.error) {
+        throw new Error(adminData.error)
+      }
+
+      setUsers(adminData.users || [])
+      setAdminUsers(adminData.admin_users || [])
 
       // Load usage statistics
       const { data: statsData, error: statsError } = await supabase
@@ -167,7 +173,7 @@ export default function AdminPage() {
         setUsageStats(statsData || [])
       }
 
-      console.log('✅ Admin data loaded:', usersData.users.length, 'users')
+      console.log('✅ Admin data loaded:', adminData.users?.length || 0, 'users')
 
     } catch (err: any) {
       console.error('Error loading admin data:', err)
@@ -193,28 +199,58 @@ export default function AdminPage() {
     }
   }
 
-  const grantAdminAccess = async () => {
-    if (!selectedUserForAdmin) return
-
+  const grantAdminAccess = async (targetUserId: string, adminLevel: string = 'admin') => {
     try {
-      const targetUser = users.find(u => u.id === selectedUserForAdmin)
-      if (!targetUser) throw new Error('User not found')
-
-      const { error } = await supabase
-        .rpc('grant_admin_access', {
-          p_target_user_id: selectedUserForAdmin,
-          p_target_email: targetUser.email,
-          p_granted_by: user.id,
-          p_admin_level: 'admin',
-          p_notes: 'Admin access granted via PantryIQ admin dashboard'
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'grant_admin',
+          target_user_id: targetUserId,
+          requesting_user_id: user.id,
+          admin_level: adminLevel,
+          notes: 'Admin access granted via PantryIQ admin dashboard'
         })
+      })
 
-      if (error) throw error
+      const result = await response.json()
 
-      setSuccess(`Admin access granted to ${targetUser.email}!`)
-      setGrantAdminDialog(false)
-      setSelectedUserForAdmin('')
-      await loadAdminUsers()
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to grant admin access')
+      }
+
+      setSuccess('Admin access granted successfully!')
+      await loadAdminData()
+
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
+  const revokeAdminAccess = async (targetUserId: string) => {
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'revoke_admin',
+          target_user_id: targetUserId,
+          requesting_user_id: user.id
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to revoke admin access')
+      }
+
+      setSuccess('Admin access revoked successfully!')
+      await loadAdminData()
 
     } catch (err: any) {
       setError(err.message)

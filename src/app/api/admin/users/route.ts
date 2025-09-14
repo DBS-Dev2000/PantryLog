@@ -1,0 +1,171 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+// Use service role for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+)
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const requestingUserId = searchParams.get('user_id')
+
+    if (!requestingUserId) {
+      return NextResponse.json(
+        { error: 'User ID required' },
+        { status: 400 }
+      )
+    }
+
+    // Verify requesting user is admin
+    const { data: isAdmin, error: adminCheckError } = await supabaseAdmin
+      .rpc('is_system_admin', { p_user_id: requestingUserId })
+
+    if (adminCheckError || !isAdmin) {
+      return NextResponse.json(
+        { error: 'Admin privileges required' },
+        { status: 403 }
+      )
+    }
+
+    // Get all users
+    const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
+
+    if (usersError) {
+      throw usersError
+    }
+
+    // Get admin users
+    const { data: adminUsers, error: adminError } = await supabaseAdmin
+      .from('system_admins')
+      .select('*')
+      .eq('is_active', true)
+
+    const adminUserIds = new Set(adminUsers?.map(admin => admin.user_id) || [])
+
+    // Combine user data with admin status
+    const usersWithAdminStatus = usersData.users.map(user => ({
+      id: user.id,
+      email: user.email,
+      created_at: user.created_at,
+      last_sign_in_at: user.last_sign_in_at,
+      is_admin: adminUserIds.has(user.id),
+      admin_level: adminUsers?.find(admin => admin.user_id === user.id)?.admin_level || null
+    }))
+
+    // Log admin access
+    await supabaseAdmin.rpc('log_admin_activity', {
+      p_admin_user_id: requestingUserId,
+      p_action_type: 'user_list_access',
+      p_action_details: 'Viewed user list in admin dashboard'
+    })
+
+    return NextResponse.json({
+      users: usersWithAdminStatus,
+      total_users: usersData.users.length,
+      admin_users: adminUsers || []
+    })
+
+  } catch (error: any) {
+    console.error('Admin users API error:', error)
+    return NextResponse.json(
+      { error: 'Failed to load users: ' + error.message },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { action, target_user_id, requesting_user_id, admin_level, notes } = await request.json()
+
+    if (!requesting_user_id) {
+      return NextResponse.json(
+        { error: 'Requesting user ID required' },
+        { status: 400 }
+      )
+    }
+
+    // Verify requesting user is admin
+    const { data: isAdmin, error: adminCheckError } = await supabaseAdmin
+      .rpc('is_system_admin', { p_user_id: requesting_user_id })
+
+    if (adminCheckError || !isAdmin) {
+      return NextResponse.json(
+        { error: 'Admin privileges required' },
+        { status: 403 }
+      )
+    }
+
+    if (action === 'grant_admin') {
+      // Get target user email
+      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(target_user_id)
+
+      if (!userData.user) {
+        throw new Error('Target user not found')
+      }
+
+      // Grant admin access
+      const { error } = await supabaseAdmin
+        .rpc('grant_admin_access', {
+          p_target_user_id: target_user_id,
+          p_target_email: userData.user.email,
+          p_granted_by: requesting_user_id,
+          p_admin_level: admin_level || 'admin',
+          p_notes: notes || 'Admin access granted via PantryIQ admin dashboard'
+        })
+
+      if (error) throw error
+
+      // Log the action
+      await supabaseAdmin.rpc('log_admin_activity', {
+        p_admin_user_id: requesting_user_id,
+        p_action_type: 'grant_admin_access',
+        p_action_details: `Granted ${admin_level} access to ${userData.user.email}`,
+        p_target_user_id: target_user_id
+      })
+
+      return NextResponse.json({ success: true, message: 'Admin access granted' })
+
+    } else if (action === 'revoke_admin') {
+      // Revoke admin access
+      const { error } = await supabaseAdmin
+        .rpc('revoke_admin_access', {
+          p_target_user_id: target_user_id,
+          p_revoked_by: requesting_user_id
+        })
+
+      if (error) throw error
+
+      // Log the action
+      await supabaseAdmin.rpc('log_admin_activity', {
+        p_admin_user_id: requesting_user_id,
+        p_action_type: 'revoke_admin_access',
+        p_action_details: `Revoked admin access from user ${target_user_id}`,
+        p_target_user_id: target_user_id
+      })
+
+      return NextResponse.json({ success: true, message: 'Admin access revoked' })
+    }
+
+    return NextResponse.json(
+      { error: 'Invalid action' },
+      { status: 400 }
+    )
+
+  } catch (error: any) {
+    console.error('Admin action error:', error)
+    return NextResponse.json(
+      { error: 'Admin action failed: ' + error.message },
+      { status: 500 }
+    )
+  }
+}
