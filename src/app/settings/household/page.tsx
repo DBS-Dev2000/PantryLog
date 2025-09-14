@@ -93,6 +93,7 @@ export default function HouseholdPage() {
   }, [router])
 
   const loadHouseholdData = async (currentUser: any) => {
+    console.log('🔄 loadHouseholdData called in household management')
     setLoading(true)
     try {
       // Get user's household - first check if they're a member, then check legacy
@@ -109,11 +110,14 @@ export default function HouseholdPage() {
       }
 
       // Load household details
+      console.log('🏠 Loading household data for ID:', householdId)
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .select('*')
         .eq('id', householdId)
         .single()
+
+      console.log('📊 Loaded household data:', householdData)
 
       if (householdError) throw householdError
       setHousehold(householdData)
