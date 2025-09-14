@@ -233,6 +233,22 @@ export default function HouseholdPage() {
     }
   }
 
+  const updateHouseholdName = async (newName: string) => {
+    try {
+      const { error } = await supabase
+        .from('households')
+        .update({ name: newName })
+        .eq('id', household?.id)
+
+      if (error) throw error
+
+      setSuccess(`Household name updated to "${newName}"!`)
+      await loadHouseholdData(user)
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
   const copyInviteLink = (code: string) => {
     const inviteUrl = `${window.location.origin}/join/${code}`
     navigator.clipboard.writeText(inviteUrl)
@@ -282,12 +298,29 @@ export default function HouseholdPage() {
       {/* Household Info */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            {household?.name || 'My Household'}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Household ID: {household?.id}
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                {household?.name || 'My Household'}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Household ID: {household?.id}
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              startIcon={<SettingsIcon />}
+              onClick={() => {
+                const newName = prompt('Enter new household name:', household?.name || 'My Household')
+                if (newName && newName.trim()) {
+                  updateHouseholdName(newName.trim())
+                }
+              }}
+              size="small"
+            >
+              Edit Name
+            </Button>
+          </Box>
         </CardContent>
       </Card>
 

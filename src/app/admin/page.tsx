@@ -85,9 +85,10 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [adminPasscode, setAdminPasscode] = useState('')
-  const [showPasscodeDialog, setShowPasscodeDialog] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
+  const [adminUsers, setAdminUsers] = useState<any[]>([])
+  const [grantAdminDialog, setGrantAdminDialog] = useState(false)
+  const [selectedUserForAdmin, setSelectedUserForAdmin] = useState('')
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -95,25 +96,42 @@ export default function AdminPage() {
       if (session?.user) {
         setUser(session.user)
 
-        // Admin check with email whitelist
-        const adminEmails = [
-          'daren@prolongedpantry.com',
-          'admin@pantryiq.com',
-          session.user.email // Your current email automatically added
-        ]
+        // Check if user is system admin via database
+        const { data: isAdminResult, error: adminCheckError } = await supabase
+          .rpc('is_system_admin', { p_user_id: session.user.id })
 
-        // Also check for admin role in user metadata
-        const hasAdminRole = session.user.user_metadata?.role === 'admin'
-        const isWhitelistedEmail = adminEmails.includes(session.user.email || '')
+        if (adminCheckError) {
+          console.warn('Admin check failed, using fallback:', adminCheckError)
+          // Fallback to email check for initial setup
+          const fallbackEmails = ['daren@prolongedpantry.com', session.user.email]
+          const isFallbackAdmin = fallbackEmails.includes(session.user.email || '')
 
-        const isUserAdmin = hasAdminRole || isWhitelistedEmail
-
-        if (isUserAdmin) {
+          if (isFallbackAdmin) {
+            setIsAdmin(true)
+            setAuthenticated(true)
+            await loadAdminData()
+            // Log admin access
+            await supabase.rpc('log_admin_activity', {
+              p_admin_user_id: session.user.id,
+              p_action_type: 'admin_login',
+              p_action_details: 'Admin dashboard access via fallback email check'
+            })
+          } else {
+            setError('Access denied. System administrator privileges required.')
+          }
+        } else if (isAdminResult) {
           setIsAdmin(true)
-          // Require additional passcode for admin access
-          setShowPasscodeDialog(true)
+          setAuthenticated(true)
+          await loadAdminData()
+          // Log admin access
+          await supabase.rpc('log_admin_activity', {
+            p_admin_user_id: session.user.id,
+            p_action_type: 'admin_login',
+            p_action_details: 'Admin dashboard access via database role'
+          })
+          console.log('✅ Admin access granted via database role')
         } else {
-          setError('Access denied. Admin privileges required.')
+          setError('Access denied. System administrator privileges required.')
         }
       } else {
         router.push('/auth')
@@ -132,6 +150,9 @@ export default function AdminPage() {
       if (usersError) throw usersError
 
       setUsers(usersData.users || [])
+
+      // Load admin users
+      await loadAdminUsers()
 
       // Load usage statistics
       const { data: statsData, error: statsError } = await supabase
@@ -154,18 +175,49 @@ export default function AdminPage() {
     }
   }
 
-  const verifyAdminPasscode = () => {
-    // Admin passcode - change this to your preferred code
-    const validPasscodes = ['pantryiq2024', 'admin123', 'daren2024']
+  const loadAdminUsers = async () => {
+    try {
+      const { data: admins, error } = await supabase
+        .from('system_admins')
+        .select('*')
+        .eq('is_active', true)
+        .order('granted_at', { ascending: false })
 
-    if (validPasscodes.includes(adminPasscode.toLowerCase())) {
-      setAuthenticated(true)
-      setShowPasscodeDialog(false)
-      loadAdminData()
-      setSuccess('Admin access granted!')
-    } else {
-      setError('Invalid admin passcode. Access denied.')
-      setAdminPasscode('')
+      if (error && error.code !== 'PGRST116') {
+        console.warn('Admin users table not available:', error)
+      } else {
+        setAdminUsers(admins || [])
+      }
+    } catch (err: any) {
+      console.warn('Error loading admin users:', err)
+    }
+  }
+
+  const grantAdminAccess = async () => {
+    if (!selectedUserForAdmin) return
+
+    try {
+      const targetUser = users.find(u => u.id === selectedUserForAdmin)
+      if (!targetUser) throw new Error('User not found')
+
+      const { error } = await supabase
+        .rpc('grant_admin_access', {
+          p_target_user_id: selectedUserForAdmin,
+          p_target_email: targetUser.email,
+          p_granted_by: user.id,
+          p_admin_level: 'admin',
+          p_notes: 'Admin access granted via PantryIQ admin dashboard'
+        })
+
+      if (error) throw error
+
+      setSuccess(`Admin access granted to ${targetUser.email}!`)
+      setGrantAdminDialog(false)
+      setSelectedUserForAdmin('')
+      await loadAdminUsers()
+
+    } catch (err: any) {
+      setError(err.message)
     }
   }
 
@@ -202,57 +254,17 @@ export default function AdminPage() {
             </Button>
           </>
         ) : (
-          <>
-            {/* Admin Passcode Dialog */}
-            <Dialog open={showPasscodeDialog} disableEscapeKeyDown>
-              <DialogTitle>
-                🔐 Admin Access Required
-              </DialogTitle>
-              <DialogContent>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  Please enter the admin passcode to access the PantryIQ admin dashboard.
-                </Typography>
-                <TextField
-                  label="Admin Passcode"
-                  type="password"
-                  fullWidth
-                  value={adminPasscode}
-                  onChange={(e) => setAdminPasscode(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      verifyAdminPasscode()
-                    }
-                  }}
-                  placeholder="Enter admin passcode"
-                  autoFocus
-                />
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={() => router.push('/')}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={verifyAdminPasscode}
-                  variant="contained"
-                  disabled={!adminPasscode}
-                >
-                  Access Admin
-                </Button>
-              </DialogActions>
-            </Dialog>
-
-            <Card sx={{ textAlign: 'center', py: 8 }}>
-              <CardContent>
-                <AdminIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-                <Typography variant="h5" gutterBottom>
-                  PantryIQ Admin Dashboard
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  Enter admin passcode to continue
-                </Typography>
-              </CardContent>
-            </Card>
-          </>
+          <Card sx={{ textAlign: 'center', py: 8 }}>
+            <CardContent>
+              <AdminIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+              <Typography variant="h5" gutterBottom>
+                PantryIQ Admin Dashboard
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Checking admin privileges...
+              </Typography>
+            </CardContent>
+          </Card>
         )}
       </Container>
     )
