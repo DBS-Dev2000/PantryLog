@@ -49,6 +49,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import BarcodeScanner from '@/components/BarcodeScanner'
 import QRScanner from '@/components/QRScanner'
+import VisualItemScanner from '@/components/VisualItemScanner'
 
 interface ProductData {
   id: string
@@ -99,22 +100,103 @@ export default function QuickUsePage() {
   const [success, setSuccess] = useState(false)
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
   const [showQRScanner, setShowQRScanner] = useState(false)
+  const [showVisualScanner, setShowVisualScanner] = useState(false)
   const [inventoryProducts, setInventoryProducts] = useState<any[]>([])
   const [inventoryLocations, setInventoryLocations] = useState<any[]>([])
+  const [storageLocations, setStorageLocations] = useState<any[]>([])
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         setUser(session.user)
+        await loadInventoryData(session.user.id)
       } else {
         router.push('/auth')
       }
     }
 
     getUser()
+  }, [router, searchParams])
 
-    // Check if we came from a QR code scan or barcode scan
+  const loadInventoryData = async (userId: string) => {
+    try {
+      // Load products that are currently in inventory
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from('inventory_items')
+        .select(`
+          product_id,
+          products (id, name, brand, category, upc, image_url),
+          storage_locations (id, name, type)
+        `)
+        .eq('household_id', userId)
+        .eq('is_consumed', false)
+
+      if (inventoryError) throw inventoryError
+
+      // Build unique products list (only items with inventory)
+      const uniqueProducts = new Map()
+      const uniqueLocations = new Map()
+
+      inventoryData?.forEach(item => {
+        if (item.products) {
+          const product = item.products
+          uniqueProducts.set(product.id, {
+            ...product,
+            displayName: `${product.name}${product.brand ? ` (${product.brand})` : ''}`,
+            searchText: `${product.name} ${product.brand || ''} ${product.category || ''}`
+          })
+        }
+
+        if (item.storage_locations) {
+          const location = item.storage_locations
+          uniqueLocations.set(location.id, location)
+        }
+      })
+
+      setInventoryProducts(Array.from(uniqueProducts.values()))
+      setInventoryLocations(Array.from(uniqueLocations.values()))
+
+      // Also load all storage locations for hierarchy
+      const { data: allLocations, error: locationsError } = await supabase
+        .from('storage_locations')
+        .select('*')
+        .eq('household_id', userId)
+        .eq('is_active', true)
+        .order('level')
+        .order('sort_order')
+
+      if (locationsError) throw locationsError
+
+      // Build full paths for storage locations
+      const locationsWithPaths = (allLocations || []).map(location => {
+        const buildPath = (loc: any): string => {
+          const parent = allLocations?.find(l => l.id === loc.parent_id)
+          if (parent) {
+            return `${buildPath(parent)} > ${loc.name}`
+          }
+          return loc.name
+        }
+
+        return {
+          id: location.id,
+          label: location.name,
+          fullPath: buildPath(location),
+          level: (location as any).level || 0
+        }
+      })
+
+      setStorageLocations(locationsWithPaths)
+
+      console.log('🏃 Grab & Go: Loaded', uniqueProducts.size, 'inventory products and', locationsWithPaths.length, 'storage locations')
+
+    } catch (err: any) {
+      console.error('Error loading inventory data for Grab & Go:', err)
+      setError('Failed to load inventory data')
+    }
+  }
+
+  // Check if we came from a QR code scan or barcode scan
     const locationParam = searchParams.get('location')
     const itemParam = searchParams.get('item')
 
@@ -549,6 +631,13 @@ export default function QuickUsePage() {
     }
   }
 
+  const handleVisualItemSelected = (itemData: any) => {
+    console.log('👁️ AI identified item in Grab & Go:', itemData)
+    setItemBarcode(itemData.upc || itemData.name)
+    setShowVisualScanner(false)
+    lookupProduct(itemData.upc || itemData.name)
+  }
+
   if (!user) {
     return (
       <Container maxWidth="sm" sx={{ mt: 4 }}>
@@ -674,27 +763,71 @@ export default function QuickUsePage() {
                 ) : (
                   /* Item-first workflow */
                   <Box>
-                    <TextField
-                      inputRef={itemInputRef}
-                      label="Product UPC/Barcode"
-                      fullWidth
-                      value={itemBarcode}
-                      onChange={(e) => setItemBarcode(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && itemBarcode) {
-                          lookupProduct(itemBarcode)
+                    {/* Unified Product Input - Search/Scan/AI (Only Inventory Items) */}
+                    <Autocomplete
+                      freeSolo
+                      options={inventoryProducts}
+                      getOptionLabel={(option) => typeof option === 'string' ? option : option.displayName}
+                      value={inventoryProducts.find(p => p.upc === itemBarcode) || itemBarcode}
+                      onChange={(event, newValue) => {
+                        if (newValue && typeof newValue === 'object') {
+                          setItemBarcode(newValue.upc)
+                          setProductData({
+                            id: newValue.id,
+                            name: newValue.name,
+                            brand: newValue.brand,
+                            image_url: newValue.image_url,
+                            upc: newValue.upc
+                          })
+                          setActiveStep(1)
+                          loadProductLocations(newValue.id)
                         }
                       }}
-                      placeholder="Scan or enter product barcode"
-                      InputProps={{
-                        endAdornment: (
-                          <IconButton onClick={() => setShowBarcodeScanner(true)}>
-                            <CameraIcon />
-                          </IconButton>
-                        ),
+                      onInputChange={(event, newInputValue) => {
+                        setItemBarcode(newInputValue)
                       }}
-                      sx={{ mb: 2 }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          inputRef={itemInputRef}
+                          label="Product in Your Pantry"
+                          placeholder="Search inventory, scan barcode, or use AI"
+                          InputProps={{
+                            ...params.InputProps,
+                            endAdornment: (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                {params.InputProps.endAdornment}
+                                <IconButton onClick={() => setShowBarcodeScanner(true)} title="Scan Barcode">
+                                  <CameraIcon />
+                                </IconButton>
+                                <IconButton onClick={() => setShowVisualScanner(true)} title="AI Identify" color="secondary">
+                                  <EyeIcon />
+                                </IconButton>
+                              </Box>
+                            ),
+                          }}
+                          sx={{ mb: 2 }}
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <li {...props}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                            {option.image_url && (
+                              <Avatar src={option.image_url} sx={{ width: 32, height: 32 }} />
+                            )}
+                            <Box sx={{ flexGrow: 1 }}>
+                              <Typography variant="body2">{option.name}</Typography>
+                              {option.brand && (
+                                <Typography variant="caption" color="textSecondary">
+                                  {option.brand} • {option.category}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+                        </li>
+                      )}
                     />
+
                     <Button
                       variant="contained"
                       onClick={() => lookupProduct(itemBarcode)}
@@ -971,6 +1104,15 @@ export default function QuickUsePage() {
         onScan={handleQRScanned}
         title="Scan Storage Location QR Code"
         description="Scan the QR code of the storage location to see its inventory"
+      />
+
+      {/* Visual Item Scanner Dialog */}
+      <VisualItemScanner
+        open={showVisualScanner}
+        onClose={() => setShowVisualScanner(false)}
+        onItemSelected={handleVisualItemSelected}
+        title="AI Item Recognition"
+        userId={user?.id}
       />
     </Container>
   )
