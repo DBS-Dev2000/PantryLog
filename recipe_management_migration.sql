@@ -30,7 +30,7 @@ ON CONFLICT (name) DO NOTHING;
 CREATE TABLE IF NOT EXISTS recipes (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     household_id UUID NOT NULL REFERENCES households(id) ON DELETE CASCADE,
-    category_id UUID REFERENCES recipe_categories(id),
+    category_id UUID,
 
     -- Basic recipe info
     title VARCHAR(300) NOT NULL,
@@ -252,6 +252,11 @@ BEGIN
     RETURN consumed_items;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Add foreign key constraints after tables are created
+ALTER TABLE recipes
+ADD CONSTRAINT fk_recipes_category
+FOREIGN KEY (category_id) REFERENCES recipe_categories(id);
 
 -- Disable RLS for recipe tables
 ALTER TABLE recipe_categories DISABLE ROW LEVEL SECURITY;
