@@ -238,16 +238,27 @@ export default function HouseholdPage() {
 
   const updateHouseholdName = async (newName: string) => {
     try {
-      const { error } = await supabase
+      console.log('🏠 Updating household name:', newName)
+      console.log('📍 Household ID:', household?.id)
+
+      const { data, error } = await supabase
         .from('households')
         .update({ name: newName })
         .eq('id', household?.id)
+        .select()
 
-      if (error) throw error
+      console.log('📊 Update result:', data)
 
+      if (error) {
+        console.error('❌ Update error:', error)
+        throw error
+      }
+
+      console.log('✅ Household name updated successfully')
       setSuccess(`Household name updated to "${newName}"!`)
       await loadHouseholdData(user)
     } catch (err: any) {
+      console.error('❌ Household name update failed:', err)
       setError(err.message)
     }
   }
@@ -339,10 +350,13 @@ export default function HouseholdPage() {
                 />
                 <Button
                   variant="contained"
-                  onClick={() => {
+                  onClick={async () => {
+                    console.log('💾 Save button clicked, new name:', newHouseholdName.trim())
                     if (newHouseholdName.trim()) {
-                      updateHouseholdName(newHouseholdName.trim())
+                      await updateHouseholdName(newHouseholdName.trim())
                       setEditingName(false)
+                    } else {
+                      console.warn('⚠️ No household name entered')
                     }
                   }}
                   disabled={!newHouseholdName.trim()}
