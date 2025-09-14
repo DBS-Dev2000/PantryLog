@@ -33,7 +33,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -877,45 +881,142 @@ export default function ProductDetailPage() {
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12}>
                 <TextField
-                  label="Product Name"
+                  label="Product Title"
                   fullWidth
                   value={editedProduct.name}
                   onChange={(e) => setEditedProduct({ ...editedProduct, name: e.target.value })}
                   required
+                  helperText="Full product name (e.g., LIFEWTR Premium Purified Bottled Water...)"
                 />
               </Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="Brand"
                   fullWidth
                   value={editedProduct.brand || ''}
                   onChange={(e) => setEditedProduct({ ...editedProduct, brand: e.target.value })}
+                  placeholder="e.g., LIFEWTR"
                 />
               </Grid>
+
               <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    value={editedProduct.category || ''}
+                    label="Category"
+                    onChange={(e) => setEditedProduct({ ...editedProduct, category: e.target.value })}
+                  >
+                    <MenuItem value="">None</MenuItem>
+                    <MenuItem value="Pantry Staples">Pantry Staples</MenuItem>
+                    <MenuItem value="Canned Goods">Canned Goods</MenuItem>
+                    <MenuItem value="Frozen Foods">Frozen Foods</MenuItem>
+                    <MenuItem value="Fresh Produce">Fresh Produce</MenuItem>
+                    <MenuItem value="Dairy">Dairy</MenuItem>
+                    <MenuItem value="Meat & Poultry">Meat & Poultry</MenuItem>
+                    <MenuItem value="Seafood">Seafood</MenuItem>
+                    <MenuItem value="Beverages">Beverages</MenuItem>
+                    <MenuItem value="Snacks">Snacks</MenuItem>
+                    <MenuItem value="Condiments">Condiments</MenuItem>
+                    <MenuItem value="Spices & Seasonings">Spices & Seasonings</MenuItem>
+                    <MenuItem value="Baking">Baking</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12}>
                 <TextField
-                  label="Category"
+                  label="Description"
                   fullWidth
-                  value={editedProduct.category || ''}
-                  onChange={(e) => setEditedProduct({ ...editedProduct, category: e.target.value })}
+                  multiline
+                  rows={3}
+                  value={(editedProduct as any).nutritional_info?.description || ''}
+                  onChange={(e) => setEditedProduct({
+                    ...editedProduct,
+                    nutritional_info: {
+                      ...(editedProduct as any).nutritional_info,
+                      description: e.target.value
+                    }
+                  })}
+                  placeholder="Detailed product description..."
                 />
               </Grid>
-              <Grid item xs={12}>
+
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="UPC/Barcode"
                   fullWidth
                   value={editedProduct.upc || ''}
                   onChange={(e) => setEditedProduct({ ...editedProduct, upc: e.target.value })}
+                  placeholder="012000161155"
                   helperText="Leave empty for custom items"
                 />
               </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Weight"
+                  fullWidth
+                  value={(editedProduct as any).nutritional_info?.weight || ''}
+                  onChange={(e) => setEditedProduct({
+                    ...editedProduct,
+                    nutritional_info: {
+                      ...(editedProduct as any).nutritional_info,
+                      weight: e.target.value
+                    }
+                  })}
+                  placeholder="1.00lb"
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Color"
+                  fullWidth
+                  value={(editedProduct as any).nutritional_info?.api_data?.color || ''}
+                  onChange={(e) => setEditedProduct({
+                    ...editedProduct,
+                    nutritional_info: {
+                      ...(editedProduct as any).nutritional_info,
+                      api_data: {
+                        ...(editedProduct as any).nutritional_info?.api_data,
+                        color: e.target.value
+                      }
+                    }
+                  })}
+                  placeholder="Clear"
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Size"
+                  fullWidth
+                  value={(editedProduct as any).nutritional_info?.api_data?.size || ''}
+                  onChange={(e) => setEditedProduct({
+                    ...editedProduct,
+                    nutritional_info: {
+                      ...(editedProduct as any).nutritional_info,
+                      api_data: {
+                        ...(editedProduct as any).nutritional_info?.api_data,
+                        size: e.target.value
+                      }
+                    }
+                  })}
+                  placeholder="1 Liter"
+                />
+              </Grid>
+
               <Grid item xs={12}>
                 <TextField
-                  label="Image URL"
+                  label="Primary Image URL"
                   fullWidth
                   value={editedProduct.image_url || ''}
                   onChange={(e) => setEditedProduct({ ...editedProduct, image_url: e.target.value })}
-                  helperText="URL to product image"
+                  placeholder="https://..."
+                  helperText="Main product image URL"
                 />
               </Grid>
             </Grid>
@@ -937,7 +1038,8 @@ export default function ProductDetailPage() {
                     brand: editedProduct.brand || null,
                     category: editedProduct.category || null,
                     upc: editedProduct.upc || null,
-                    image_url: editedProduct.image_url || null
+                    image_url: editedProduct.image_url || null,
+                    nutritional_info: (editedProduct as any).nutritional_info || null
                   })
                   .eq('id', product!.id)
 
