@@ -569,11 +569,11 @@ export default function QuickUsePage() {
           <Box display="flex" alignItems="center" gap={1} mb={1}>
             <RemoveIcon color="primary" />
             <Typography variant="h4" component="h1">
-              Quick Use
+              Grab & Go
             </Typography>
           </Box>
           <Typography variant="body1" color="textSecondary">
-            Remove items from inventory - scan location or product to get started
+            Remove items from your pantry - scan location or product to track usage
           </Typography>
         </Box>
       </Box>

@@ -39,7 +39,8 @@ import {
   Remove as RemoveIcon,
   Backspace as BackspaceIcon,
   ExpandMore as ExpandMoreIcon,
-  Visibility as EyeIcon
+  Visibility as EyeIcon,
+  Edit as EditIcon
 } from '@mui/icons-material'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -400,11 +401,11 @@ export default function QuickAddPage() {
           <Box display="flex" alignItems="center" gap={1} mb={1}>
             <QuickIcon color="primary" />
             <Typography variant="h4" component="h1">
-              Quick Add
+              Stock Up
             </Typography>
           </Box>
           <Typography variant="body1" color="textSecondary">
-            Smart inventory tracking - Scan, identify, and manage with intelligent efficiency
+            Add items to your pantry - Scan, identify, and stock with intelligent efficiency
           </Typography>
         </Box>
       </Box>
@@ -541,9 +542,14 @@ export default function QuickAddPage() {
                   placeholder="Scan or enter product barcode"
                   InputProps={{
                     endAdornment: (
-                      <IconButton onClick={() => setShowBarcodeScanner(true)}>
-                        <CameraIcon />
-                      </IconButton>
+                      <Box display="flex" gap={0.5}>
+                        <IconButton onClick={() => setShowBarcodeScanner(true)} title="Scan Barcode">
+                          <CameraIcon />
+                        </IconButton>
+                        <IconButton onClick={() => setShowVisualScanner(true)} title="AI Identify" color="secondary">
+                          <EyeIcon />
+                        </IconButton>
+                      </Box>
                     ),
                   }}
                   sx={{ mb: 2 }}
@@ -559,11 +565,11 @@ export default function QuickAddPage() {
                   </Button>
                   <Button
                     variant="outlined"
-                    onClick={() => setShowVisualScanner(true)}
-                    startIcon={<EyeIcon />}
-                    color="secondary"
+                    onClick={() => router.push('/inventory/add')}
+                    startIcon={<EditIcon />}
+                    color="info"
                   >
-                    AI Identify
+                    Manual Add
                   </Button>
                 </Box>
 

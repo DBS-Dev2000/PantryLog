@@ -96,7 +96,7 @@ export default function HomePage() {
             <CardContent sx={{ textAlign: 'center', py: 3 }}>
               <AddIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
               <Typography variant="h6" gutterBottom>
-                Quick Add
+                Stock Up
               </Typography>
               <Button
                 variant="contained"
@@ -105,7 +105,7 @@ export default function HomePage() {
                 color="primary"
                 onClick={() => router.push('/inventory/quick-add')}
               >
-                Quick Add
+                Stock Up
               </Button>
             </CardContent>
           </Card>
@@ -116,7 +116,7 @@ export default function HomePage() {
             <CardContent sx={{ textAlign: 'center', py: 3 }}>
               <RemoveIcon sx={{ fontSize: 48, color: 'secondary.main', mb: 1 }} />
               <Typography variant="h6" gutterBottom>
-                Quick Use
+                Grab & Go
               </Typography>
               <Button
                 variant="contained"
@@ -125,7 +125,7 @@ export default function HomePage() {
                 color="secondary"
                 onClick={() => router.push('/inventory/quick-use')}
               >
-                Quick Use
+                Grab & Go
               </Button>
             </CardContent>
           </Card>
@@ -134,7 +134,7 @@ export default function HomePage() {
 
       {/* Secondary Actions */}
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={6}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
@@ -151,24 +151,7 @@ export default function HomePage() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <AddIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Add Items</Typography>
-              </Box>
-              <Typography variant="body2" color="textSecondary" paragraph>
-                Detailed item entry with full options
-              </Typography>
-              <Button variant="outlined" fullWidth onClick={() => router.push('/inventory/add')}>
-                Add Items
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={6}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>

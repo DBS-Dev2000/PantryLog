@@ -46,11 +46,10 @@ interface AppLayoutProps {
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'My Pantry', href: '/inventory', icon: PantryIcon },
-  { name: 'Quick Add', href: '/inventory/quick-add', icon: QrCodeScanner },
-  { name: 'Quick Use', href: '/inventory/quick-use', icon: Remove },
+  { name: 'Stock Up', href: '/inventory/quick-add', icon: QrCodeScanner },
+  { name: 'Grab & Go', href: '/inventory/quick-use', icon: Remove },
   { name: 'Recipes', href: '/recipes', icon: Restaurant },
   { name: 'Shopping List', href: '/shopping', icon: ShoppingCart },
-  { name: 'Add Items', href: '/inventory/add', icon: AddIcon },
   { name: 'Receipt Scan', href: '/inventory/receipt', icon: Receipt },
   { name: 'Settings', href: '/settings', icon: SettingsIcon },
 ]
