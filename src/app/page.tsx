@@ -13,10 +13,10 @@ import {
 } from '@mui/material'
 import {
   Inventory as InventoryIcon,
-  Scanner as ScannerIcon,
+  Add as AddIcon,
+  Remove as RemoveIcon,
   Restaurant as RecipeIcon,
-  Warning as WarningIcon,
-  Settings as SettingsIcon
+  List as ListIcon
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -81,7 +81,7 @@ export default function HomePage() {
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Welcome to BITE! 🦷
+          Welcome to BITE!
         </Typography>
         <Typography variant="body1" color="textSecondary">
           Take a BITE out of waste. Your smart inventory management system.
@@ -92,42 +92,58 @@ export default function HomePage() {
         This is the initial setup. Complete your household setup and start adding items to your inventory.
       </Alert>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <InventoryIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Inventory</Typography>
-              </Box>
-              <Typography variant="body2" color="textSecondary" paragraph>
-                View and manage all your stored items
+      {/* Primary Actions - Mobile First */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        <Grid item xs={6}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <AddIcon sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
+              <Typography variant="h6" gutterBottom>
+                Add
               </Typography>
-              <Button variant="outlined" fullWidth onClick={() => router.push('/inventory')}>
-                View Inventory
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                Scan product + location
+              </Typography>
+              <Button
+                variant="contained"
+                fullWidth
+                size="large"
+                color="success"
+                onClick={() => router.push('/inventory/quick-add')}
+              >
+                Quick Add
               </Button>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <ScannerIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Add Items</Typography>
-              </Box>
-              <Typography variant="body2" color="textSecondary" paragraph>
-                Scan barcodes or add items manually
+        <Grid item xs={6}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <RemoveIcon sx={{ fontSize: 48, color: 'error.main', mb: 1 }} />
+              <Typography variant="h6" gutterBottom>
+                Use
               </Typography>
-              <Button variant="outlined" fullWidth onClick={() => router.push('/inventory/add')}>
-                Add Items
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                Remove items used
+              </Typography>
+              <Button
+                variant="contained"
+                fullWidth
+                size="large"
+                color="error"
+                onClick={() => router.push('/inventory/quick-use')}
+              >
+                Quick Use
               </Button>
             </CardContent>
           </Card>
         </Grid>
+      </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+      {/* Secondary Actions */}
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
@@ -144,18 +160,35 @@ export default function HomePage() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
-                <WarningIcon color="warning" sx={{ mr: 1 }} />
-                <Typography variant="h6">Expiring Soon</Typography>
+                <AddIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6">Add Items</Typography>
               </Box>
               <Typography variant="body2" color="textSecondary" paragraph>
-                Items that need attention
+                Detailed item entry with full options
               </Typography>
-              <Button variant="outlined" fullWidth onClick={() => router.push('/inventory?filter=expiring')}>
-                View Report
+              <Button variant="outlined" fullWidth onClick={() => router.push('/inventory/add')}>
+                Add Items
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={4}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={2}>
+                <ListIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6">Inventory</Typography>
+              </Box>
+              <Typography variant="body2" color="textSecondary" paragraph>
+                View and manage all your stored items
+              </Typography>
+              <Button variant="outlined" fullWidth onClick={() => router.push('/inventory')}>
+                View Inventory
               </Button>
             </CardContent>
           </Card>
