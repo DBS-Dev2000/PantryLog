@@ -198,10 +198,10 @@ export default function RecipeDetailPage() {
 
   const getAvailabilityIcon = (status: string) => {
     switch (status) {
-      case 'available': return <CheckIcon />
-      case 'partial': return <WarningIcon />
-      case 'missing': return <CloseIcon />
-      default: return null
+      case 'available': return <CheckIcon sx={{ color: 'success.main' }} />
+      case 'partial': return <WarningIcon sx={{ color: 'warning.main' }} />
+      case 'missing': return <CloseIcon sx={{ color: 'error.main' }} />
+      default: return <WarningIcon sx={{ color: 'grey.400' }} />
     }
   }
 
@@ -498,6 +498,11 @@ export default function RecipeDetailPage() {
           <List>
             {ingredients.map((ingredient, index) => (
               <ListItem key={index} sx={{ py: 1 }}>
+                {/* Availability Icon */}
+                <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
+                  {getAvailabilityIcon(ingredient.availability_status)}
+                </Box>
+
                 <Checkbox
                   checked={selectedIngredients.includes(ingredient.ingredient_name)}
                   onChange={(e) => {
@@ -509,6 +514,7 @@ export default function RecipeDetailPage() {
                   }}
                   color="secondary"
                   disabled={ingredient.availability_status === 'available'}
+                  sx={{ ml: 1 }}
                 />
                 <ListItemText
                   primary={
@@ -527,15 +533,17 @@ export default function RecipeDetailPage() {
                           ({ingredient.preparation})
                         </Typography>
                       )}
-                      {ingredient.availability_status === 'available' && (
-                        <Chip
-                          size="small"
-                          label="✓ Have it"
-                          color="success"
-                          variant="outlined"
-                        />
-                      )}
                     </Box>
+                  }
+                  secondary={
+                    ingredient.availability_status !== 'available' && ingredient.availability_status !== 'unknown' && (
+                      <Typography variant="caption" color="textSecondary">
+                        {ingredient.availability_status === 'partial'
+                          ? `Need more - only have ${ingredient.available_quantity || 0} ${ingredient.required_unit || 'units'}`
+                          : 'Need to buy'
+                        }
+                      </Typography>
+                    )
                   }
                 />
               </ListItem>
