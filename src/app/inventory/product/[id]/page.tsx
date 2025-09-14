@@ -43,10 +43,12 @@ import {
   Description as DescriptionIcon,
   Restaurant as NutritionIcon,
   Store as StoreIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Print as PrintIcon
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import QRCode from 'qrcode'
 
 interface ProductDetail {
   id: string
@@ -228,6 +230,67 @@ export default function ProductDetailPage() {
     }))
   }
 
+  const printItemQRCode = async () => {
+    if (!product) return
+
+    try {
+      // Generate QR code that links to this product's detail page
+      const productUrl = `${window.location.origin}/inventory/product/${product.id}`
+      const qrCodeDataUrl = await QRCode.toDataURL(productUrl, {
+        width: 250,
+        margin: 2,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      })
+
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) return
+
+      // Determine if this is a custom item
+      const isCustomItem = !product.upc || product.upc.startsWith('CUSTOM-')
+
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print Item QR Code</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+              .qr-container { border: 2px solid #000; padding: 20px; display: inline-block; margin: 20px; max-width: 350px; }
+              .item-info { margin: 10px 0; font-size: 18px; font-weight: bold; word-wrap: break-word; }
+              .brand-info { margin: 5px 0; font-size: 14px; color: #666; }
+              .instructions { margin: 10px 0; font-size: 12px; color: #666; }
+              .details { margin: 10px 0; font-size: 14px; }
+              .footer { margin-top: 15px; font-size: 10px; color: #999; }
+            </style>
+          </head>
+          <body>
+            <div class="qr-container">
+              <div class="item-info">${product.name}</div>
+              ${product.brand ? `<div class="brand-info">by ${product.brand}</div>` : ''}
+              <div class="instructions">Scan to view product details</div>
+              <img src="${qrCodeDataUrl}" alt="Product QR Code" style="max-width: 200px;" />
+              <div class="details">
+                ${isCustomItem ? 'Custom Item' : 'Product'} • Total: ${getTotalQuantity()} items<br>
+                ${getUniqueLocations()} storage location${getUniqueLocations() !== 1 ? 's' : ''}<br>
+                ${product.category ? `Category: ${product.category}` : ''}
+              </div>
+              <div class="footer">
+                BITE - Basic Inventory Tracking Engine<br>
+                ${isCustomItem ? 'Custom Item' : product.upc ? `UPC: ${product.upc}` : 'Product'} • ID: ${product.id}
+              </div>
+            </div>
+          </body>
+        </html>
+      `)
+
+      printWindow.document.close()
+      printWindow.print()
+
+      console.log('✅ Generated QR code for product:', product.name)
+    } catch (err) {
+      console.error('Error generating product QR code:', err)
+    }
+  }
+
   if (!user || loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, textAlign: 'center' }}>
@@ -277,9 +340,19 @@ export default function ProductDetailPage() {
         >
           Back to Inventory
         </Button>
-        <Typography variant="h4" component="h1">
-          Product Details
-        </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="h4" component="h1">
+            Product Details
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          startIcon={<PrintIcon />}
+          onClick={() => printItemQRCode()}
+          sx={{ ml: 2 }}
+        >
+          Print QR Code
+        </Button>
       </Box>
 
       {/* Mobile-Optimized Product Information */}

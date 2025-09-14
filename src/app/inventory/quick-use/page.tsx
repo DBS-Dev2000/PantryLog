@@ -332,6 +332,54 @@ export default function QuickUsePage() {
     }
   }
 
+  // Handle item QR code scan (for custom items or damaged barcodes)
+  const handleItemQRScan = async (qrInput: string) => {
+    setError(null)
+
+    try {
+      let productId = qrInput
+
+      // Check if it's a QR code URL to product details
+      if (qrInput.includes('/inventory/product/')) {
+        const url = new URL(qrInput)
+        const pathParts = url.pathname.split('/')
+        productId = pathParts[pathParts.length - 1]
+      }
+
+      if (!productId) {
+        setError('Invalid item QR code')
+        return
+      }
+
+      // Load product by ID instead of barcode
+      const { data: productData, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', productId)
+        .single()
+
+      if (error) throw error
+
+      setProductData({
+        id: productData.id,
+        name: productData.name,
+        brand: productData.brand || undefined,
+        image_url: productData.image_url || undefined,
+        upc: productData.upc || 'CUSTOM'
+      })
+
+      if (workflowMode === 'item-first') {
+        setActiveStep(1)
+        await loadProductLocations(productData.id)
+      }
+
+      console.log('✅ Product loaded from QR code:', productData.name)
+    } catch (err) {
+      setError('Invalid item QR code. Please scan a valid product QR code.')
+      console.error('Item QR scan error:', err)
+    }
+  }
+
   // Remove/use item from inventory
   const handleQuickUse = async () => {
     if (!user || !selectedItem) return
@@ -465,10 +513,30 @@ export default function QuickUsePage() {
   }
 
   const handleQRScanned = (qrCode: string) => {
-    console.log('📱 Camera scanned location QR code:', qrCode)
-    setLocationCode(qrCode)
+    console.log('📱 Camera scanned QR code:', qrCode)
     setShowQRScanner(false)
-    handleLocationScan(qrCode)
+
+    // Determine if this is a location QR or item QR
+    if (qrCode.includes('/inventory/product/')) {
+      // Item QR code
+      console.log('🔍 Detected item QR code')
+      setItemBarcode(qrCode)
+      handleItemQRScan(qrCode)
+    } else if (qrCode.includes('/inventory?location=')) {
+      // Location QR code
+      console.log('📍 Detected location QR code')
+      setLocationCode(qrCode)
+      handleLocationScan(qrCode)
+    } else {
+      // Try as location ID first, then as item ID
+      if (qrCode.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+        // Looks like a UUID - try as location first
+        setLocationCode(qrCode)
+        handleLocationScan(qrCode)
+      } else {
+        setError('Unrecognized QR code format')
+      }
+    }
   }
 
   if (!user) {

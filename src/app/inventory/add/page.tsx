@@ -42,6 +42,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
 import BarcodeScanner from '@/components/BarcodeScanner'
+import QRCode from 'qrcode'
 
 const barcodeSchema = z.object({
   barcode: z.string().min(1, 'Please enter a barcode or UPC'),
@@ -219,6 +220,7 @@ export default function AddItemPage() {
   const [showCamera, setShowCamera] = useState(false)
   const [printDialogOpen, setPrintDialogOpen] = useState(false)
   const [generatedBarcode, setGeneratedBarcode] = useState<string>('')
+  const [customItemQR, setCustomItemQR] = useState<string>('')
   const [storageLocations, setStorageLocations] = useState<StorageLocationOption[]>([])
   const [loadingLocations, setLoadingLocations] = useState(true)
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
@@ -647,7 +649,7 @@ export default function AddItemPage() {
       }
 
       // Create inventory item
-      const { error: inventoryError } = await supabase
+      const { data: newInventoryItem, error: inventoryError } = await supabase
         .from('inventory_items')
         .insert([
           {
@@ -660,17 +662,27 @@ export default function AddItemPage() {
             expiration_date: data.expirationDate || null,
             cost: data.cost || null,
             notes: data.notes || null,
+            created_by: user.id,
+            last_modified_by: user.id,
+            last_modified_at: new Date().toISOString()
           }
         ])
+        .select('id')
+        .single()
 
       if (inventoryError) throw inventoryError
 
       setSuccess(true)
 
-      // Show print dialog for custom items
-      if (generatedBarcode) {
-        setTimeout(() => setPrintDialogOpen(true), 1000)
+      // For custom items (no original barcode), offer to print item QR code
+      const isCustomItem = !productData?.upc || productData.upc.startsWith('CUSTOM-')
+      if (isCustomItem && newInventoryItem) {
+        setTimeout(() => {
+          setCustomItemQR(newInventoryItem.id) // Use inventory item ID for QR
+          setPrintDialogOpen(true)
+        }, 1000)
       }
+
 
       setTimeout(() => {
         router.push('/inventory')
@@ -709,30 +721,79 @@ export default function AddItemPage() {
     lookupProduct(barcode)
   }
 
-  const printBarcode = () => {
-    // This would integrate with a label printer or generate a printable page
+  const printBarcode = async () => {
     const printWindow = window.open('', '_blank')
-    if (printWindow && generatedBarcode) {
-      printWindow.document.write(`
-        <html>
-          <head><title>Print Barcode</title></head>
-          <body style="text-align: center; font-family: Arial;">
-            <h2>${detailsForm.getValues('productName')}</h2>
-            <div style="font-size: 24px; font-family: monospace; margin: 20px;">
-              ${generatedBarcode}
-            </div>
-            <div style="border: 1px solid #000; display: inline-block; padding: 10px;">
-              <!-- Barcode would be rendered here with a barcode library -->
-              <div style="font-family: monospace; font-size: 12px;">
+    if (!printWindow) return
+
+    const productName = detailsForm.getValues('productName')
+    const isCustomItem = !productData?.upc || productData.upc.startsWith('CUSTOM-')
+
+    try {
+      if (isCustomItem && customItemQR) {
+        // Generate QR code for custom items (links to inventory item)
+        const itemUrl = `${window.location.origin}/inventory/item/${customItemQR}`
+        const qrCodeDataUrl = await QRCode.toDataURL(itemUrl, {
+          width: 200,
+          margin: 2,
+          color: { dark: '#000000', light: '#FFFFFF' }
+        })
+
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print Item QR Code</title>
+              <style>
+                body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+                .qr-container { border: 2px solid #000; padding: 20px; display: inline-block; margin: 20px; }
+                .item-info { margin: 10px 0; font-size: 18px; font-weight: bold; }
+                .instructions { margin: 10px 0; font-size: 12px; color: #666; }
+                .details { margin: 10px 0; font-size: 14px; }
+              </style>
+            </head>
+            <body>
+              <div class="qr-container">
+                <div class="item-info">${productName}</div>
+                <div class="instructions">Scan to view/edit this item</div>
+                <img src="${qrCodeDataUrl}" alt="Item QR Code" />
+                <div class="details">
+                  Quantity: ${detailsForm.getValues('quantity')} ${detailsForm.getValues('unit')}<br>
+                  Added: ${new Date().toLocaleDateString()}<br>
+                  ${detailsForm.getValues('expirationDate') ? `Expires: ${new Date(detailsForm.getValues('expirationDate')).toLocaleDateString()}` : ''}
+                </div>
+                <div class="instructions">
+                  BITE - Basic Inventory Tracking Engine<br>
+                  Custom Item Code: ${customItemQR}
+                </div>
+              </div>
+            </body>
+          </html>
+        `)
+      } else if (generatedBarcode) {
+        // Regular barcode for standard products
+        printWindow.document.write(`
+          <html>
+            <head><title>Print Barcode</title></head>
+            <body style="text-align: center; font-family: Arial;">
+              <h2>${productName}</h2>
+              <div style="font-size: 24px; font-family: monospace; margin: 20px;">
                 ${generatedBarcode}
               </div>
-            </div>
-          </body>
-        </html>
-      `)
+              <div style="border: 1px solid #000; display: inline-block; padding: 10px;">
+                <div style="font-family: monospace; font-size: 12px;">
+                  ${generatedBarcode}
+                </div>
+              </div>
+            </body>
+          </html>
+        `)
+      }
+
       printWindow.document.close()
       printWindow.print()
+    } catch (err) {
+      console.error('Error generating print content:', err)
     }
+
     setPrintDialogOpen(false)
   }
 
@@ -1283,16 +1344,32 @@ export default function AddItemPage() {
         </Fade>
       )}
 
-      {/* Print Barcode Dialog */}
+      {/* Print Item Code Dialog */}
       <Dialog open={printDialogOpen} onClose={() => setPrintDialogOpen(false)}>
-        <DialogTitle>Print Custom Barcode</DialogTitle>
+        <DialogTitle>
+          {customItemQR ? 'Print Item QR Code' : 'Print Custom Barcode'}
+        </DialogTitle>
         <DialogContent>
           <Typography paragraph>
-            A custom barcode has been generated for this item. Would you like to print it?
+            {customItemQR
+              ? 'A custom QR code has been generated for this item. Perfect for homemade items, garden produce, or meal prep containers!'
+              : 'A custom barcode has been generated for this item.'
+            }
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Barcode: {generatedBarcode}
+            {customItemQR
+              ? `Item ID: ${customItemQR}`
+              : `Barcode: ${generatedBarcode}`
+            }
           </Typography>
+          {customItemQR && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                <strong>Perfect for:</strong> Garden produce, meal prep containers, bulk items,
+                homemade foods, and anything without a barcode
+              </Typography>
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPrintDialogOpen(false)}>
@@ -1303,7 +1380,7 @@ export default function AddItemPage() {
             variant="contained"
             startIcon={<PrintIcon />}
           >
-            Print Barcode
+            {customItemQR ? 'Print QR Code' : 'Print Barcode'}
           </Button>
         </DialogActions>
       </Dialog>
