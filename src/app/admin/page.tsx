@@ -143,6 +143,11 @@ export default function AdminPage() {
   }, [router])
 
   const loadAdminData = async () => {
+    if (!user?.id) {
+      console.log('❌ User not loaded yet, skipping admin data load')
+      return
+    }
+
     try {
       // Load users via server-side admin API
       const response = await fetch(`/api/admin/users?user_id=${user.id}`)
@@ -200,6 +205,11 @@ export default function AdminPage() {
   }
 
   const grantAdminAccess = async (targetUserId: string, adminLevel: string = 'admin') => {
+    if (!user?.id) {
+      setError('User not authenticated')
+      return
+    }
+
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
@@ -230,6 +240,11 @@ export default function AdminPage() {
   }
 
   const revokeAdminAccess = async (targetUserId: string) => {
+    if (!user?.id) {
+      setError('User not authenticated')
+      return
+    }
+
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
