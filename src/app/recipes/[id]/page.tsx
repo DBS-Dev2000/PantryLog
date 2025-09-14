@@ -131,28 +131,50 @@ export default function RecipeDetailPage() {
 
       setRecipe(recipeData as RecipeDetail)
 
-      // Load ingredients with availability check
-      const { data: availabilityData, error: availabilityError } = await supabase
-        .rpc('check_recipe_availability', {
-          p_recipe_id: recipeId,
-          p_household_id: userId
-        })
+      // Load recipe ingredients first
+      const { data: ingredientsData, error: ingredientsError } = await supabase
+        .from('recipe_ingredients')
+        .select('*')
+        .eq('recipe_id', recipeId)
+        .order('sort_order')
 
-      if (availabilityError && availabilityError.code !== 'PGRST116') {
-        console.warn('Availability check failed:', availabilityError)
-        // Load ingredients without availability if function doesn't exist
-        const { data: ingredientsData } = await supabase
-          .from('recipe_ingredients')
-          .select('*')
-          .eq('recipe_id', recipeId)
-          .order('sort_order')
+      if (ingredientsError) {
+        console.error('Error loading ingredients:', ingredientsError)
+      }
 
-        setIngredients((ingredientsData || []).map(ing => ({
-          ...ing,
-          availability_status: 'unknown'
-        })))
+      console.log('🥕 Loaded recipe ingredients:', ingredientsData?.length || 0)
+
+      if (ingredientsData && ingredientsData.length > 0) {
+        // Try availability check if function exists
+        try {
+          const { data: availabilityData, error: availabilityError } = await supabase
+            .rpc('check_recipe_availability', {
+              p_recipe_id: recipeId,
+              p_household_id: userId
+            })
+
+          if (availabilityError) {
+            console.warn('Availability check function not available:', availabilityError)
+            // Use ingredients without availability check
+            setIngredients(ingredientsData.map(ing => ({
+              ...ing,
+              availability_status: 'missing' // Default to missing for shopping list functionality
+            })))
+          } else {
+            console.log('✅ Availability check complete:', availabilityData?.length || 0)
+            setIngredients(availabilityData || [])
+          }
+        } catch (rpcError) {
+          console.warn('RPC function error, using basic ingredients:', rpcError)
+          // Fallback: Mark all ingredients as missing so shopping list works
+          setIngredients(ingredientsData.map(ing => ({
+            ...ing,
+            availability_status: 'missing'
+          })))
+        }
       } else {
-        setIngredients(availabilityData || [])
+        console.warn('❌ No ingredients found for recipe')
+        setIngredients([])
       }
 
       console.log('🍳 Recipe loaded:', recipeData.name || recipeData.title)
