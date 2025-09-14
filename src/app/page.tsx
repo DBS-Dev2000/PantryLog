@@ -12,7 +12,7 @@ import {
   Alert
 } from '@mui/material'
 import {
-  Inventory as InventoryIcon,
+  Kitchen as PantryIcon,
   Add as AddIcon,
   Remove as RemoveIcon,
   Restaurant as RecipeIcon,
@@ -172,14 +172,14 @@ export default function HomePage() {
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
-                <ListIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Inventory</Typography>
+                <PantryIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6">My Pantry</Typography>
               </Box>
               <Typography variant="body2" color="textSecondary" paragraph>
                 View and manage all your stored items
               </Typography>
               <Button variant="outlined" fullWidth onClick={() => router.push('/inventory')}>
-                View Inventory
+                View My Pantry
               </Button>
             </CardContent>
           </Card>

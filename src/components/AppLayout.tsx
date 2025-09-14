@@ -23,7 +23,7 @@ import {
 import {
   Menu as MenuIcon,
   Home as HomeIcon,
-  Inventory as InventoryIcon,
+  Kitchen as PantryIcon,
   Add as AddIcon,
   Settings as SettingsIcon,
   AccountCircle as AccountIcon,
@@ -45,7 +45,7 @@ interface AppLayoutProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Inventory', href: '/inventory', icon: InventoryIcon },
+  { name: 'My Pantry', href: '/inventory', icon: PantryIcon },
   { name: 'Quick Add', href: '/inventory/quick-add', icon: QrCodeScanner },
   { name: 'Quick Use', href: '/inventory/quick-use', icon: Remove },
   { name: 'Recipes', href: '/recipes', icon: Restaurant },

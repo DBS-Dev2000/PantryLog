@@ -24,7 +24,7 @@ import {
 } from '@mui/material'
 import {
   Add as AddIcon,
-  Inventory as InventoryIcon,
+  Kitchen as PantryIcon,
   LocationOn as LocationIcon,
   CalendarToday as CalendarIcon,
   Launch as LaunchIcon,
@@ -210,12 +210,12 @@ export default function InventoryPage() {
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom>
-            {storageLocation ? `${storageLocation.name} Inventory` : 'Inventory'}
+            {storageLocation ? `${storageLocation.name}` : 'My Pantry'}
           </Typography>
           <Typography variant="body1" color="textSecondary">
             {storageLocation
               ? `Items stored in ${storageLocation.name}`
-              : 'Manage your pantry and freezer items'
+              : 'Your complete pantry and freezer contents'
             }
           </Typography>
           {storageLocation && (
@@ -243,7 +243,7 @@ export default function InventoryPage() {
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
-                <InventoryIcon color="primary" sx={{ mr: 2 }} />
+                <PantryIcon color="primary" sx={{ mr: 2 }} />
                 <Box>
                   <Typography variant="h6">
                     {storageLocation ? filteredItems.length : items.length}
@@ -298,9 +298,9 @@ export default function InventoryPage() {
         </Alert>
       ) : filteredItems.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <InventoryIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <PantryIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h6" gutterBottom>
-            No items in your inventory yet
+            No items in your pantry yet
           </Typography>
           <Typography variant="body2" color="textSecondary" paragraph>
             Start by adding some items to track your pantry and freezer contents.
