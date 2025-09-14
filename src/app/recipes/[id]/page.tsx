@@ -42,7 +42,8 @@ import {
   Close as CloseIcon,
   Delete as DeleteIcon,
   ShoppingCart as ShoppingIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  Eco
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -101,6 +102,7 @@ export default function RecipeDetailPage() {
   const [ingredientSubstitutions, setIngredientSubstitutions] = useState<{[key: string]: string}>({})
   const [omittedIngredients, setOmittedIngredients] = useState<string[]>([])
   const [makingRecipe, setMakingRecipe] = useState(false)
+  const [loadingSubstitutions, setLoadingSubstitutions] = useState<{[key: string]: boolean}>({})
 
   useEffect(() => {
     const getUser = async () => {
@@ -568,8 +570,9 @@ export default function RecipeDetailPage() {
                         size="small"
                         variant="outlined"
                         onClick={async () => {
+                          setLoadingSubstitutions(prev => ({ ...prev, [ingredient.ingredient_name]: true }))
                           try {
-                            console.log('🤖 Getting AI substitutions for:', ingredient.ingredient_name)
+                            console.log('🌿 Getting AI substitutions for:', ingredient.ingredient_name)
                             const response = await fetch('/api/get-substitutions', {
                               method: 'POST',
                               headers: {
@@ -587,24 +590,36 @@ export default function RecipeDetailPage() {
                               const data = await response.json()
                               console.log('✅ AI substitutions received:', data.substitutions?.length || 0)
 
-                              // For now, just set the first excellent substitution
-                              const bestSub = data.substitutions?.find((sub: any) => sub.quality === 'excellent')
+                              // Handle both array and object responses
+                              const substitutions = Array.isArray(data.substitutions) ? data.substitutions : []
+                              const bestSub = substitutions.find((sub: any) => sub.quality === 'excellent')
                               if (bestSub) {
                                 setIngredientSubstitutions(prev => ({
                                   ...prev,
                                   [ingredient.ingredient_name]: bestSub.substitute
                                 }))
                                 console.log(`🔄 Auto-substituted: ${ingredient.ingredient_name} → ${bestSub.substitute}`)
+                              } else if (substitutions.length > 0) {
+                                // Use first substitution if no excellent ones found
+                                const firstSub = substitutions[0]
+                                setIngredientSubstitutions(prev => ({
+                                  ...prev,
+                                  [ingredient.ingredient_name]: firstSub.substitute
+                                }))
+                                console.log(`🔄 Auto-substituted: ${ingredient.ingredient_name} → ${firstSub.substitute}`)
                               }
                             }
                           } catch (err) {
                             console.error('Substitution error:', err)
+                          } finally {
+                            setLoadingSubstitutions(prev => ({ ...prev, [ingredient.ingredient_name]: false }))
                           }
                         }}
                         color="secondary"
-                        disabled={ingredient.availability_status === 'available'}
+                        disabled={ingredient.availability_status === 'available' || loadingSubstitutions[ingredient.ingredient_name]}
+                        startIcon={loadingSubstitutions[ingredient.ingredient_name] ? <CircularProgress size={16} /> : <Eco />}
                       >
-                        🤖 Smart Sub
+                        {loadingSubstitutions[ingredient.ingredient_name] ? 'Finding...' : 'Natural Sub'}
                       </Button>
                     )}
 
@@ -698,7 +713,7 @@ export default function RecipeDetailPage() {
             <Box display="flex" gap={1} flexWrap="wrap">
               <Button
                 variant="contained"
-                size={isMobile ? "medium" : "large"}
+                size="large"
                 onClick={async () => {
                   setMakingRecipe(true)
                   try {
@@ -747,7 +762,7 @@ export default function RecipeDetailPage() {
               {(Object.keys(ingredientSubstitutions).length > 0 || omittedIngredients.length > 0) && (
                 <Button
                   variant="outlined"
-                  size={isMobile ? "medium" : "large"}
+                  size="large"
                   onClick={() => {
                     // Create personalized recipe version
                     const versionName = prompt('Name for your version:', `${recipe?.name} - My Version`)
