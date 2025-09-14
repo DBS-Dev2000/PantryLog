@@ -26,7 +26,9 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -95,6 +97,7 @@ export default function RecipeDetailPage() {
   const [shoppingDialog, setShoppingDialog] = useState(false)
   const [shoppingLists, setShoppingLists] = useState<any[]>([])
   const [selectedShoppingList, setSelectedShoppingList] = useState('')
+  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
 
   useEffect(() => {
     const getUser = async () => {
@@ -185,7 +188,15 @@ export default function RecipeDetailPage() {
   }
 
   const getMissingIngredients = () => {
+    // If no ingredients in recipe, all ingredients are "missing" in a sense
+    if (ingredients.length === 0) {
+      return []
+    }
     return ingredients.filter(ing => ing.availability_status === 'missing' || ing.availability_status === 'partial')
+  }
+
+  const hasIngredients = () => {
+    return ingredients.length > 0
   }
 
   const deleteRecipe = async () => {
@@ -236,12 +247,15 @@ export default function RecipeDetailPage() {
   }
 
   const addMissingToShoppingList = async () => {
-    if (!selectedShoppingList) return
+    if (!selectedShoppingList || selectedIngredients.length === 0) return
 
     try {
       const missingIngredients = getMissingIngredients()
+      const selectedIngredientData = missingIngredients.filter(ing =>
+        selectedIngredients.includes(ing.ingredient_name)
+      )
 
-      const shoppingItems = missingIngredients.map(ingredient => ({
+      const shoppingItems = selectedIngredientData.map(ingredient => ({
         shopping_list_id: selectedShoppingList,
         item_name: ingredient.ingredient_name,
         quantity: ingredient.quantity,
@@ -258,12 +272,13 @@ export default function RecipeDetailPage() {
       if (error) throw error
 
       setShoppingDialog(false)
+      setSelectedIngredients([])
       setError(null)
-      console.log('✅ Added', missingIngredients.length, 'ingredients to shopping list')
+      console.log('✅ Added', selectedIngredientData.length, 'selected ingredients to shopping list')
 
       // Show success message
       const listName = shoppingLists.find(l => l.id === selectedShoppingList)?.name || 'shopping list'
-      setError(`Added ${missingIngredients.length} missing ingredients to ${listName}!`)
+      setError(`Added ${selectedIngredientData.length} ingredients to ${listName}!`)
 
     } catch (err: any) {
       setError(err.message)
@@ -444,7 +459,11 @@ export default function RecipeDetailPage() {
             🥕 Ingredients ({ingredients.length})
           </Typography>
 
-          {canMakeRecipe() ? (
+          {!hasIngredients() ? (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              ℹ️ No ingredients found for this recipe. Please edit the recipe to add ingredients.
+            </Alert>
+          ) : canMakeRecipe() ? (
             <Alert severity="success" sx={{ mb: 2 }}>
               ✅ You have all ingredients to make this recipe!
             </Alert>
@@ -458,6 +477,9 @@ export default function RecipeDetailPage() {
                   startIcon={<ShoppingIcon />}
                   onClick={() => {
                     loadShoppingLists()
+                    // Auto-select all missing ingredients
+                    const missingIngredients = getMissingIngredients()
+                    setSelectedIngredients(missingIngredients.map(ing => ing.ingredient_name))
                     setShoppingDialog(true)
                   }}
                   color="inherit"
@@ -593,18 +615,62 @@ export default function RecipeDetailPage() {
 
           <Box sx={{ mb: 3 }}>
             <Typography variant="body2" fontWeight="medium" gutterBottom>
-              Missing ingredients:
+              Select ingredients to add:
             </Typography>
             <List dense>
               {getMissingIngredients().map((ingredient, index) => (
-                <ListItem key={index} sx={{ py: 0.5 }}>
-                  <ListItemText
-                    primary={`${ingredient.quantity} ${ingredient.unit} ${ingredient.ingredient_name}`}
-                    secondary={ingredient.preparation ? `(${ingredient.preparation})` : ''}
+                <ListItem key={index} sx={{ py: 0.5, px: 0 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={selectedIngredients.includes(ingredient.ingredient_name)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedIngredients(prev => [...prev, ingredient.ingredient_name])
+                          } else {
+                            setSelectedIngredients(prev => prev.filter(name => name !== ingredient.ingredient_name))
+                          }
+                        }}
+                        color="secondary"
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="body2">
+                          {ingredient.quantity} {ingredient.unit} {ingredient.ingredient_name}
+                        </Typography>
+                        {ingredient.preparation && (
+                          <Typography variant="caption" color="textSecondary">
+                            ({ingredient.preparation})
+                          </Typography>
+                        )}
+                      </Box>
+                    }
+                    sx={{ width: '100%', m: 0 }}
                   />
                 </ListItem>
               ))}
             </List>
+
+            {getMissingIngredients().length > 1 && (
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  size="small"
+                  onClick={() => setSelectedIngredients(getMissingIngredients().map(ing => ing.ingredient_name))}
+                  disabled={selectedIngredients.length === getMissingIngredients().length}
+                >
+                  Select All
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => setSelectedIngredients([])}
+                  disabled={selectedIngredients.length === 0}
+                  sx={{ ml: 1 }}
+                >
+                  Select None
+                </Button>
+              </Box>
+            )}
           </Box>
 
           <FormControl fullWidth>
@@ -629,11 +695,11 @@ export default function RecipeDetailPage() {
           <Button
             onClick={addMissingToShoppingList}
             variant="contained"
-            disabled={!selectedShoppingList}
+            disabled={!selectedShoppingList || selectedIngredients.length === 0}
             startIcon={<AddIcon />}
             color="secondary"
           >
-            Add to Shopping List
+            Add {selectedIngredients.length} Ingredient{selectedIngredients.length !== 1 ? 's' : ''}
           </Button>
         </DialogActions>
       </Dialog>
