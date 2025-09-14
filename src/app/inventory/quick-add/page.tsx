@@ -565,7 +565,10 @@ export default function QuickAddPage() {
                   </Button>
                   <Button
                     variant="outlined"
-                    onClick={() => router.push('/inventory/add')}
+                    onClick={() => {
+                      setProductData({ name: '', upc: '' })
+                      setActiveStep(1)
+                    }}
                     startIcon={<EditIcon />}
                     color="info"
                   >
