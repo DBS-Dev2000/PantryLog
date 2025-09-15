@@ -44,27 +44,32 @@ import {
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { getUserHouseholdFeatures, shouldShowFeature, FeaturePermissions } from '@/lib/features'
+import FeatureUpsell from './FeatureUpsell'
 // import { useHousehold } from '@/contexts/HouseholdContext' // Temporarily disabled
 
 interface AppLayoutProps {
   children: React.ReactNode
 }
 
-const navigation = [
-  { name: 'Kitchen', href: '/', icon: HomeIcon },
-  { name: 'My Pantry', href: '/inventory', icon: PantryIcon },
-  { name: 'Stock Up', href: '/inventory/quick-add', icon: QrCodeScanner },
-  { name: 'Grab & Go', href: '/inventory/quick-use', icon: Remove },
-  { name: 'Recipes', href: '/recipes', icon: Restaurant },
-  { name: 'Shopping List', href: '/shopping', icon: ShoppingCart },
-  { name: 'Receipt Scan', href: '/inventory/receipt', icon: Receipt },
-  { name: 'Help', href: '/help', icon: HelpIcon },
-  { name: 'Settings', href: '/settings', icon: SettingsIcon },
+const baseNavigation = [
+  { name: 'Kitchen', href: '/', icon: HomeIcon, feature: null },
+  { name: 'My Pantry', href: '/inventory', icon: PantryIcon, feature: null },
+  { name: 'Stock Up', href: '/inventory/quick-add', icon: QrCodeScanner, feature: 'barcode_scanning' },
+  { name: 'Grab & Go', href: '/inventory/quick-use', icon: Remove, feature: null },
+  { name: 'Recipes', href: '/recipes', icon: Restaurant, feature: 'recipes_enabled' },
+  { name: 'Shopping List', href: '/shopping', icon: ShoppingCart, feature: 'shopping_list_sharing' },
+  { name: 'Receipt Scan', href: '/inventory/receipt', icon: Receipt, feature: 'ai_features_enabled' },
+  { name: 'Help', href: '/help', icon: HelpIcon, feature: null },
+  { name: 'Settings', href: '/settings', icon: SettingsIcon, feature: 'storage_editing' },
 ]
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<any>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [featurePermissions, setFeaturePermissions] = useState<FeaturePermissions | null>(null)
+  const [upsellDialog, setUpsellDialog] = useState<string | null>(null)
+  const [filteredNavigation, setFilteredNavigation] = useState(baseNavigation)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const router = useRouter()
   const pathname = usePathname()
@@ -104,6 +109,63 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
 
     loadHouseholdName()
+  }, [user])
+
+  // Load feature permissions and update navigation
+  useEffect(() => {
+    const loadFeaturePermissions = async () => {
+      if (!user) {
+        setFeaturePermissions(null)
+        setFilteredNavigation(baseNavigation)
+        return
+      }
+
+      try {
+        console.log('🔍 Loading feature permissions for navigation...')
+        const permissions = await getUserHouseholdFeatures(user.id)
+        setFeaturePermissions(permissions)
+
+        // Filter navigation based on feature permissions and enforcement mode
+        const filteredNav = await Promise.all(
+          baseNavigation.map(async (item) => {
+            if (!item.feature) {
+              // No feature restriction - always show
+              return item
+            }
+
+            const showResult = await shouldShowFeature(item.feature, user.id)
+
+            if (showResult === 'hide') {
+              return null // Will be filtered out
+            }
+
+            // Add visual indicator for upsell items
+            return {
+              ...item,
+              isUpsell: showResult === 'upsell',
+              disabled: showResult === 'upsell'
+            }
+          })
+        )
+
+        // Remove null items (hidden features)
+        const visibleNav = filteredNav.filter(item => item !== null)
+        setFilteredNavigation(visibleNav)
+
+        console.log('✅ Navigation filtered based on features:', {
+          total_items: baseNavigation.length,
+          visible_items: visibleNav.length,
+          permissions: permissions
+        })
+
+      } catch (error) {
+        console.error('❌ Error loading feature permissions:', error)
+        // Fail open - show all navigation if error
+        setFilteredNavigation(baseNavigation)
+      }
+    }
+
+    loadFeaturePermissions()
   }, [user])
 
   useEffect(() => {
@@ -159,7 +221,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </Toolbar>
       <Divider />
       <List>
-        {navigation.map((item) => {
+        {filteredNavigation.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href ||
             (item.href !== '/' && pathname.startsWith(item.href))
@@ -168,12 +230,40 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <ListItem key={item.name} disablePadding>
               <ListItemButton
                 selected={isActive}
-                onClick={() => handleNavigation(item.href)}
+                onClick={() => {
+                  if (item.isUpsell) {
+                    // Show upsell dialog instead of navigating
+                    console.log('🎁 Showing upsell for feature:', item.feature)
+                    setUpsellDialog(item.feature)
+                  } else {
+                    handleNavigation(item.href)
+                  }
+                }}
+                sx={{
+                  opacity: item.isUpsell ? 0.6 : 1,
+                  '&:hover': {
+                    opacity: 1
+                  }
+                }}
               >
                 <ListItemIcon>
-                  <Icon color={isActive ? 'primary' : 'inherit'} />
+                  <Icon color={isActive ? 'primary' : item.isUpsell ? 'disabled' : 'inherit'} />
                 </ListItemIcon>
-                <ListItemText primary={item.name} />
+                <ListItemText
+                  primary={
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <span>{item.name}</span>
+                      {item.isUpsell && (
+                        <Chip
+                          label="Upgrade"
+                          size="small"
+                          color="warning"
+                          sx={{ height: 20, fontSize: '0.7rem' }}
+                        />
+                      )}
+                    </Box>
+                  }
+                />
               </ListItemButton>
             </ListItem>
           )
@@ -306,6 +396,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <Toolbar />
         {children}
       </Box>
+
+      {/* Feature Upsell Dialog */}
+      <FeatureUpsell
+        open={!!upsellDialog}
+        onClose={() => setUpsellDialog(null)}
+        featureName={upsellDialog || ''}
+      />
     </Box>
   )
 }
