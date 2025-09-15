@@ -85,17 +85,35 @@ export async function GET(request: NextRequest) {
         })
 
         // Process the data to get member counts and details
-        households = householdsData.map(h => ({
-          ...h,
-          member_count: h.household_members?.filter(m => m.is_active !== false)?.length || 0,
-          members: h.household_members?.filter(m => m.is_active !== false)?.map(member => ({
+        households = householdsData.map(h => {
+          const activeMembers = h.household_members?.filter(m => m.is_active !== false) || []
+          const householdMembers = activeMembers.map(member => ({
             user_id: member.user_id,
             role: member.role || 'member',
             joined_at: member.joined_at,
             email: userMap.get(member.user_id)?.email || 'Unknown',
-            user_created_at: userMap.get(member.user_id)?.created_at
-          })) || []
-        }))
+            user_created_at: userMap.get(member.user_id)?.created_at,
+            is_creator: member.user_id === h.created_by
+          }))
+
+          // If no members found but household exists, add creator as member
+          if (householdMembers.length === 0 && h.created_by) {
+            householdMembers.push({
+              user_id: h.created_by,
+              role: 'admin',
+              joined_at: h.created_at,
+              email: userMap.get(h.created_by)?.email || 'Creator',
+              user_created_at: userMap.get(h.created_by)?.created_at,
+              is_creator: true
+            })
+          }
+
+          return {
+            ...h,
+            member_count: Math.max(householdMembers.length, 1),
+            members: householdMembers
+          }
+        })
         console.log('🏠 Enhanced households query result:', householdsData.length, 'households found with members')
       } else {
         console.error('❌ Enhanced households query failed:', householdsError)

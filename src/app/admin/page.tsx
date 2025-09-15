@@ -859,13 +859,17 @@ export default function AdminPage() {
                     </Typography>
                     <Box display="flex" flexWrap="wrap" gap={1}>
                       {selectedUser.households.map((household: any, index: number) => (
-                        <Chip
-                          key={household.household_id || index}
-                          label={`${household.household_name} (${household.role})`}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
+                        <Box key={household.household_id || index} sx={{ mb: 1 }}>
+                          <Chip
+                            label={`${household.household_name || 'Unnamed Household'} (${household.role})`}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                          <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
+                            ID: {household.household_id}
+                          </Typography>
+                        </Box>
                       ))}
                     </Box>
                   </Grid>
@@ -943,9 +947,14 @@ export default function AdminPage() {
                           {selectedHousehold.members.map((member: any, index: number) => (
                             <TableRow key={member.user_id || index}>
                               <TableCell>
-                                <Typography variant="body2">
-                                  {member.email}
-                                </Typography>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                  <Typography variant="body2">
+                                    {member.email}
+                                  </Typography>
+                                  {member.is_creator && (
+                                    <Chip label="Creator" size="small" color="warning" />
+                                  )}
+                                </Box>
                               </TableCell>
                               <TableCell>
                                 <Chip
