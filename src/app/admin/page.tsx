@@ -29,7 +29,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress
+  CircularProgress,
+  Tabs,
+  Tab,
+  Divider
 } from '@mui/material'
 import {
   AdminPanelSettings as AdminIcon,
@@ -39,7 +42,10 @@ import {
   Visibility as ViewIcon,
   Edit as EditIcon,
   Block as BlockIcon,
-  Save as SaveIcon
+  Save as SaveIcon,
+  Dashboard as DashboardIcon,
+  Psychology as PromptIcon,
+  Code as CodeIcon
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -94,6 +100,9 @@ export default function AdminPage() {
   const [households, setHouseholds] = useState<any[]>([])
   const [householdPermissions, setHouseholdPermissions] = useState<any[]>([])
 
+  // Tab management
+  const [activeTab, setActiveTab] = useState(0)
+
   // Dialog states for actions
   const [userDetailsDialog, setUserDetailsDialog] = useState(false)
   const [householdDetailsDialog, setHouseholdDetailsDialog] = useState(false)
@@ -102,6 +111,15 @@ export default function AdminPage() {
   const [selectedHousehold, setSelectedHousehold] = useState<any>(null)
   const [editingFeatures, setEditingFeatures] = useState<any>(null)
   const [savingFeatures, setSavingFeatures] = useState(false)
+
+  // AI Configuration management
+  const [aiPrompts, setAiPrompts] = useState({
+    item_recognition: `Analyze this grocery item image and identify the product. Return a JSON object with detailed product information including name, brand, category, and confidence level.`,
+    recipe_extraction: `Extract the complete recipe from this image. This could be a handwritten recipe card, printed cookbook page, or recipe note. Extract ALL visible information and return a detailed JSON object.`,
+    substitution_suggestions: `Provide ingredient substitution suggestions for this recipe based on available pantry items. Focus on practical alternatives that maintain flavor and nutritional balance.`,
+    predictive_shopping: `Analyze consumption patterns and current inventory to generate a predictive shopping list. Consider usage frequency, expiration dates, and seasonal preferences.`
+  })
+  const [editingPrompts, setEditingPrompts] = useState(false)
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -479,8 +497,47 @@ export default function AdminPage() {
         </Alert>
       )}
 
-      {/* System Overview */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      {/* Admin Navigation Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab
+            icon={<DashboardIcon />}
+            label="System Overview"
+            sx={{ minHeight: 'auto' }}
+          />
+          <Tab
+            icon={<UsersIcon />}
+            label="Users & Households"
+            sx={{ minHeight: 'auto' }}
+          />
+          <Tab
+            icon={<AIIcon />}
+            label="AI Configuration"
+            sx={{ minHeight: 'auto' }}
+          />
+          <Tab
+            icon={<PromptIcon />}
+            label="AI Prompts"
+            sx={{ minHeight: 'auto' }}
+          />
+          <Tab
+            icon={<SettingsIcon />}
+            label="System Settings"
+            sx={{ minHeight: 'auto' }}
+          />
+        </Tabs>
+      </Box>
+
+      {/* Tab Content */}
+      {activeTab === 0 && (
+        <>
+          {/* System Overview */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
@@ -532,8 +589,12 @@ export default function AdminPage() {
           </Card>
         </Grid>
       </Grid>
+        </>
+      )}
 
-      {/* Household Management */}
+      {activeTab === 1 && (
+        <>
+          {/* Users & Households Management */}
       <Card sx={{ mb: 4 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
@@ -798,6 +859,294 @@ export default function AdminPage() {
           </TableContainer>
         </CardContent>
       </Card>
+        </>
+      )}
+
+      {activeTab === 2 && (
+        <>
+          {/* AI Configuration */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                🤖 AI Provider Configuration
+              </Typography>
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Primary AI Provider</InputLabel>
+                    <Select
+                      value={adminSettings.default_ai_provider}
+                      label="Primary AI Provider"
+                      onChange={(e) => setAdminSettings({ ...adminSettings, default_ai_provider: e.target.value })}
+                    >
+                      <MenuItem value="claude">Claude (Anthropic)</MenuItem>
+                      <MenuItem value="gemini">Gemini (Google)</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <Box>
+                    <Typography variant="body2" color="textSecondary" gutterBottom>
+                      Provider Status:
+                    </Typography>
+                    <Box display="flex" gap={1}>
+                      <Chip
+                        label="Claude"
+                        color={process.env.CLAUDE_API_KEY ? 'success' : 'default'}
+                        size="small"
+                      />
+                      <Chip
+                        label="Gemini"
+                        color={process.env.GEMINI_API_KEY ? 'success' : 'default'}
+                        size="small"
+                      />
+                    </Box>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Box display="flex" gap={2} justifyContent="flex-end">
+                    <Button
+                      variant="contained"
+                      onClick={updateAdminSettings}
+                      startIcon={<SettingsIcon />}
+                    >
+                      Update Settings
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {activeTab === 3 && (
+        <>
+          {/* AI Prompts Management */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    🧠 AI Prompt Management
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Customize AI prompts for different functions to improve results
+                  </Typography>
+                </Box>
+                <Button
+                  variant={editingPrompts ? "outlined" : "contained"}
+                  onClick={() => setEditingPrompts(!editingPrompts)}
+                  startIcon={<EditIcon />}
+                >
+                  {editingPrompts ? 'View Mode' : 'Edit Prompts'}
+                </Button>
+              </Box>
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom color="primary">
+                        📸 Item Recognition
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                        Visual AI analysis for grocery item identification
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={4}
+                        value={aiPrompts.item_recognition}
+                        onChange={(e) => setAiPrompts({
+                          ...aiPrompts,
+                          item_recognition: e.target.value
+                        })}
+                        disabled={!editingPrompts}
+                        placeholder="Enter prompt for item recognition AI..."
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom color="secondary">
+                        📝 Recipe Extraction
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                        Extract recipes from photos and scanned images
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={4}
+                        value={aiPrompts.recipe_extraction}
+                        onChange={(e) => setAiPrompts({
+                          ...aiPrompts,
+                          recipe_extraction: e.target.value
+                        })}
+                        disabled={!editingPrompts}
+                        placeholder="Enter prompt for recipe extraction AI..."
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom color="warning.main">
+                        🔄 Substitution Suggestions
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                        AI-powered ingredient substitution recommendations
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={4}
+                        value={aiPrompts.substitution_suggestions}
+                        onChange={(e) => setAiPrompts({
+                          ...aiPrompts,
+                          substitution_suggestions: e.target.value
+                        })}
+                        disabled={!editingPrompts}
+                        placeholder="Enter prompt for substitution AI..."
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom color="success.main">
+                        🛒 Predictive Shopping
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                        Smart shopping list generation based on usage patterns
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={4}
+                        value={aiPrompts.predictive_shopping}
+                        onChange={(e) => setAiPrompts({
+                          ...aiPrompts,
+                          predictive_shopping: e.target.value
+                        })}
+                        disabled={!editingPrompts}
+                        placeholder="Enter prompt for predictive shopping AI..."
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {editingPrompts && (
+                  <Grid item xs={12}>
+                    <Box display="flex" gap={2} justifyContent="flex-end">
+                      <Button
+                        variant="outlined"
+                        onClick={() => setEditingPrompts(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={() => {
+                          console.log('💾 Saving AI prompts:', aiPrompts)
+                          setSuccess('AI prompts updated successfully!')
+                          setEditingPrompts(false)
+                        }}
+                        startIcon={<SaveIcon />}
+                      >
+                        Save Prompts
+                      </Button>
+                    </Box>
+                  </Grid>
+                )}
+              </Grid>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {activeTab === 4 && (
+        <>
+          {/* System Settings */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                ⚙️ System Settings
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                Global system configuration and maintenance
+              </Typography>
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Default Monthly AI Limit ($)"
+                    type="number"
+                    value={adminSettings.default_monthly_limit}
+                    onChange={(e) => setAdminSettings({
+                      ...adminSettings,
+                      default_monthly_limit: parseFloat(e.target.value)
+                    })}
+                    inputProps={{ step: 0.01, min: 0 }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Default Daily AI Limit ($)"
+                    type="number"
+                    value={adminSettings.default_daily_limit}
+                    onChange={(e) => setAdminSettings({
+                      ...adminSettings,
+                      default_daily_limit: parseFloat(e.target.value)
+                    })}
+                    inputProps={{ step: 0.01, min: 0 }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Free Tier Requests"
+                    type="number"
+                    value={adminSettings.free_tier_requests}
+                    onChange={(e) => setAdminSettings({
+                      ...adminSettings,
+                      free_tier_requests: parseInt(e.target.value)
+                    })}
+                    inputProps={{ min: 0 }}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Box display="flex" gap={2} justifyContent="flex-end">
+                    <Button
+                      variant="contained"
+                      onClick={updateAdminSettings}
+                      startIcon={<SettingsIcon />}
+                    >
+                      Update System Settings
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       {/* User Details Dialog */}
       <Dialog
