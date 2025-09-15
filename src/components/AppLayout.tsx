@@ -66,7 +66,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<any>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const [householdMenuEl, setHouseholdMenuEl] = useState<null | HTMLElement>(null)
   const router = useRouter()
   const pathname = usePathname()
   const theme = useTheme()
@@ -246,70 +245,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </MenuItem>
           </Menu>
 
-          {/* Household Switching Menu */}
-          <Menu
-            id="household-menu"
-            anchorEl={householdMenuEl}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'left',
-            }}
-            keepMounted
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'left',
-            }}
-            open={Boolean(householdMenuEl)}
-            onClose={handleHouseholdMenuClose}
-          >
-            <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider' }}>
-              <Typography variant="subtitle2" color="textSecondary">
-                Switch Household
-              </Typography>
-            </Box>
-            {households && households.map((household) => (
-              <MenuItem
-                key={household.household_id}
-                onClick={() => handleHouseholdSwitch(household.household_id)}
-                selected={currentHousehold?.id === household.household_id}
-                sx={{ py: 1.5 }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                      {household.household_name}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                      <Chip
-                        label={household.role}
-                        size="small"
-                        variant="outlined"
-                        sx={{ mr: 1, height: 20, fontSize: '0.75rem' }}
-                      />
-                      {household.is_default && (
-                        <Chip
-                          label="Default"
-                          size="small"
-                          color="primary"
-                          sx={{ height: 20, fontSize: '0.75rem' }}
-                        />
-                      )}
-                    </Box>
-                  </Box>
-                  {currentHousehold?.id === household.household_id && (
-                    <CheckIcon color="primary" sx={{ ml: 1 }} />
-                  )}
-                </Box>
-              </MenuItem>
-            ))}
-            <Divider />
-            <MenuItem onClick={() => { handleNavigation('/settings/profile'); handleHouseholdMenuClose() }}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <SettingsIcon sx={{ mr: 1, fontSize: 20 }} />
-                <Typography variant="body2">Manage Households</Typography>
-              </Box>
-            </MenuItem>
-          </Menu>
+          {/* Household Switching Menu - Temporarily Disabled */}
         </Toolbar>
       </AppBar>
 
