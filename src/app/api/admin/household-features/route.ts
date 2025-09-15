@@ -56,27 +56,50 @@ export async function POST(request: NextRequest) {
 
     console.log('💾 Saving household features:', { household_id, features })
 
-    // Update household features using the new features column
+    // Update household features - try direct update first, then RPC if available
+    let updateSuccess = false
+
     try {
+      // Try direct column update first
       const { data, error } = await supabaseAdmin
-        .rpc('update_household_features', {
-          household_uuid: household_id,
-          new_features: features
+        .from('households')
+        .update({
+          features: features,
+          updated_at: new Date().toISOString()
         })
+        .eq('id', household_id)
 
       if (error) {
-        throw error
+        console.log('Direct update failed, trying RPC function:', error.message)
+
+        // Fallback to RPC function if column exists and migration was run
+        const { data: rpcData, error: rpcError } = await supabaseAdmin
+          .rpc('update_household_features', {
+            household_uuid: household_id,
+            new_features: features
+          })
+
+        if (rpcError) {
+          throw new Error(`Both direct update and RPC failed. You may need to run the household_features_column_migration.sql first. Direct error: ${error.message}, RPC error: ${rpcError.message}`)
+        }
+        updateSuccess = true
+        console.log('✅ Household features updated via RPC fallback')
+      } else {
+        updateSuccess = true
+        console.log('✅ Household features updated via direct column update')
       }
 
-      console.log('✅ Household features updated successfully via RPC function')
-
       // Log admin activity
-      await supabaseAdmin.rpc('log_admin_activity', {
-        p_admin_user_id: requesting_user_id,
-        p_action_type: 'update_household_features',
-        p_action_details: `Updated features for household ${household_id}`,
-        p_target_user_id: null
-      }).catch(() => {}) // Ignore logging errors
+      try {
+        await supabaseAdmin.rpc('log_admin_activity', {
+          p_admin_user_id: requesting_user_id,
+          p_action_type: 'update_household_features',
+          p_action_details: `Updated features for household ${household_id}`,
+          p_target_user_id: null
+        })
+      } catch (logError) {
+        console.log('Failed to log admin activity:', logError)
+      }
 
       return NextResponse.json({
         success: true,
