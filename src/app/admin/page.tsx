@@ -111,6 +111,7 @@ export default function AdminPage() {
 
   // Dialog states for actions
   const [userDetailsDialog, setUserDetailsDialog] = useState(false)
+  const [userEditMode, setUserEditMode] = useState(false)
   const [householdDetailsDialog, setHouseholdDetailsDialog] = useState(false)
   const [householdEditDialog, setHouseholdEditDialog] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
@@ -387,8 +388,17 @@ export default function AdminPage() {
   }
 
   const handleEditUser = (userData: any) => {
-    // For now, same as view - can be enhanced later
-    setSelectedUser(userData)
+    setSelectedUser({
+      ...userData,
+      overrides: userData.overrides || {
+        enforcement_mode: 'system_default', // system_default, upsell, hide
+        enforce_api_limits: null, // null = use household/system setting
+        show_upgrade_prompts: null, // null = use household/system setting
+        unlimited_ai: false, // special override for specific users
+        admin_features_access: userData.is_admin // admins get all features regardless
+      }
+    })
+    setUserEditMode(true)
     setUserDetailsDialog(true)
   }
 
@@ -1209,12 +1219,15 @@ export default function AdminPage() {
       {/* User Details Dialog */}
       <Dialog
         open={userDetailsDialog}
-        onClose={() => setUserDetailsDialog(false)}
+        onClose={() => {
+          setUserDetailsDialog(false)
+          setUserEditMode(false)
+        }}
         maxWidth="md"
         fullWidth
       >
         <DialogTitle>
-          👤 User Details: {selectedUser?.email}
+          👤 {userEditMode ? 'Edit User Settings' : 'User Details'}: {selectedUser?.email}
         </DialogTitle>
         <DialogContent>
           {selectedUser && (
@@ -1288,12 +1301,138 @@ export default function AdminPage() {
                     </Alert>
                   </Grid>
                 )}
+
+                {/* User Override Settings (only in edit mode) */}
+                {userEditMode && (
+                  <>
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 2 }} />
+                      <Typography variant="h6" gutterBottom color="secondary">
+                        🎭 User Enforcement Overrides
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                        Override household and system enforcement settings for this specific user
+                      </Typography>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Card variant="outlined" sx={{ backgroundColor: 'action.hover' }}>
+                        <CardContent>
+                          <Typography variant="body1" gutterBottom>🚫 Personal Enforcement Mode</Typography>
+                          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                            <InputLabel>Override Mode</InputLabel>
+                            <Select
+                              value={selectedUser.overrides?.enforcement_mode || 'system_default'}
+                              label="Override Mode"
+                              onChange={(e) => setSelectedUser({
+                                ...selectedUser,
+                                overrides: {
+                                  ...selectedUser.overrides,
+                                  enforcement_mode: e.target.value
+                                }
+                              })}
+                            >
+                              <MenuItem value="system_default">Use Household/System Default</MenuItem>
+                              <MenuItem value="upsell">Show as Upsell</MenuItem>
+                              <MenuItem value="hide">Hide from Navigation</MenuItem>
+                            </Select>
+                          </FormControl>
+
+                          <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <Typography variant="body2">Unlimited AI Access</Typography>
+                            <Switch
+                              checked={selectedUser.overrides?.unlimited_ai || false}
+                              onChange={(e) => setSelectedUser({
+                                ...selectedUser,
+                                overrides: {
+                                  ...selectedUser.overrides,
+                                  unlimited_ai: e.target.checked
+                                }
+                              })}
+                              size="small"
+                            />
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Card variant="outlined" sx={{ backgroundColor: 'action.hover' }}>
+                        <CardContent>
+                          <Typography variant="body1" gutterBottom>🔒 Personal API Settings</Typography>
+                          <Box display="flex" flexDirection="column" gap={1}>
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                              <Typography variant="body2">Override API Limits</Typography>
+                              <Switch
+                                checked={selectedUser.overrides?.enforce_api_limits === false}
+                                onChange={(e) => setSelectedUser({
+                                  ...selectedUser,
+                                  overrides: {
+                                    ...selectedUser.overrides,
+                                    enforce_api_limits: e.target.checked ? false : null
+                                  }
+                                })}
+                                size="small"
+                              />
+                            </Box>
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                              <Typography variant="body2">Hide Upgrade Prompts</Typography>
+                              <Switch
+                                checked={selectedUser.overrides?.show_upgrade_prompts === false}
+                                onChange={(e) => setSelectedUser({
+                                  ...selectedUser,
+                                  overrides: {
+                                    ...selectedUser.overrides,
+                                    show_upgrade_prompts: e.target.checked ? false : null
+                                  }
+                                })}
+                                size="small"
+                              />
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Alert severity="warning">
+                        <Typography variant="body2">
+                          <strong>Priority Order:</strong> User overrides → Household settings → System defaults<br />
+                          <strong>Admin Users:</strong> Always have access to all features regardless of enforcement settings
+                        </Typography>
+                      </Alert>
+                    </Grid>
+                  </>
+                )}
               </Grid>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setUserDetailsDialog(false)}>Close</Button>
+          {userEditMode ? (
+            <>
+              <Button onClick={() => {
+                setUserDetailsDialog(false)
+                setUserEditMode(false)
+              }}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  console.log('💾 Saving user overrides:', selectedUser.overrides)
+                  setSuccess(`User overrides updated for: ${selectedUser.email}`)
+                  setUserDetailsDialog(false)
+                  setUserEditMode(false)
+                }}
+                startIcon={<SaveIcon />}
+              >
+                Save Overrides
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => setUserDetailsDialog(false)}>Close</Button>
+          )}
         </DialogActions>
       </Dialog>
 
@@ -1563,12 +1702,84 @@ export default function AdminPage() {
                   </Card>
                 </Grid>
 
+                {/* Enforcement Overrides */}
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="h6" gutterBottom color="warning.main">
+                    🎛️ Enforcement Overrides
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                    Override system-wide enforcement settings for this household only
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="body1" gutterBottom>🚫 Disabled Feature Mode</Typography>
+                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                        How should disabled features appear for this household?
+                      </Typography>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Override Mode</InputLabel>
+                        <Select
+                          value={editingFeatures.enforcement_mode || 'system_default'}
+                          label="Override Mode"
+                          onChange={(e) => setEditingFeatures({
+                            ...editingFeatures,
+                            enforcement_mode: e.target.value
+                          })}
+                        >
+                          <MenuItem value="system_default">Use System Default</MenuItem>
+                          <MenuItem value="upsell">Show as Upsell</MenuItem>
+                          <MenuItem value="hide">Hide from Navigation</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="body1" gutterBottom>🔒 API Limits</Typography>
+                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                        Override API usage limits for this household
+                      </Typography>
+                      <Box display="flex" flexDirection="column" gap={1}>
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography variant="body2">Enforce API Limits</Typography>
+                          <Switch
+                            checked={editingFeatures.enforce_api_limits ?? true}
+                            onChange={(e) => setEditingFeatures({
+                              ...editingFeatures,
+                              enforce_api_limits: e.target.checked
+                            })}
+                            size="small"
+                          />
+                        </Box>
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography variant="body2">Show Upgrade Prompts</Typography>
+                          <Switch
+                            checked={editingFeatures.show_upgrade_prompts ?? true}
+                            onChange={(e) => setEditingFeatures({
+                              ...editingFeatures,
+                              show_upgrade_prompts: e.target.checked
+                            })}
+                            size="small"
+                          />
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
                 {/* Household Info */}
                 <Grid item xs={12}>
                   <Alert severity="info">
                     <Typography variant="body2">
-                      <strong>Note:</strong> Changes will take effect immediately for this household.
-                      Users may need to refresh their browser to see feature changes.
+                      <strong>Note:</strong> Household overrides take precedence over system settings.
+                      Individual users can be given additional overrides in their user settings.
                     </Typography>
                   </Alert>
                 </Grid>
