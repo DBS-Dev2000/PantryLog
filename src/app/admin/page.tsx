@@ -111,7 +111,6 @@ export default function AdminPage() {
           if (isFallbackAdmin) {
             setIsAdmin(true)
             setAuthenticated(true)
-            await loadAdminData()
             // Log admin access
             await supabase.rpc('log_admin_activity', {
               p_admin_user_id: session.user.id,
@@ -124,7 +123,6 @@ export default function AdminPage() {
         } else if (isAdminResult) {
           setIsAdmin(true)
           setAuthenticated(true)
-          await loadAdminData()
           // Log admin access
           await supabase.rpc('log_admin_activity', {
             p_admin_user_id: session.user.id,
@@ -144,97 +142,75 @@ export default function AdminPage() {
     checkAdminAccess()
   }, [router])
 
+  // Load admin data after user and authentication states are set
+  useEffect(() => {
+    if (user && isAdmin && authenticated) {
+      loadAdminData()
+    }
+  }, [user, isAdmin, authenticated])
+
   const loadAdminData = async () => {
     if (!user?.id) {
-      console.log('❌ User not loaded yet, skipping admin data load')
+      console.warn('❌ User not loaded yet, cannot load admin data')
       return
     }
 
     try {
-      console.log('📡 Loading admin data...')
+      console.log('📡 Loading admin data for user:', user.email)
 
-      // Load users directly from Supabase as fallback
-      try {
-        // Try API route first
-        const response = await fetch(`/api/admin/users?user_id=${user.id}`)
+      // Load all admin data via API routes
+      const [usersResponse, dashboardResponse] = await Promise.all([
+        fetch(`/api/admin/users?user_id=${user.id}`).catch(() => null),
+        fetch(`/api/admin/dashboard?user_id=${user.id}`).catch(() => null)
+      ])
 
-        if (response.ok) {
-          const adminData = await response.json()
-          if (!adminData.error) {
-            setUsers(adminData.users || [])
-            setAdminUsers(adminData.admin_users || [])
-            console.log('✅ Admin data loaded via API:', adminData.users?.length || 0, 'users')
-          } else {
-            throw new Error(adminData.error)
-          }
+      // Load users data
+      if (usersResponse?.ok) {
+        const adminData = await usersResponse.json()
+        if (!adminData.error) {
+          setUsers(adminData.users || [])
+          setAdminUsers(adminData.admin_users || [])
+          console.log('✅ User data loaded via API:', adminData.users?.length || 0, 'users')
         } else {
-          throw new Error('API route failed')
+          console.warn('Users API error:', adminData.error)
+          // Fallback for users
+          setUsers([{
+            id: user.id,
+            email: user.email,
+            created_at: user.created_at,
+            last_sign_in_at: user.last_sign_in_at,
+            is_admin: true
+          }])
         }
-      } catch (apiError) {
-        console.log('API route failed, using direct database query:', apiError)
-
-        // Fallback: Load basic user data directly from auth.users
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
-
-        if (authError) {
-          // If we can't access auth.users, create mock data for demo
-          console.log('Auth admin access not available, using fallback data')
-          setUsers([
-            {
-              id: user.id,
-              email: user.email,
-              created_at: user.created_at,
-              last_sign_in_at: user.last_sign_in_at,
-              is_admin: true
-            }
-          ])
-        } else {
-          const usersWithStatus = authUsers.users.map(u => ({
-            id: u.id,
-            email: u.email,
-            created_at: u.created_at,
-            last_sign_in_at: u.last_sign_in_at,
-            is_admin: u.email === user.email // Current user is admin
-          }))
-          setUsers(usersWithStatus)
-        }
+      } else {
+        console.log('Users API failed, using fallback data')
+        setUsers([{
+          id: user.id,
+          email: user.email,
+          created_at: user.created_at,
+          last_sign_in_at: user.last_sign_in_at,
+          is_admin: true
+        }])
       }
 
-      // Load usage statistics with fallback
-      try {
-        const { data: statsData, error: statsError } = await supabase
-          .from('user_ai_usage_summary')
-          .select('*')
-          .order('month_cost', { ascending: false })
-          .limit(50)
-
-        if (!statsError) {
-          setUsageStats(statsData || [])
+      // Load dashboard data (households, usage stats)
+      if (dashboardResponse?.ok) {
+        const dashboardData = await dashboardResponse.json()
+        if (!dashboardData.error && dashboardData.data) {
+          setHouseholds(dashboardData.data.households || [])
+          setUsageStats(dashboardData.data.usage_stats || [])
+          console.log('✅ Dashboard data loaded via API:', {
+            households: dashboardData.data.households?.length || 0,
+            usage_stats: dashboardData.data.usage_stats?.length || 0,
+            totals: dashboardData.data.totals
+          })
+        } else {
+          console.warn('Dashboard API error:', dashboardData.error)
         }
-      } catch (statsErr) {
-        console.log('Usage stats not available yet')
-        setUsageStats([])
-      }
-
-      // Load household data for admin management
-      try {
-        const { data: householdsData, error: householdsError } = await supabase
-          .from('households')
-          .select(`
-            id,
-            name,
-            created_at,
-            updated_at,
-            household_members(count)
-          `)
-          .order('created_at', { ascending: false })
-
-        if (!householdsError) {
-          setHouseholds(householdsData || [])
-        }
-      } catch (householdsErr) {
-        console.log('Household data not available yet')
+      } else {
+        console.log('Dashboard API failed, using empty data')
         setHouseholds([])
+        setUsageStats([])
       }
 
       console.log('✅ Admin data loading complete')

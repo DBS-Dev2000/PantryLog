@@ -25,15 +25,34 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Verify requesting user is admin
-    const { data: isAdmin, error: adminCheckError } = await supabaseAdmin
-      .rpc('is_system_admin', { p_user_id: requestingUserId })
+    // Verify requesting user is admin (simplified check)
+    try {
+      const { data: isAdmin, error: adminCheckError } = await supabaseAdmin
+        .rpc('is_system_admin', { p_user_id: requestingUserId })
 
-    if (adminCheckError || !isAdmin) {
-      return NextResponse.json(
-        { error: 'Admin privileges required' },
-        { status: 403 }
-      )
+      if (adminCheckError || !isAdmin) {
+        // Fallback admin check for development
+        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(requestingUserId)
+        const adminEmails = ['daren@prolongedpantry.com']
+
+        if (!userData.user || !adminEmails.includes(userData.user.email || '')) {
+          return NextResponse.json(
+            { error: 'Admin privileges required' },
+            { status: 403 }
+          )
+        }
+      }
+    } catch (rpcError) {
+      // RPC function doesn't exist, use fallback admin check
+      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(requestingUserId)
+      const adminEmails = ['daren@prolongedpantry.com']
+
+      if (!userData.user || !adminEmails.includes(userData.user.email || '')) {
+        return NextResponse.json(
+          { error: 'Admin privileges required - RPC not available' },
+          { status: 403 }
+        )
+      }
     }
 
     // Get all users
@@ -43,13 +62,23 @@ export async function GET(request: NextRequest) {
       throw usersError
     }
 
-    // Get admin users
-    const { data: adminUsers, error: adminError } = await supabaseAdmin
-      .from('system_admins')
-      .select('*')
-      .eq('is_active', true)
+    // Get admin users with fallback
+    let adminUsers = []
+    try {
+      const { data: adminData, error: adminError } = await supabaseAdmin
+        .from('system_admins')
+        .select('*')
+        .eq('is_active', true)
 
-    const adminUserIds = new Set(adminUsers?.map(admin => admin.user_id) || [])
+      if (!adminError) {
+        adminUsers = adminData || []
+      }
+    } catch (adminErr) {
+      console.log('system_admins table not available, using fallback')
+      adminUsers = []
+    }
+
+    const adminUserIds = new Set(adminUsers.map(admin => admin.user_id) || [])
 
     // Combine user data with admin status
     const usersWithAdminStatus = usersData.users.map(user => ({
