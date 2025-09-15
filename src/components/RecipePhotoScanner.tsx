@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { supabase } from '@/lib/supabase'
 import {
   Dialog,
   DialogTitle,
@@ -71,6 +72,14 @@ export default function RecipePhotoScanner({
     setError(null)
 
     try {
+      // Get current user ID if not provided via props
+      let currentUserId = userId
+      if (!currentUserId) {
+        const { data: { session } } = await supabase.auth.getSession()
+        currentUserId = session?.user?.id
+        console.log('🔐 Retrieved user ID for recipe extraction:', currentUserId)
+      }
+
       console.log('🤖 Extracting recipe from image with AI...')
 
       const response = await fetch('/api/extract-recipe-image', {
@@ -80,7 +89,7 @@ export default function RecipePhotoScanner({
         },
         body: JSON.stringify({
           image: capturedImage,
-          user_id: userId,
+          user_id: currentUserId,
           prompt: `Extract the complete recipe from this image. This could be:
           - A handwritten recipe card
           - A printed cookbook page

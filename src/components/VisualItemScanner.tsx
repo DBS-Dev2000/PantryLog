@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 import {
   Dialog,
   DialogTitle,
@@ -186,6 +187,14 @@ export default function VisualItemScanner({
     setError(null)
 
     try {
+      // Get current user ID if not provided via props
+      let currentUserId = userId
+      if (!currentUserId) {
+        const { data: { session } } = await supabase.auth.getSession()
+        currentUserId = session?.user?.id
+        console.log('🔐 Retrieved user ID for AI request:', currentUserId)
+      }
+
       // Capture frame from video
       const video = videoRef.current
       const canvas = canvasRef.current
@@ -211,7 +220,7 @@ export default function VisualItemScanner({
         },
         body: JSON.stringify({
           image: imageData,
-          user_id: userId,
+          user_id: currentUserId,
           prompt: `Analyze this grocery item image and identify the product. Return a JSON object with:
           {
             "items": [
