@@ -171,6 +171,11 @@ export default function AdminPage() {
           setUsers(adminData.users || [])
           setAdminUsers(adminData.admin_users || [])
           console.log('✅ User data loaded via API:', adminData.users?.length || 0, 'users')
+
+          // Debug user IDs for AI usage matching
+          if (adminData.users?.length > 0) {
+            console.log('👤 User ID sample:', adminData.users[0].id, 'Email:', adminData.users[0].email)
+          }
         } else {
           console.error('❌ Users API error:', adminData.error)
           // Fallback for users
@@ -212,6 +217,11 @@ export default function AdminPage() {
             usage_stats: dashboardData.data.usage_stats?.length || 0,
             totals: dashboardData.data.totals
           })
+
+          // Debug AI usage data structure
+          if (dashboardData.data.usage_stats?.length > 0) {
+            console.log('🤖 AI Usage Stats sample:', dashboardData.data.usage_stats[0])
+          }
         } else {
           console.error('❌ Dashboard API error:', dashboardData.error)
         }
