@@ -409,23 +409,32 @@ export default function AdminPage() {
   }
 
   const handleSaveHouseholdFeatures = async () => {
-    if (!selectedHousehold || !editingFeatures) return
+    if (!selectedHousehold || !editingFeatures || !user?.id) return
 
     setSavingFeatures(true)
     try {
-      // TODO: Implement API call to save household features
-      console.log('💾 Saving household features:', {
-        household_id: selectedHousehold.id,
-        features: editingFeatures
+      const response = await fetch('/api/admin/household-features', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          household_id: selectedHousehold.id,
+          features: editingFeatures,
+          requesting_user_id: user.id
+        })
       })
 
-      // Simulate API call for now
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update household features')
+      }
 
       setSuccess(`Features updated for household: ${selectedHousehold.name}`)
       setHouseholdEditDialog(false)
 
-      // Refresh household data
+      // Refresh household data to show updated features
       await loadAdminData()
     } catch (err: any) {
       setError(`Failed to update features: ${err.message}`)
@@ -719,62 +728,6 @@ export default function AdminPage() {
         </CardContent>
       </Card>
 
-      {/* AI Configuration */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            🤖 AI Provider Configuration
-          </Typography>
-
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Primary AI Provider</InputLabel>
-                <Select
-                  value={adminSettings.default_ai_provider}
-                  label="Primary AI Provider"
-                  onChange={(e) => setAdminSettings({ ...adminSettings, default_ai_provider: e.target.value })}
-                >
-                  <MenuItem value="claude">Claude (Anthropic)</MenuItem>
-                  <MenuItem value="gemini">Gemini (Google)</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Provider Status:
-                </Typography>
-                <Box display="flex" gap={1}>
-                  <Chip
-                    label="Claude"
-                    color={process.env.CLAUDE_API_KEY ? 'success' : 'default'}
-                    size="small"
-                  />
-                  <Chip
-                    label="Gemini"
-                    color={process.env.GEMINI_API_KEY ? 'success' : 'default'}
-                    size="small"
-                  />
-                </Box>
-              </Box>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Box display="flex" gap={2} justifyContent="flex-end">
-                <Button
-                  variant="contained"
-                  onClick={updateAdminSettings}
-                  startIcon={<SettingsIcon />}
-                >
-                  Update Settings
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
 
       {/* Active Users */}
       <Card>

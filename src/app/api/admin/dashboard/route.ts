@@ -107,7 +107,17 @@ export async function GET(request: NextRequest) {
           return {
             ...h,
             member_count: members.length,
-            members: members
+            members: members,
+            features: h.features || {
+              recipes_enabled: true,
+              ai_features_enabled: true,
+              shopping_list_sharing: true,
+              storage_editing: true,
+              multiple_households: false,
+              advanced_reporting: false,
+              custom_labels: true,
+              barcode_scanning: true
+            }
           }
         })
         console.log('🏠 Households loaded with membership:', householdsData.length, 'households found')
