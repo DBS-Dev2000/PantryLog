@@ -90,6 +90,12 @@ export default function AdminPage() {
     default_daily_limit: 1.00,
     free_tier_requests: 10
   })
+
+  const [enforcementSettings, setEnforcementSettings] = useState({
+    disabled_feature_mode: 'upsell', // 'hide' or 'upsell'
+    show_upgrade_prompts: true,
+    enforce_feature_limits: true
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -705,9 +711,24 @@ export default function AdminPage() {
                     </TableCell>
                     <TableCell>
                       <Box display="flex" gap={0.5} flexWrap="wrap">
-                        <Chip label="Recipes" size="small" color="success" />
-                        <Chip label="Shopping" size="small" color="info" />
-                        <Chip label="AI Features" size="small" color="secondary" />
+                        <Chip
+                          label="Recipes"
+                          size="small"
+                          color={household.features?.recipes_enabled ? "success" : "default"}
+                          variant={household.features?.recipes_enabled ? "filled" : "outlined"}
+                        />
+                        <Chip
+                          label="Shopping"
+                          size="small"
+                          color={household.features?.shopping_list_sharing ? "info" : "default"}
+                          variant={household.features?.shopping_list_sharing ? "filled" : "outlined"}
+                        />
+                        <Chip
+                          label="AI Features"
+                          size="small"
+                          color={household.features?.ai_features_enabled ? "secondary" : "default"}
+                          variant={household.features?.ai_features_enabled ? "filled" : "outlined"}
+                        />
                       </Box>
                     </TableCell>
                     <TableCell>
@@ -1097,6 +1118,75 @@ export default function AdminPage() {
                     })}
                     inputProps={{ min: 0 }}
                   />
+                </Grid>
+
+                {/* Feature Enforcement Settings */}
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="h6" gutterBottom color="primary">
+                    🚫 Feature Enforcement
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                    Control how disabled features are handled in the main application
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Disabled Feature Mode</InputLabel>
+                    <Select
+                      value={enforcementSettings.disabled_feature_mode}
+                      label="Disabled Feature Mode"
+                      onChange={(e) => setEnforcementSettings({
+                        ...enforcementSettings,
+                        disabled_feature_mode: e.target.value
+                      })}
+                    >
+                      <MenuItem value="upsell">Show as Upsell (Recommended)</MenuItem>
+                      <MenuItem value="hide">Hide from Navigation</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" color="textSecondary" gutterBottom>
+                      Enforcement Options:
+                    </Typography>
+                    <Box display="flex" flexDirection="column" gap={1}>
+                      <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Typography variant="body2">Show Upgrade Prompts</Typography>
+                        <Switch
+                          checked={enforcementSettings.show_upgrade_prompts}
+                          onChange={(e) => setEnforcementSettings({
+                            ...enforcementSettings,
+                            show_upgrade_prompts: e.target.checked
+                          })}
+                          size="small"
+                        />
+                      </Box>
+                      <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Typography variant="body2">Enforce API Limits</Typography>
+                        <Switch
+                          checked={enforcementSettings.enforce_feature_limits}
+                          onChange={(e) => setEnforcementSettings({
+                            ...enforcementSettings,
+                            enforce_feature_limits: e.target.checked
+                          })}
+                          size="small"
+                        />
+                      </Box>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Alert severity="info">
+                    <Typography variant="body2">
+                      <strong>Upsell Mode:</strong> Disabled features show with overlay and upgrade prompts<br />
+                      <strong>Hide Mode:</strong> Disabled features are completely removed from navigation
+                    </Typography>
+                  </Alert>
                 </Grid>
 
                 <Grid item xs={12}>
