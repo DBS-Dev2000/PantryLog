@@ -122,9 +122,22 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const drawer = (
     <Box>
       <Toolbar>
-        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-          {householdLoading ? 'Loading...' : (currentHousehold?.name ? `${currentHousehold.name} | PantryIQ` : 'PantryIQ')}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <img
+            src="/Logo_trans.png"
+            alt="PantryIQ"
+            style={{
+              height: '32px',
+              width: 'auto',
+              marginRight: '8px'
+            }}
+          />
+          {currentHousehold?.name && (
+            <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+              {currentHousehold.name}
+            </Typography>
+          )}
+        </Box>
       </Toolbar>
       <Divider />
       <List>
@@ -194,13 +207,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 {currentHousehold.name}
               </Button>
             ) : (
-              <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-                {householdLoading ? 'Loading...' : 'PantryIQ'}
+              <img
+                src="/Logo_trans.png"
+                alt="PantryIQ"
+                style={{
+                  height: '40px',
+                  width: 'auto'
+                }}
+              />
+            )}
+            {currentHousehold?.name && (
+              <Typography variant="h6" sx={{ ml: 2, fontWeight: 'bold' }}>
+                {currentHousehold.name}
               </Typography>
             )}
-            <Typography variant="h6" sx={{ ml: 1, fontWeight: 'normal', opacity: 0.7 }}>
-              | PantryIQ
-            </Typography>
           </Box>
           <IconButton
             size="large"
