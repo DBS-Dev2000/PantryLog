@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
           name,
           created_at,
           updated_at,
+          features,
           household_members(
             user_id,
             role,
@@ -82,6 +83,7 @@ export async function GET(request: NextRequest) {
         })
 
         households = householdsData.map(h => {
+          console.log('🏠 Processing household:', h.name, 'Features from DB:', h.features)
           let members = []
 
           // If household_members data exists, use it
