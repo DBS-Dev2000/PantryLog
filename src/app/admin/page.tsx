@@ -156,7 +156,7 @@ export default function AdminPage() {
     }
 
     try {
-      console.log('📡 Loading admin data for user:', user.email)
+      console.log('📡 Loading admin data for user:', user.email, 'User ID:', user.id)
 
       // Load all admin data via API routes
       const [usersResponse, dashboardResponse] = await Promise.all([

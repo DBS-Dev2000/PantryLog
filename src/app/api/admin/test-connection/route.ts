@@ -18,12 +18,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const requestingUserId = searchParams.get('user_id')
 
-    if (!requestingUserId) {
-      return NextResponse.json(
-        { error: 'User ID required' },
-        { status: 400 }
-      )
-    }
+    console.log('🔍 Test connection requested with user_id:', requestingUserId)
 
     // Test Supabase admin connection
     console.log('🧪 Testing Supabase admin connection...')
@@ -65,22 +60,26 @@ export async function GET(request: NextRequest) {
       tableTest.error = err.message
     }
 
-    // Test 4: Check specific user
+    // Test 4: Check specific user (only if user_id provided)
     let currentUserTest = { success: false, error: null, user: null }
-    try {
-      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(requestingUserId)
-      if (userError) {
-        currentUserTest.error = userError.message
-      } else {
-        currentUserTest.success = true
-        currentUserTest.user = {
-          id: userData.user?.id,
-          email: userData.user?.email,
-          created_at: userData.user?.created_at
+    if (requestingUserId) {
+      try {
+        const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(requestingUserId)
+        if (userError) {
+          currentUserTest.error = userError.message
+        } else {
+          currentUserTest.success = true
+          currentUserTest.user = {
+            id: userData.user?.id,
+            email: userData.user?.email,
+            created_at: userData.user?.created_at
+          }
         }
+      } catch (err: any) {
+        currentUserTest.error = err.message
       }
-    } catch (err: any) {
-      currentUserTest.error = err.message
+    } else {
+      currentUserTest.error = 'No user ID provided'
     }
 
     const results = {
