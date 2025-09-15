@@ -135,12 +135,11 @@ export default function HouseholdPage() {
 
       setMembers(membersData || [])
 
-      // Load pending invites
+      // Load active (non-expired) invites
       const { data: invitesData, error: invitesError } = await supabase
         .from('household_invites')
         .select('*')
         .eq('household_id', householdId)
-        .is('accepted_at', null)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })
 
@@ -164,14 +163,18 @@ export default function HouseholdPage() {
     try {
       setError(null)
 
-      // Generate invite
+      // Generate invite with 24-hour expiration
+      const expiresAt = new Date()
+      expiresAt.setHours(expiresAt.getHours() + 24)
+
       const { data: inviteData, error: inviteError } = await supabase
         .from('household_invites')
         .insert([{
           household_id: household.id,
           invited_email: inviteEmail,
           invite_code: Math.random().toString(36).substring(2, 10).toUpperCase(),
-          invited_by: user.id
+          invited_by: user.id,
+          expires_at: expiresAt.toISOString()
         }])
         .select()
         .single()
@@ -194,14 +197,18 @@ export default function HouseholdPage() {
     try {
       const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase()
 
-      // Create invite record
+      // Create invite record with 24-hour expiration
+      const expiresAt = new Date()
+      expiresAt.setHours(expiresAt.getHours() + 24)
+
       await supabase
         .from('household_invites')
         .insert([{
           household_id: household.id,
           invited_email: 'QR_INVITE',
           invite_code: inviteCode,
-          invited_by: user.id
+          invited_by: user.id,
+          expires_at: expiresAt.toISOString()
         }])
 
       const inviteUrl = `${window.location.origin}/join/${inviteCode}`

@@ -69,7 +69,6 @@ export default function JoinHouseholdPage() {
           households (name, created_at)
         `)
         .eq('invite_code', inviteCode)
-        .is('accepted_at', null)
         .gt('expires_at', new Date().toISOString())
         .single()
 
@@ -93,6 +92,19 @@ export default function JoinHouseholdPage() {
 
     setJoining(true)
     try {
+      // Check if user is already a member of this household
+      const { data: existingMember } = await supabase
+        .from('household_members')
+        .select('id')
+        .eq('household_id', invite.household_id)
+        .eq('user_id', user.id)
+        .single()
+
+      if (existingMember) {
+        setError('You are already a member of this household!')
+        return
+      }
+
       // Add user to household
       const { error: memberError } = await supabase
         .from('household_members')
@@ -103,20 +115,10 @@ export default function JoinHouseholdPage() {
           invited_by: invite.invited_by
         }])
 
-      if (memberError && memberError.code !== '23505') { // Ignore if already member
-        throw memberError
-      }
+      if (memberError) throw memberError
 
-      // Mark invite as accepted
-      const { error: inviteError } = await supabase
-        .from('household_invites')
-        .update({
-          accepted_at: new Date().toISOString(),
-          accepted_by: user.id
-        })
-        .eq('id', invite.id)
-
-      if (inviteError) throw inviteError
+      // Note: We don't mark the invite as consumed so it can be reused by other users
+      // The household_members table prevents the same user from joining twice
 
       setSuccess(true)
 
