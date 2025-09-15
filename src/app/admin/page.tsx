@@ -836,7 +836,7 @@ export default function AdminPage() {
                     }
                   </Typography>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="textSecondary">Admin Status</Typography>
                   <Chip
                     label={selectedUser.is_admin ? 'Admin' : 'Regular User'}
@@ -844,6 +844,32 @@ export default function AdminPage() {
                     size="small"
                   />
                 </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">Household Memberships</Typography>
+                  <Typography variant="body1">
+                    {selectedUser.households?.length || 0} households
+                  </Typography>
+                </Grid>
+
+                {/* Household Memberships Details */}
+                {selectedUser.households?.length > 0 && (
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                      Member of Households:
+                    </Typography>
+                    <Box display="flex" flexWrap="wrap" gap={1}>
+                      {selectedUser.households.map((household: any, index: number) => (
+                        <Chip
+                          key={household.household_id || index}
+                          label={`${household.household_name} (${household.role})`}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                        />
+                      ))}
+                    </Box>
+                  </Grid>
+                )}
               </Grid>
             </Box>
           )}
@@ -896,6 +922,60 @@ export default function AdminPage() {
                     {selectedHousehold.member_count || 0} members
                   </Typography>
                 </Grid>
+
+                {/* Household Members List */}
+                {selectedHousehold.members?.length > 0 && (
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                      Household Members:
+                    </Typography>
+                    <TableContainer component={Paper} variant="outlined">
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Email</TableCell>
+                            <TableCell>Role</TableCell>
+                            <TableCell>Joined</TableCell>
+                            <TableCell>Status</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {selectedHousehold.members.map((member: any, index: number) => (
+                            <TableRow key={member.user_id || index}>
+                              <TableCell>
+                                <Typography variant="body2">
+                                  {member.email}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={member.role || 'member'}
+                                  size="small"
+                                  color={member.role === 'admin' ? 'secondary' : 'default'}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2">
+                                  {member.joined_at
+                                    ? new Date(member.joined_at).toLocaleDateString()
+                                    : 'Unknown'
+                                  }
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label="Active"
+                                  size="small"
+                                  color="success"
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                )}
               </Grid>
             </Box>
           )}

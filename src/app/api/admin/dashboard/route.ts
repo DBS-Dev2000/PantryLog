@@ -65,15 +65,35 @@ export async function GET(request: NextRequest) {
           name,
           created_at,
           updated_at,
-          household_members(user_id)
+          created_by,
+          household_members(
+            user_id,
+            role,
+            joined_at,
+            is_active
+          )
         `)
         .order('created_at', { ascending: false })
 
       if (!householdsError) {
-        // Process the data to get member counts
+        // Get all user data for member details
+        const allUsersData = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+        const userMap = new Map()
+        allUsersData.data?.users?.forEach(user => {
+          userMap.set(user.id, { email: user.email, created_at: user.created_at })
+        })
+
+        // Process the data to get member counts and details
         households = householdsData?.map(h => ({
           ...h,
-          member_count: h.household_members?.length || 0
+          member_count: h.household_members?.filter(m => m.is_active)?.length || 0,
+          members: h.household_members?.filter(m => m.is_active)?.map(member => ({
+            user_id: member.user_id,
+            role: member.role,
+            joined_at: member.joined_at,
+            email: userMap.get(member.user_id)?.email || 'Unknown',
+            user_created_at: userMap.get(member.user_id)?.created_at
+          })) || []
         })) || []
         console.log('🏠 Households query result:', householdsData?.length, 'households found')
       } else {

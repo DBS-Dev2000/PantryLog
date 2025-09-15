@@ -90,14 +90,50 @@ export async function GET(request: NextRequest) {
 
     const adminUserIds = new Set(adminUsers.map(admin => admin.user_id) || [])
 
-    // Combine user data with admin status
+    // Get household memberships for all users
+    let userHouseholds = []
+    try {
+      const { data: membershipData, error: membershipError } = await supabaseAdmin
+        .from('household_members')
+        .select(`
+          user_id,
+          role,
+          joined_at,
+          is_active,
+          households(id, name)
+        `)
+        .eq('is_active', true)
+
+      if (!membershipError) {
+        userHouseholds = membershipData || []
+      }
+    } catch (membershipErr) {
+      console.log('Household membership data not available:', membershipErr)
+    }
+
+    // Create a map of user ID to their households
+    const userHouseholdMap = new Map()
+    userHouseholds.forEach(membership => {
+      if (!userHouseholdMap.has(membership.user_id)) {
+        userHouseholdMap.set(membership.user_id, [])
+      }
+      userHouseholdMap.get(membership.user_id).push({
+        household_id: membership.households?.id,
+        household_name: membership.households?.name,
+        role: membership.role,
+        joined_at: membership.joined_at
+      })
+    })
+
+    // Combine user data with admin status and household memberships
     const usersWithAdminStatus = usersData.users.map(user => ({
       id: user.id,
       email: user.email,
       created_at: user.created_at,
       last_sign_in_at: user.last_sign_in_at,
       is_admin: adminUserIds.has(user.id),
-      admin_level: adminUsers?.find(admin => admin.user_id === user.id)?.admin_level || null
+      admin_level: adminUsers?.find(admin => admin.user_id === user.id)?.admin_level || null,
+      households: userHouseholdMap.get(user.id) || []
     }))
 
     // Log admin access
