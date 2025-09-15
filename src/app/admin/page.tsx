@@ -852,12 +852,12 @@ export default function AdminPage() {
                 </Grid>
 
                 {/* Household Memberships Details */}
-                {selectedUser.households?.length > 0 && (
+                {selectedUser.households?.length > 0 ? (
                   <Grid item xs={12}>
                     <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                       Member of Households:
                     </Typography>
-                    <Box display="flex" flexWrap="wrap" gap={1}>
+                    <Box display="flex" flexDirection="column" gap={1}>
                       {selectedUser.households.map((household: any, index: number) => (
                         <Box key={household.household_id || index} sx={{ mb: 1 }}>
                           <Chip
@@ -872,6 +872,13 @@ export default function AdminPage() {
                         </Box>
                       ))}
                     </Box>
+                  </Grid>
+                ) : (
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="textSecondary">Household Relationships</Typography>
+                    <Alert severity="warning" sx={{ mt: 1 }}>
+                      No household memberships found. This user may not be properly linked to any households.
+                    </Alert>
                   </Grid>
                 )}
               </Grid>

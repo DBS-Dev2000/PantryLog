@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
 
     const adminUserIds = new Set(adminUsers.map(admin => admin.user_id) || [])
 
-    // Get household memberships for all users
+    // Get household memberships for all users (based on migration schema)
     let userHouseholds = []
     try {
       const { data: membershipData, error: membershipError } = await supabaseAdmin
@@ -99,31 +99,60 @@ export async function GET(request: NextRequest) {
           user_id,
           role,
           joined_at,
-          is_active,
-          households(id, name)
+          household_id,
+          households!inner(id, name)
         `)
-        .eq('is_active', true)
 
-      if (!membershipError) {
-        userHouseholds = membershipData || []
+      if (!membershipError && membershipData) {
+        userHouseholds = membershipData
+        console.log('👥 Found membership data:', membershipData.length, 'memberships')
+      } else {
+        console.log('👥 No membership data found, using legacy pattern')
       }
     } catch (membershipErr) {
-      console.log('Household membership data not available:', membershipErr)
+      console.log('👥 Membership query failed:', membershipErr)
     }
 
-    // Create a map of user ID to their households
+    // Create user-household mapping
     const userHouseholdMap = new Map()
+
+    // First, add membership data if available
     userHouseholds.forEach(membership => {
       if (!userHouseholdMap.has(membership.user_id)) {
         userHouseholdMap.set(membership.user_id, [])
       }
       userHouseholdMap.get(membership.user_id).push({
-        household_id: membership.households?.id,
-        household_name: membership.households?.name,
+        household_id: membership.households?.id || membership.household_id,
+        household_name: membership.households?.name || 'Unknown Household',
         role: membership.role,
         joined_at: membership.joined_at
       })
     })
+
+    // Fallback: If no membership data, check if user ID matches household ID (legacy pattern)
+    if (userHouseholds.length === 0) {
+      try {
+        const { data: allHouseholds } = await supabaseAdmin
+          .from('households')
+          .select('id, name, created_at')
+
+        allHouseholds?.forEach(household => {
+          // In legacy pattern, household.id = user.id for the owner
+          if (!userHouseholdMap.has(household.id)) {
+            userHouseholdMap.set(household.id, [])
+          }
+          userHouseholdMap.get(household.id).push({
+            household_id: household.id,
+            household_name: household.name,
+            role: 'admin',
+            joined_at: household.created_at
+          })
+        })
+        console.log('👥 Using legacy household ownership pattern')
+      } catch (legacyErr) {
+        console.log('👥 Legacy pattern also failed:', legacyErr)
+      }
+    }
 
     // Combine user data with admin status and household memberships
     const usersWithAdminStatus = usersData.users.map(user => ({

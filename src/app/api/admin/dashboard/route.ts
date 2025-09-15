@@ -55,10 +55,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Load households with member counts
+    // Load households with membership data (based on migration schema)
     let households = []
     try {
-      // Try enhanced query first
       const { data: householdsData, error: householdsError } = await supabaseAdmin
         .from('households')
         .select(`
@@ -66,12 +65,10 @@ export async function GET(request: NextRequest) {
           name,
           created_at,
           updated_at,
-          created_by,
           household_members(
             user_id,
             role,
-            joined_at,
-            is_active
+            joined_at
           )
         `)
         .order('created_at', { ascending: false })
@@ -84,62 +81,39 @@ export async function GET(request: NextRequest) {
           userMap.set(user.id, { email: user.email, created_at: user.created_at })
         })
 
-        // Process the data to get member counts and details
         households = householdsData.map(h => {
-          const activeMembers = h.household_members?.filter(m => m.is_active !== false) || []
-          const householdMembers = activeMembers.map(member => ({
-            user_id: member.user_id,
-            role: member.role || 'member',
-            joined_at: member.joined_at,
-            email: userMap.get(member.user_id)?.email || 'Unknown',
-            user_created_at: userMap.get(member.user_id)?.created_at,
-            is_creator: member.user_id === h.created_by
-          }))
+          let members = []
 
-          // If no members found but household exists, add creator as member
-          if (householdMembers.length === 0 && h.created_by) {
-            householdMembers.push({
-              user_id: h.created_by,
+          // If household_members data exists, use it
+          if (h.household_members && h.household_members.length > 0) {
+            members = h.household_members.map(member => ({
+              user_id: member.user_id,
+              role: member.role || 'member',
+              joined_at: member.joined_at,
+              email: userMap.get(member.user_id)?.email || 'Unknown',
+              is_creator: member.user_id === h.id // Based on migration logic
+            }))
+          } else {
+            // Fallback: household owner is the user with same ID (legacy pattern)
+            members = [{
+              user_id: h.id,
               role: 'admin',
               joined_at: h.created_at,
-              email: userMap.get(h.created_by)?.email || 'Creator',
-              user_created_at: userMap.get(h.created_by)?.created_at,
+              email: userMap.get(h.id)?.email || 'Owner',
               is_creator: true
-            })
+            }]
           }
 
           return {
             ...h,
-            member_count: Math.max(householdMembers.length, 1),
-            members: householdMembers
+            member_count: members.length,
+            members: members
           }
         })
-        console.log('🏠 Enhanced households query result:', householdsData.length, 'households found with members')
+        console.log('🏠 Households loaded with membership:', householdsData.length, 'households found')
       } else {
-        console.error('❌ Enhanced households query failed:', householdsError)
-
-        // Fallback to basic household query
-        const { data: basicHouseholds, error: basicError } = await supabaseAdmin
-          .from('households')
-          .select(`
-            id,
-            name,
-            created_at,
-            updated_at
-          `)
-          .order('created_at', { ascending: false })
-
-        if (!basicError && basicHouseholds) {
-          households = basicHouseholds.map(h => ({
-            ...h,
-            member_count: 1, // Default to 1 (creator)
-            members: []
-          }))
-          console.log('🏠 Fallback households query result:', basicHouseholds.length, 'households found (basic)')
-        } else {
-          console.error('❌ Even basic households query failed:', basicError)
-          households = []
-        }
+        console.error('❌ Households query failed:', householdsError)
+        households = []
       }
     } catch (householdsErr) {
       console.error('❌ Households query exception:', householdsErr)
