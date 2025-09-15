@@ -56,20 +56,19 @@ export async function POST(request: NextRequest) {
 
     console.log('💾 Saving household features:', { household_id, features })
 
-    // For now, store in household metadata column or create separate table
-    // Since we don't have a household_features table yet, we'll update households table
+    // Update household features using the new features column
     try {
       const { data, error } = await supabaseAdmin
-        .from('households')
-        .update({
-          features: features,
-          updated_at: new Date().toISOString()
+        .rpc('update_household_features', {
+          household_uuid: household_id,
+          new_features: features
         })
-        .eq('id', household_id)
 
       if (error) {
         throw error
       }
+
+      console.log('✅ Household features updated successfully via RPC function')
 
       // Log admin activity
       await supabaseAdmin.rpc('log_admin_activity', {
