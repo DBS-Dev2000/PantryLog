@@ -44,7 +44,6 @@ import {
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { useHousehold } from '@/contexts/HouseholdContext'
 
 interface UserProfile {
   id: string
@@ -81,9 +80,6 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [newHouseholdName, setNewHouseholdName] = useState('')
-  const [creatingHousehold, setCreatingHousehold] = useState(false)
-  const { households, currentHousehold, setDefaultHousehold, refreshHouseholds } = useHousehold()
 
   useEffect(() => {
     const getUser = async () => {
@@ -165,62 +161,6 @@ export default function ProfilePage() {
     }
   }
 
-  const handleCreateHousehold = async () => {
-    if (!user || !newHouseholdName.trim()) return
-
-    setCreatingHousehold(true)
-    setError(null)
-
-    try {
-      // Create new household
-      const { data: household, error: householdError } = await supabase
-        .from('households')
-        .insert([{ name: newHouseholdName.trim() }])
-        .select()
-        .single()
-
-      if (householdError) throw householdError
-
-      // Add user as admin of the new household
-      const { error: memberError } = await supabase
-        .from('household_members')
-        .insert([{
-          household_id: household.id,
-          user_id: user.id,
-          role: 'admin'
-        }])
-
-      if (memberError) throw memberError
-
-      setSuccess(`Household "${newHouseholdName}" created successfully!`)
-      setNewHouseholdName('')
-      await refreshHouseholds()
-
-      setTimeout(() => {
-        setSuccess(null)
-      }, 3000)
-
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setCreatingHousehold(false)
-    }
-  }
-
-  const handleSetDefault = async (householdId: string) => {
-    try {
-      setError(null)
-      await setDefaultHousehold(householdId)
-      setSuccess('Default household updated!')
-
-      setTimeout(() => {
-        setSuccess(null)
-      }, 3000)
-
-    } catch (err: any) {
-      setError(err.message)
-    }
-  }
 
   if (!user || loading) {
     return (
@@ -350,147 +290,26 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Household Management */}
+      {/* Household Quick Access */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             <HomeIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Household Management
+            Household Quick Access
           </Typography>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-            Manage your households, create new ones, and set your default household
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Manage households, invite members, and create new households
           </Typography>
 
-          {/* Current Households */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'medium' }}>
-              Your Households
-            </Typography>
-
-            {households.length > 0 ? (
-              <List>
-                {households.map((household) => (
-                  <ListItem key={household.household_id} sx={{ px: 0 }}>
-                    <ListItemText
-                      primary={
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                            {household.household_name}
-                          </Typography>
-                          {household.is_default && (
-                            <Chip
-                              label="Default"
-                              size="small"
-                              color="primary"
-                              icon={<StarIcon />}
-                              sx={{ height: 24 }}
-                            />
-                          )}
-                        </Box>
-                      }
-                      secondary={
-                        <Box display="flex" alignItems="center" gap={1} mt={0.5}>
-                          <Chip
-                            label={household.role}
-                            size="small"
-                            variant="outlined"
-                            sx={{ height: 20, fontSize: '0.75rem' }}
-                          />
-                          <Typography variant="caption" color="textSecondary">
-                            Joined {new Date(household.joined_at).toLocaleDateString()}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                    <ListItemSecondaryAction>
-                      {!household.is_default && (
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => handleSetDefault(household.household_id)}
-                          startIcon={<StarIcon />}
-                        >
-                          Set Default
-                        </Button>
-                      )}
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-              </List>
-            ) : (
-              <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: 'grey.50' }}>
-                <Typography variant="body2" color="textSecondary">
-                  No households found. Create your first household below.
-                </Typography>
-              </Paper>
-            )}
-          </Box>
-
-          {/* Create New Household */}
-          <Divider sx={{ my: 3 }} />
-
-          <Box>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'medium' }}>
-              Create New Household
-            </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-              Create additional households for second homes, RVs, boats, or separate living spaces
-            </Typography>
-
-            <Box display="flex" gap={2} alignItems="end">
-              <TextField
-                label="Household Name"
-                value={newHouseholdName}
-                onChange={(e) => setNewHouseholdName(e.target.value)}
-                placeholder="e.g., Beach House, RV Kitchen, Boat Galley"
-                sx={{ flexGrow: 1 }}
-                disabled={creatingHousehold}
-              />
-              <Button
-                variant="contained"
-                onClick={handleCreateHousehold}
-                disabled={!newHouseholdName.trim() || creatingHousehold}
-                startIcon={<AddIcon />}
-                sx={{ whiteSpace: 'nowrap' }}
-              >
-                {creatingHousehold ? 'Creating...' : 'Create'}
-              </Button>
-            </Box>
-          </Box>
-
-          {/* Household Actions */}
-          <Divider sx={{ my: 3 }} />
-
-          <Box>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'medium' }}>
-              Household Actions
-            </Typography>
-
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  startIcon={<PersonAddIcon />}
-                  onClick={() => router.push('/settings/household')}
-                  sx={{ py: 1.5 }}
-                >
-                  Invite Members
-                </Button>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  startIcon={<SettingsIcon />}
-                  onClick={() => router.push('/settings/household')}
-                  sx={{ py: 1.5 }}
-                >
-                  Manage Settings
-                </Button>
-              </Grid>
-            </Grid>
-          </Box>
+          <Button
+            variant="contained"
+            fullWidth
+            startIcon={<SettingsIcon />}
+            onClick={() => router.push('/settings/household')}
+            sx={{ py: 1.5 }}
+          >
+            Manage Households
+          </Button>
         </CardContent>
       </Card>
 

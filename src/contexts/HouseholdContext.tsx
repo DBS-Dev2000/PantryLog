@@ -44,36 +44,67 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
       let householdsList = []
 
       try {
-        const { data: householdsData, error: householdsError } = await supabase
-          .rpc('get_user_households', { user_uuid: session.user.id })
+        // First try the RPC function
+        try {
+          const { data: householdsData, error: householdsError } = await supabase
+            .rpc('get_user_households', { user_uuid: session.user.id })
 
-        if (householdsError) {
-          // If RPC function doesn't exist, fall back to basic query
-          console.log('RPC function not found, using fallback query')
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('household_members')
-            .select(`
-              household_id,
-              role,
-              joined_at,
-              households!inner(name)
-            `)
-            .eq('user_id', session.user.id)
-
-          if (fallbackError) throw fallbackError
-
-          householdsList = (fallbackData || []).map(item => ({
-            household_id: item.household_id,
-            household_name: item.households.name,
-            role: item.role,
-            is_default: false, // Default logic will be added later
-            joined_at: item.joined_at
-          }))
-        } else {
+          if (householdsError) throw householdsError
           householdsList = householdsData || []
+        } catch (rpcError) {
+          // If RPC function doesn't exist, fall back to basic query
+          console.log('RPC function not available, using fallback query:', rpcError)
+
+          try {
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from('household_members')
+              .select(`
+                household_id,
+                role,
+                joined_at,
+                households(name)
+              `)
+              .eq('user_id', session.user.id)
+
+            if (fallbackError) throw fallbackError
+
+            householdsList = (fallbackData || []).map(item => ({
+              household_id: item.household_id,
+              household_name: item.households?.name || 'Unknown Household',
+              role: item.role,
+              is_default: false, // Default logic will be added later
+              joined_at: item.joined_at
+            }))
+          } catch (fallbackError) {
+            console.log('Fallback query also failed, checking legacy mode:', fallbackError)
+
+            // Last resort: check if user has their own household (legacy mode)
+            try {
+              const { data: legacyData, error: legacyError } = await supabase
+                .from('households')
+                .select('id, name, created_at')
+                .eq('id', session.user.id)
+                .single()
+
+              if (!legacyError && legacyData) {
+                householdsList = [{
+                  household_id: legacyData.id,
+                  household_name: legacyData.name,
+                  role: 'admin',
+                  is_default: true,
+                  joined_at: legacyData.created_at
+                }]
+              } else {
+                householdsList = []
+              }
+            } catch (legacyError) {
+              console.log('No households found for user')
+              householdsList = []
+            }
+          }
         }
       } catch (err) {
-        console.log('Household query failed, user may not have any households yet')
+        console.error('All household queries failed:', err)
         householdsList = []
       }
 

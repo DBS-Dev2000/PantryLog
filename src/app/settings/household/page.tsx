@@ -77,6 +77,9 @@ export default function HouseholdPage() {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('')
   const [editingName, setEditingName] = useState(false)
   const [newHouseholdName, setNewHouseholdName] = useState('')
+  const [createHouseholdDialogOpen, setCreateHouseholdDialogOpen] = useState(false)
+  const [newHouseholdNameCreate, setNewHouseholdNameCreate] = useState('')
+  const [creatingHousehold, setCreatingHousehold] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -274,6 +277,47 @@ export default function HouseholdPage() {
     }
   }
 
+  const createNewHousehold = async () => {
+    if (!user || !newHouseholdNameCreate.trim()) return
+
+    setCreatingHousehold(true)
+    setError(null)
+
+    try {
+      // Create new household
+      const { data: newHousehold, error: householdError } = await supabase
+        .from('households')
+        .insert([{ name: newHouseholdNameCreate.trim() }])
+        .select()
+        .single()
+
+      if (householdError) throw householdError
+
+      // Add user as admin of the new household
+      const { error: memberError } = await supabase
+        .from('household_members')
+        .insert([{
+          household_id: newHousehold.id,
+          user_id: user.id,
+          role: 'admin'
+        }])
+
+      if (memberError) throw memberError
+
+      setSuccess(`Household "${newHouseholdNameCreate}" created successfully!`)
+      setNewHouseholdNameCreate('')
+      setCreateHouseholdDialogOpen(false)
+
+      // Reload data to show new household
+      await loadHouseholdData(user)
+
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setCreatingHousehold(false)
+    }
+  }
+
   const copyInviteLink = (code: string) => {
     const inviteUrl = `${window.location.origin}/join/${code}`
     navigator.clipboard.writeText(inviteUrl)
@@ -420,6 +464,14 @@ export default function HouseholdPage() {
               Household Members ({members.length + 1})
             </Typography>
             <Box>
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => setCreateHouseholdDialogOpen(true)}
+                sx={{ mr: 1 }}
+              >
+                New Household
+              </Button>
               <Button
                 variant="outlined"
                 startIcon={<QrCodeIcon />}
@@ -594,6 +646,46 @@ export default function HouseholdPage() {
             startIcon={<CopyIcon />}
           >
             Copy Invite Link
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create New Household Dialog */}
+      <Dialog open={createHouseholdDialogOpen} onClose={() => setCreateHouseholdDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Create New Household</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+            Create additional households for second homes, RVs, boats, or separate living spaces.
+            Each household has its own inventory and settings.
+          </Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Household Name"
+            value={newHouseholdNameCreate}
+            onChange={(e) => setNewHouseholdNameCreate(e.target.value)}
+            placeholder="e.g., Beach House, RV Kitchen, Boat Galley"
+            disabled={creatingHousehold}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setCreateHouseholdDialogOpen(false)
+              setNewHouseholdNameCreate('')
+            }}
+            disabled={creatingHousehold}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={createNewHousehold}
+            variant="contained"
+            disabled={!newHouseholdNameCreate.trim() || creatingHousehold}
+            startIcon={<AddIcon />}
+          >
+            {creatingHousehold ? 'Creating...' : 'Create Household'}
           </Button>
         </DialogActions>
       </Dialog>
