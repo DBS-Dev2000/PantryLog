@@ -172,7 +172,7 @@ export default function AdminPage() {
           setAdminUsers(adminData.admin_users || [])
           console.log('✅ User data loaded via API:', adminData.users?.length || 0, 'users')
         } else {
-          console.warn('Users API error:', adminData.error)
+          console.error('❌ Users API error:', adminData.error)
           // Fallback for users
           setUsers([{
             id: user.id,
@@ -183,7 +183,15 @@ export default function AdminPage() {
           }])
         }
       } else {
-        console.log('Users API failed, using fallback data')
+        console.error('❌ Users API failed with status:', usersResponse?.status, usersResponse?.statusText)
+        if (usersResponse) {
+          try {
+            const errorData = await usersResponse.json()
+            console.error('❌ Users API error details:', errorData)
+          } catch (e) {
+            console.error('❌ Could not parse Users API error response')
+          }
+        }
         setUsers([{
           id: user.id,
           email: user.email,
@@ -205,10 +213,18 @@ export default function AdminPage() {
             totals: dashboardData.data.totals
           })
         } else {
-          console.warn('Dashboard API error:', dashboardData.error)
+          console.error('❌ Dashboard API error:', dashboardData.error)
         }
       } else {
-        console.log('Dashboard API failed, using empty data')
+        console.error('❌ Dashboard API failed with status:', dashboardResponse?.status, dashboardResponse?.statusText)
+        if (dashboardResponse) {
+          try {
+            const errorData = await dashboardResponse.json()
+            console.error('❌ Dashboard API error details:', errorData)
+          } catch (e) {
+            console.error('❌ Could not parse Dashboard API error response')
+          }
+        }
         setHouseholds([])
         setUsageStats([])
       }

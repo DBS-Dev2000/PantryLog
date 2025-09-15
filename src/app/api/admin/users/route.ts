@@ -55,12 +55,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get all users
-    const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
+    // Get all users with pagination handling
+    const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000 // Get up to 1000 users
+    })
 
     if (usersError) {
+      console.error('Error fetching users:', usersError)
       throw usersError
     }
+
+    console.log('📊 Users API Debug:', {
+      total_users: usersData?.users?.length || 0,
+      requesting_user: requestingUserId,
+      users_sample: usersData?.users?.slice(0, 3).map(u => ({ id: u.id, email: u.email })) || []
+    })
 
     // Get admin users with fallback
     let adminUsers = []

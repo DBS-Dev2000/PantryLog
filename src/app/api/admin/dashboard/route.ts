@@ -99,9 +99,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Get total counts
-    const totalUsers = (await supabaseAdmin.auth.admin.listUsers()).data.users.length
+    const allUsersData = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    const totalUsers = allUsersData.data?.users?.length || 0
     const totalHouseholds = households.length
     const totalAIRequests = usageStats.reduce((sum, stat) => sum + (stat.total_requests || 0), 0)
+
+    console.log('📊 Dashboard API Debug:', {
+      total_users: totalUsers,
+      total_households: totalHouseholds,
+      total_ai_requests: totalAIRequests,
+      households_sample: households.slice(0, 2).map(h => ({ id: h.id, name: h.name, members: h.member_count })),
+      requesting_user: requestingUserId
+    })
 
     // Log admin access
     await supabaseAdmin.rpc('log_admin_activity', {
