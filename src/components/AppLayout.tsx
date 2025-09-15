@@ -137,7 +137,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <Box>
       <Toolbar>
         <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-          {householdLoading ? 'PantryIQ' : (currentHousehold?.name ? `${currentHousehold.name} | PantryIQ` : 'PantryIQ')}
+          {householdLoading ? 'Loading...' : (currentHousehold?.name ? `${currentHousehold.name} | PantryIQ` : 'PantryIQ')}
         </Typography>
       </Toolbar>
       <Divider />
@@ -189,22 +189,27 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <MenuIcon />
           </IconButton>
           <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-            {!householdLoading && currentHousehold && households.length > 1 ? (
+            {!householdLoading && currentHousehold ? (
               <Button
-                onClick={handleHouseholdMenuOpen}
+                onClick={households.length > 1 ? handleHouseholdMenuOpen : undefined}
                 sx={{
                   color: 'inherit',
                   textTransform: 'none',
                   fontWeight: 'bold',
                   fontSize: '1.25rem',
+                  cursor: households.length > 1 ? 'pointer' : 'default',
+                  '&:hover': {
+                    backgroundColor: households.length > 1 ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
+                  }
                 }}
-                endIcon={<ArrowDownIcon />}
+                endIcon={households.length > 1 ? <ArrowDownIcon /> : null}
+                disableRipple={households.length <= 1}
               >
                 {currentHousehold.name}
               </Button>
             ) : (
               <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-                {householdLoading ? 'PantryIQ' : (currentHousehold?.name || 'PantryIQ')}
+                {householdLoading ? 'Loading...' : 'PantryIQ'}
               </Typography>
             )}
             <Typography variant="h6" sx={{ ml: 1, fontWeight: 'normal', opacity: 0.7 }}>
