@@ -113,11 +113,16 @@ export async function GET(request: NextRequest) {
     })
 
     // Log admin access
-    await supabaseAdmin.rpc('log_admin_activity', {
-      p_admin_user_id: requestingUserId,
-      p_action_type: 'dashboard_access',
-      p_action_details: 'Viewed admin dashboard data'
-    }).catch(() => {}) // Ignore logging errors
+    try {
+      await supabaseAdmin.rpc('log_admin_activity', {
+        p_admin_user_id: requestingUserId,
+        p_action_type: 'dashboard_access',
+        p_action_details: 'Viewed admin dashboard data'
+      })
+    } catch (logError) {
+      // Ignore logging errors
+      console.log('Failed to log admin activity:', logError)
+    }
 
     return NextResponse.json({
       success: true,
