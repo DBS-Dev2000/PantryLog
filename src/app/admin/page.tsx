@@ -423,7 +423,11 @@ export default function AdminPage() {
       multiple_households: household.features?.multiple_households ?? false,
       advanced_reporting: household.features?.advanced_reporting ?? false,
       custom_labels: household.features?.custom_labels ?? true,
-      barcode_scanning: household.features?.barcode_scanning ?? true
+      barcode_scanning: household.features?.barcode_scanning ?? true,
+      // Include enforcement overrides
+      enforcement_mode: household.features?.enforcement_mode || 'system_default',
+      enforce_api_limits: household.features?.enforce_api_limits ?? true,
+      show_upgrade_prompts: household.features?.show_upgrade_prompts ?? true
     }
 
     console.log('🎛️ Initialized features for editing:', initialFeatures)
