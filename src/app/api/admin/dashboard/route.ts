@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
           name,
           created_at,
           updated_at,
-          household_members!inner(user_id)
+          household_members(user_id)
         `)
         .order('created_at', { ascending: false })
 
@@ -75,6 +75,9 @@ export async function GET(request: NextRequest) {
           ...h,
           member_count: h.household_members?.length || 0
         })) || []
+        console.log('🏠 Households query result:', householdsData?.length, 'households found')
+      } else {
+        console.error('❌ Households query error:', householdsError)
       }
     } catch (householdsErr) {
       console.log('Household data not available:', householdsErr)
