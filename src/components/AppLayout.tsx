@@ -70,10 +70,41 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  // Temporarily disabled household functionality
-  const currentHousehold = null
-  const households = []
-  const householdLoading = false
+  // Re-enable household functionality gradually
+  const [currentHousehold, setCurrentHousehold] = useState<any>(null)
+  const [householdLoading, setHouseholdLoading] = useState(true)
+
+  // Load household name for header
+  useEffect(() => {
+    const loadHouseholdName = async () => {
+      if (!user) {
+        setHouseholdLoading(false)
+        return
+      }
+
+      try {
+        // Try to get household name from user's household
+        const { data: householdData, error } = await supabase
+          .from('households')
+          .select('id, name')
+          .eq('id', user.id)
+          .single()
+
+        if (!error && householdData) {
+          setCurrentHousehold({
+            id: householdData.id,
+            name: householdData.name
+          })
+        }
+      } catch (err) {
+        console.log('No household found for user')
+      } finally {
+        setHouseholdLoading(false)
+      }
+    }
+
+    loadHouseholdName()
+  }, [user])
 
   useEffect(() => {
     const getSession = async () => {
@@ -122,22 +153,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const drawer = (
     <Box>
       <Toolbar>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <img
-            src="/Logo_trans.png"
-            alt="PantryIQ"
-            style={{
-              height: '32px',
-              width: 'auto',
-              marginRight: '8px'
-            }}
-          />
-          {currentHousehold?.name && (
-            <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-              {currentHousehold.name}
-            </Typography>
-          )}
-        </Box>
+        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+          {currentHousehold?.name || 'PantryIQ'}
+        </Typography>
       </Toolbar>
       <Divider />
       <List>
@@ -187,41 +205,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
           >
             <MenuIcon />
           </IconButton>
-          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-            {!householdLoading && currentHousehold ? (
-              <Button
-                onClick={households.length > 1 ? handleHouseholdMenuOpen : undefined}
-                sx={{
-                  color: 'inherit',
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  fontSize: '1.25rem',
-                  cursor: households.length > 1 ? 'pointer' : 'default',
-                  '&:hover': {
-                    backgroundColor: households.length > 1 ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
-                  }
-                }}
-                endIcon={households.length > 1 ? <ArrowDownIcon /> : null}
-                disableRipple={households.length <= 1}
-              >
-                {currentHousehold.name}
-              </Button>
-            ) : (
-              <img
-                src="/Logo_trans.png"
-                alt="PantryIQ"
-                style={{
-                  height: '40px',
-                  width: 'auto'
-                }}
-              />
-            )}
-            {currentHousehold?.name && (
-              <Typography variant="h6" sx={{ ml: 2, fontWeight: 'bold' }}>
-                {currentHousehold.name}
-              </Typography>
-            )}
-          </Box>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+            {currentHousehold?.name || 'PantryIQ'}
+          </Typography>
           <IconButton
             size="large"
             edge="end"
