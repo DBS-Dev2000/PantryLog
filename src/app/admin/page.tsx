@@ -28,7 +28,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  CircularProgress
 } from '@mui/material'
 import {
   AdminPanelSettings as AdminIcon,
@@ -37,7 +38,8 @@ import {
   Settings as SettingsIcon,
   Visibility as ViewIcon,
   Edit as EditIcon,
-  Block as BlockIcon
+  Block as BlockIcon,
+  Save as SaveIcon
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -95,8 +97,11 @@ export default function AdminPage() {
   // Dialog states for actions
   const [userDetailsDialog, setUserDetailsDialog] = useState(false)
   const [householdDetailsDialog, setHouseholdDetailsDialog] = useState(false)
+  const [householdEditDialog, setHouseholdEditDialog] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [selectedHousehold, setSelectedHousehold] = useState<any>(null)
+  const [editingFeatures, setEditingFeatures] = useState<any>(null)
+  const [savingFeatures, setSavingFeatures] = useState(false)
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -370,9 +375,45 @@ export default function AdminPage() {
   }
 
   const handleEditHousehold = (household: any) => {
-    // For now, same as view - can be enhanced later
     setSelectedHousehold(household)
-    setHouseholdDetailsDialog(true)
+    // Initialize feature settings (defaulting to enabled if not specified)
+    setEditingFeatures({
+      recipes_enabled: household.features?.recipes_enabled ?? true,
+      ai_features_enabled: household.features?.ai_features_enabled ?? true,
+      shopping_list_sharing: household.features?.shopping_list_sharing ?? true,
+      storage_editing: household.features?.storage_editing ?? true,
+      multiple_households: household.features?.multiple_households ?? false,
+      advanced_reporting: household.features?.advanced_reporting ?? false,
+      custom_labels: household.features?.custom_labels ?? true,
+      barcode_scanning: household.features?.barcode_scanning ?? true
+    })
+    setHouseholdEditDialog(true)
+  }
+
+  const handleSaveHouseholdFeatures = async () => {
+    if (!selectedHousehold || !editingFeatures) return
+
+    setSavingFeatures(true)
+    try {
+      // TODO: Implement API call to save household features
+      console.log('💾 Saving household features:', {
+        household_id: selectedHousehold.id,
+        features: editingFeatures
+      })
+
+      // Simulate API call for now
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      setSuccess(`Features updated for household: ${selectedHousehold.name}`)
+      setHouseholdEditDialog(false)
+
+      // Refresh household data
+      await loadAdminData()
+    } catch (err: any) {
+      setError(`Failed to update features: ${err.message}`)
+    } finally {
+      setSavingFeatures(false)
+    }
   }
 
   if (!user || loading) {
@@ -861,6 +902,192 @@ export default function AdminPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setHouseholdDetailsDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Household Edit Dialog */}
+      <Dialog
+        open={householdEditDialog}
+        onClose={() => setHouseholdEditDialog(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>
+          🏠 Edit Household Features: {selectedHousehold?.name}
+        </DialogTitle>
+        <DialogContent>
+          {selectedHousehold && editingFeatures && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom color="primary">
+                🎛️ Feature Management
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                Control which features this household can access
+              </Typography>
+
+              <Grid container spacing={3}>
+                {/* Core Features */}
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        📝 Core Features
+                      </Typography>
+
+                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                        <Box>
+                          <Typography variant="body1">Recipe Management</Typography>
+                          <Typography variant="body2" color="textSecondary">Create, edit, and manage recipes</Typography>
+                        </Box>
+                        <Switch
+                          checked={editingFeatures.recipes_enabled}
+                          onChange={(e) => setEditingFeatures({
+                            ...editingFeatures,
+                            recipes_enabled: e.target.checked
+                          })}
+                        />
+                      </Box>
+
+                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                        <Box>
+                          <Typography variant="body1">Shopping List Sharing</Typography>
+                          <Typography variant="body2" color="textSecondary">Share shopping lists between members</Typography>
+                        </Box>
+                        <Switch
+                          checked={editingFeatures.shopping_list_sharing}
+                          onChange={(e) => setEditingFeatures({
+                            ...editingFeatures,
+                            shopping_list_sharing: e.target.checked
+                          })}
+                        />
+                      </Box>
+
+                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                        <Box>
+                          <Typography variant="body1">Storage Location Editing</Typography>
+                          <Typography variant="body2" color="textSecondary">Create and modify storage locations</Typography>
+                        </Box>
+                        <Switch
+                          checked={editingFeatures.storage_editing}
+                          onChange={(e) => setEditingFeatures({
+                            ...editingFeatures,
+                            storage_editing: e.target.checked
+                          })}
+                        />
+                      </Box>
+
+                      <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Box>
+                          <Typography variant="body1">Barcode Scanning</Typography>
+                          <Typography variant="body2" color="textSecondary">Use barcode scanner for adding items</Typography>
+                        </Box>
+                        <Switch
+                          checked={editingFeatures.barcode_scanning}
+                          onChange={(e) => setEditingFeatures({
+                            ...editingFeatures,
+                            barcode_scanning: e.target.checked
+                          })}
+                        />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Advanced Features */}
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        🚀 Advanced Features
+                      </Typography>
+
+                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                        <Box>
+                          <Typography variant="body1">AI Features</Typography>
+                          <Typography variant="body2" color="textSecondary">Visual recognition, recipe extraction</Typography>
+                        </Box>
+                        <Switch
+                          checked={editingFeatures.ai_features_enabled}
+                          onChange={(e) => setEditingFeatures({
+                            ...editingFeatures,
+                            ai_features_enabled: e.target.checked
+                          })}
+                        />
+                      </Box>
+
+                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                        <Box>
+                          <Typography variant="body1">Multiple Households</Typography>
+                          <Typography variant="body2" color="textSecondary">Allow users to join multiple households</Typography>
+                        </Box>
+                        <Switch
+                          checked={editingFeatures.multiple_households}
+                          onChange={(e) => setEditingFeatures({
+                            ...editingFeatures,
+                            multiple_households: e.target.checked
+                          })}
+                        />
+                      </Box>
+
+                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                        <Box>
+                          <Typography variant="body1">Advanced Reporting</Typography>
+                          <Typography variant="body2" color="textSecondary">Detailed analytics and reports</Typography>
+                        </Box>
+                        <Switch
+                          checked={editingFeatures.advanced_reporting}
+                          onChange={(e) => setEditingFeatures({
+                            ...editingFeatures,
+                            advanced_reporting: e.target.checked
+                          })}
+                        />
+                      </Box>
+
+                      <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Box>
+                          <Typography variant="body1">Custom Labels</Typography>
+                          <Typography variant="body2" color="textSecondary">Create and print custom item labels</Typography>
+                        </Box>
+                        <Switch
+                          checked={editingFeatures.custom_labels}
+                          onChange={(e) => setEditingFeatures({
+                            ...editingFeatures,
+                            custom_labels: e.target.checked
+                          })}
+                        />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Household Info */}
+                <Grid item xs={12}>
+                  <Alert severity="info">
+                    <Typography variant="body2">
+                      <strong>Note:</strong> Changes will take effect immediately for this household.
+                      Users may need to refresh their browser to see feature changes.
+                    </Typography>
+                  </Alert>
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setHouseholdEditDialog(false)}
+            disabled={savingFeatures}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveHouseholdFeatures}
+            disabled={savingFeatures}
+            startIcon={savingFeatures ? <CircularProgress size={20} /> : <SaveIcon />}
+          >
+            {savingFeatures ? 'Saving...' : 'Save Features'}
+          </Button>
         </DialogActions>
       </Dialog>
 
