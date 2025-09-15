@@ -37,7 +37,8 @@ import {
   Person as PersonIcon,
   Share as ShareIcon,
   QrCode as QrCodeIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Add as AddIcon
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
