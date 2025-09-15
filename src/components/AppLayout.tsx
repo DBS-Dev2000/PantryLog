@@ -44,7 +44,7 @@ import {
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { useHousehold } from '@/contexts/HouseholdContext'
+// import { useHousehold } from '@/contexts/HouseholdContext' // Temporarily disabled
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -71,7 +71,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  const { currentHousehold, households, switchHousehold, setDefaultHousehold, loading: householdLoading } = useHousehold()
+  // Temporarily disabled household functionality
+  const currentHousehold = null
+  const households = []
+  const householdLoading = false
 
   useEffect(() => {
     const getSession = async () => {
@@ -90,23 +93,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const handleHouseholdMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setHouseholdMenuEl(event.currentTarget)
-  }
-
-  const handleHouseholdMenuClose = () => {
-    setHouseholdMenuEl(null)
-  }
-
-  const handleHouseholdSwitch = async (householdId: string) => {
-    await switchHousehold(householdId)
-    handleHouseholdMenuClose()
-  }
-
-  const handleSetDefaultHousehold = async (householdId: string) => {
-    await setDefaultHousehold(householdId)
-    handleHouseholdMenuClose()
-  }
+  // Temporarily disabled household menu handlers
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)

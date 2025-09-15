@@ -22,11 +22,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <StoreProvider>
           <ThemeProvider>
-            <HouseholdProvider>
-              <AppLayout>
-                {children}
-              </AppLayout>
-            </HouseholdProvider>
+            <AppLayout>
+              {children}
+            </AppLayout>
           </ThemeProvider>
         </StoreProvider>
       </body>
