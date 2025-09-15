@@ -205,9 +205,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            {currentHousehold?.name || 'PantryIQ'}
-          </Typography>
+          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+            {currentHousehold?.name ? (
+              <Typography variant="h6" noWrap component="div">
+                {currentHousehold.name} | <Box component="span" sx={{ fontWeight: 'bold' }}>PantryIQ</Box>
+              </Typography>
+            ) : (
+              <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+                PantryIQ
+              </Typography>
+            )}
+          </Box>
           <IconButton
             size="large"
             edge="end"
