@@ -154,7 +154,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <Box>
       <Toolbar>
         <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-          PantryIQ
+          
         </Typography>
       </Toolbar>
       <Divider />
