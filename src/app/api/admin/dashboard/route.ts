@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
     // Load households with member counts
     let households = []
     try {
+      // Try enhanced query first
       const { data: householdsData, error: householdsError } = await supabaseAdmin
         .from('households')
         .select(`
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
         `)
         .order('created_at', { ascending: false })
 
-      if (!householdsError) {
+      if (!householdsError && householdsData) {
         // Get all user data for member details
         const allUsersData = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
         const userMap = new Map()
@@ -84,23 +85,46 @@ export async function GET(request: NextRequest) {
         })
 
         // Process the data to get member counts and details
-        households = householdsData?.map(h => ({
+        households = householdsData.map(h => ({
           ...h,
-          member_count: h.household_members?.filter(m => m.is_active)?.length || 0,
-          members: h.household_members?.filter(m => m.is_active)?.map(member => ({
+          member_count: h.household_members?.filter(m => m.is_active !== false)?.length || 0,
+          members: h.household_members?.filter(m => m.is_active !== false)?.map(member => ({
             user_id: member.user_id,
-            role: member.role,
+            role: member.role || 'member',
             joined_at: member.joined_at,
             email: userMap.get(member.user_id)?.email || 'Unknown',
             user_created_at: userMap.get(member.user_id)?.created_at
           })) || []
-        })) || []
-        console.log('🏠 Households query result:', householdsData?.length, 'households found')
+        }))
+        console.log('🏠 Enhanced households query result:', householdsData.length, 'households found with members')
       } else {
-        console.error('❌ Households query error:', householdsError)
+        console.error('❌ Enhanced households query failed:', householdsError)
+
+        // Fallback to basic household query
+        const { data: basicHouseholds, error: basicError } = await supabaseAdmin
+          .from('households')
+          .select(`
+            id,
+            name,
+            created_at,
+            updated_at
+          `)
+          .order('created_at', { ascending: false })
+
+        if (!basicError && basicHouseholds) {
+          households = basicHouseholds.map(h => ({
+            ...h,
+            member_count: 1, // Default to 1 (creator)
+            members: []
+          }))
+          console.log('🏠 Fallback households query result:', basicHouseholds.length, 'households found (basic)')
+        } else {
+          console.error('❌ Even basic households query failed:', basicError)
+          households = []
+        }
       }
     } catch (householdsErr) {
-      console.log('Household data not available:', householdsErr)
+      console.error('❌ Households query exception:', householdsErr)
       households = []
     }
 
