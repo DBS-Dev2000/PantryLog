@@ -71,7 +71,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  const { currentHousehold, households, switchHousehold, setDefaultHousehold } = useHousehold()
+  const { currentHousehold, households, switchHousehold, setDefaultHousehold, loading: householdLoading } = useHousehold()
 
   useEffect(() => {
     const getSession = async () => {
@@ -137,7 +137,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <Box>
       <Toolbar>
         <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-          {currentHousehold?.name ? `${currentHousehold.name} | PantryIQ` : 'PantryIQ'}
+          {householdLoading ? 'PantryIQ' : (currentHousehold?.name ? `${currentHousehold.name} | PantryIQ` : 'PantryIQ')}
         </Typography>
       </Toolbar>
       <Divider />
@@ -189,7 +189,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <MenuIcon />
           </IconButton>
           <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-            {currentHousehold && households.length > 1 ? (
+            {!householdLoading && currentHousehold && households.length > 1 ? (
               <Button
                 onClick={handleHouseholdMenuOpen}
                 sx={{
@@ -204,7 +204,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </Button>
             ) : (
               <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-                {currentHousehold?.name || 'PantryIQ'}
+                {householdLoading ? 'PantryIQ' : (currentHousehold?.name || 'PantryIQ')}
               </Typography>
             )}
             <Typography variant="h6" sx={{ ml: 1, fontWeight: 'normal', opacity: 0.7 }}>
@@ -275,7 +275,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 Switch Household
               </Typography>
             </Box>
-            {households.map((household) => (
+            {households && households.map((household) => (
               <MenuItem
                 key={household.household_id}
                 onClick={() => handleHouseholdSwitch(household.household_id)}

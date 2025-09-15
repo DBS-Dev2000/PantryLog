@@ -40,15 +40,43 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Get all user's households
-      const { data: householdsData, error: householdsError } = await supabase
-        .rpc('get_user_households', { user_uuid: session.user.id })
+      // Get all user's households - fallback to simple query if RPC doesn't exist
+      let householdsList = []
 
-      if (householdsError) {
-        throw householdsError
+      try {
+        const { data: householdsData, error: householdsError } = await supabase
+          .rpc('get_user_households', { user_uuid: session.user.id })
+
+        if (householdsError) {
+          // If RPC function doesn't exist, fall back to basic query
+          console.log('RPC function not found, using fallback query')
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('household_members')
+            .select(`
+              household_id,
+              role,
+              joined_at,
+              households!inner(name)
+            `)
+            .eq('user_id', session.user.id)
+
+          if (fallbackError) throw fallbackError
+
+          householdsList = (fallbackData || []).map(item => ({
+            household_id: item.household_id,
+            household_name: item.households.name,
+            role: item.role,
+            is_default: false, // Default logic will be added later
+            joined_at: item.joined_at
+          }))
+        } else {
+          householdsList = householdsData || []
+        }
+      } catch (err) {
+        console.log('Household query failed, user may not have any households yet')
+        householdsList = []
       }
 
-      const householdsList = householdsData || []
       setHouseholds(householdsList)
 
       // Set current household (default one or first one)
@@ -89,13 +117,20 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
 
       if (!session?.user) return
 
-      const { error } = await supabase
-        .rpc('set_user_default_household', {
-          user_uuid: session.user.id,
-          household_uuid: householdId
-        })
+      try {
+        const { error } = await supabase
+          .rpc('set_user_default_household', {
+            user_uuid: session.user.id,
+            household_uuid: householdId
+          })
 
-      if (error) throw error
+        if (error) throw error
+      } catch (rpcError) {
+        console.log('RPC function not available, skipping default household setting')
+        // For now, just switch to that household
+        await switchHousehold(householdId)
+        return
+      }
 
       // Refresh households to update default status
       await refreshHouseholds()
