@@ -92,6 +92,12 @@ export default function AdminPage() {
   const [households, setHouseholds] = useState<any[]>([])
   const [householdPermissions, setHouseholdPermissions] = useState<any[]>([])
 
+  // Dialog states for actions
+  const [userDetailsDialog, setUserDetailsDialog] = useState(false)
+  const [householdDetailsDialog, setHouseholdDetailsDialog] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [selectedHousehold, setSelectedHousehold] = useState<any>(null)
+
   useEffect(() => {
     const checkAdminAccess = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -345,6 +351,30 @@ export default function AdminPage() {
     }
   }
 
+  // User action handlers
+  const handleViewUser = (userData: any) => {
+    setSelectedUser(userData)
+    setUserDetailsDialog(true)
+  }
+
+  const handleEditUser = (userData: any) => {
+    // For now, same as view - can be enhanced later
+    setSelectedUser(userData)
+    setUserDetailsDialog(true)
+  }
+
+  // Household action handlers
+  const handleViewHousehold = (household: any) => {
+    setSelectedHousehold(household)
+    setHouseholdDetailsDialog(true)
+  }
+
+  const handleEditHousehold = (household: any) => {
+    // For now, same as view - can be enhanced later
+    setSelectedHousehold(household)
+    setHouseholdDetailsDialog(true)
+  }
+
   if (!user || loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4 }}>
@@ -555,10 +585,18 @@ export default function AdminPage() {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" onClick={() => {}}>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewHousehold(household)}
+                        title="View Household Details"
+                      >
                         <ViewIcon />
                       </IconButton>
-                      <IconButton size="small" onClick={() => {}}>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEditHousehold(household)}
+                        title="Edit Household Settings"
+                      >
                         <EditIcon />
                       </IconButton>
                     </TableCell>
@@ -696,8 +734,19 @@ export default function AdminPage() {
                         />
                       </TableCell>
                       <TableCell>
-                        <IconButton size="small" title="View Details">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleViewUser(userData)}
+                          title="View User Details"
+                        >
                           <ViewIcon />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEditUser(userData)}
+                          title="Edit User Settings"
+                        >
+                          <EditIcon />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -708,6 +757,113 @@ export default function AdminPage() {
           </TableContainer>
         </CardContent>
       </Card>
+
+      {/* User Details Dialog */}
+      <Dialog
+        open={userDetailsDialog}
+        onClose={() => setUserDetailsDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          👤 User Details: {selectedUser?.email}
+        </DialogTitle>
+        <DialogContent>
+          {selectedUser && (
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">User ID</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedUser.id}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">Email</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedUser.email}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">Created</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {new Date(selectedUser.created_at).toLocaleDateString()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">Last Sign In</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {selectedUser.last_sign_in_at
+                      ? new Date(selectedUser.last_sign_in_at).toLocaleDateString()
+                      : 'Never'
+                    }
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="textSecondary">Admin Status</Typography>
+                  <Chip
+                    label={selectedUser.is_admin ? 'Admin' : 'Regular User'}
+                    color={selectedUser.is_admin ? 'secondary' : 'default'}
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUserDetailsDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Household Details Dialog */}
+      <Dialog
+        open={householdDetailsDialog}
+        onClose={() => setHouseholdDetailsDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          🏠 Household Details: {selectedHousehold?.name}
+        </DialogTitle>
+        <DialogContent>
+          {selectedHousehold && (
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">Household ID</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedHousehold.id}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">Name</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>{selectedHousehold.name}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">Created</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {new Date(selectedHousehold.created_at).toLocaleDateString()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">Last Updated</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {selectedHousehold.updated_at
+                      ? new Date(selectedHousehold.updated_at).toLocaleDateString()
+                      : 'N/A'
+                    }
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="textSecondary">Members</Typography>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {selectedHousehold.member_count || 0} members
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHouseholdDetailsDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
     </Container>
   )
 }
