@@ -137,7 +137,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <Box>
       <Toolbar>
         <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-          {householdName ? `${householdName} | PantryIQ` : 'PantryIQ'}
+          {currentHousehold?.name ? `${currentHousehold.name} | PantryIQ` : 'PantryIQ'}
         </Typography>
       </Toolbar>
       <Divider />
