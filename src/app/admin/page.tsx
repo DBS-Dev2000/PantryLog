@@ -394,8 +394,12 @@ export default function AdminPage() {
 
   const handleEditHousehold = (household: any) => {
     setSelectedHousehold(household)
+
+    console.log('🏠 Opening household edit for:', household.name)
+    console.log('🎛️ Current household features:', household.features)
+
     // Initialize feature settings (defaulting to enabled if not specified)
-    setEditingFeatures({
+    const initialFeatures = {
       recipes_enabled: household.features?.recipes_enabled ?? true,
       ai_features_enabled: household.features?.ai_features_enabled ?? true,
       shopping_list_sharing: household.features?.shopping_list_sharing ?? true,
@@ -404,7 +408,10 @@ export default function AdminPage() {
       advanced_reporting: household.features?.advanced_reporting ?? false,
       custom_labels: household.features?.custom_labels ?? true,
       barcode_scanning: household.features?.barcode_scanning ?? true
-    })
+    }
+
+    console.log('🎛️ Initialized features for editing:', initialFeatures)
+    setEditingFeatures(initialFeatures)
     setHouseholdEditDialog(true)
   }
 
@@ -412,6 +419,12 @@ export default function AdminPage() {
     if (!selectedHousehold || !editingFeatures || !user?.id) return
 
     setSavingFeatures(true)
+    console.log('💾 Attempting to save features:', {
+      household_id: selectedHousehold.id,
+      household_name: selectedHousehold.name,
+      features: editingFeatures
+    })
+
     try {
       const response = await fetch('/api/admin/household-features', {
         method: 'POST',
@@ -424,6 +437,8 @@ export default function AdminPage() {
           requesting_user_id: user.id
         })
       })
+
+      console.log('📡 Feature save response status:', response.status)
 
       const result = await response.json()
 
