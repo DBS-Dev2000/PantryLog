@@ -35,58 +35,86 @@ interface FeatureUpsellProps {
 }
 
 const featureDetails = {
-  recipes: {
-    title: 'Recipe Management',
-    icon: '📝',
-    description: 'Create, organize, and manage your recipe collection with AI-powered features.',
+  recipes_enabled: {
+    title: 'Recipe Collection',
+    icon: '👨‍🍳',
+    description: 'Unlock your digital cookbook with AI-powered recipe management and meal planning.',
     benefits: [
       'Import recipes from websites and YouTube videos',
       'Scan handwritten recipe cards with AI',
       'Smart ingredient substitution suggestions',
-      'Recipe availability checking based on your inventory',
-      'Organized recipe collections with tags and categories'
+      'Check what recipes you can make with current inventory',
+      'Organized recipe collections with tags and search'
     ],
     suggestedPlan: 'Premium',
     planPrice: '$4.99/month'
   },
-  ai_features: {
-    title: 'AI Features',
+  ai_features_enabled: {
+    title: 'AI Kitchen Assistant',
     icon: '🤖',
-    description: 'Unlock the power of artificial intelligence for your kitchen management.',
+    description: 'Transform your kitchen with artificial intelligence that recognizes items and helps with meal planning.',
     benefits: [
-      'Visual item recognition - just take a photo',
-      'AI-powered recipe extraction from photos',
-      'Smart ingredient substitution suggestions',
+      'Take photos to instantly identify grocery items',
+      'AI-powered recipe extraction from cookbook photos',
+      'Smart ingredient substitution recommendations',
       'Predictive shopping list generation',
-      'Advanced meal planning assistance'
+      'Intelligent meal planning assistance'
     ],
     suggestedPlan: 'Premium',
     planPrice: '$4.99/month'
   },
   shopping_list_sharing: {
-    title: 'Shopping List Sharing',
+    title: 'Family Shopping Lists',
     icon: '🛒',
-    description: 'Collaborate with household members on shopping and meal planning.',
+    description: 'Coordinate shopping and meal planning with your entire household.',
     benefits: [
       'Share shopping lists with all household members',
-      'Real-time collaboration and updates',
-      'Assign shopping tasks to different members',
+      'Real-time updates when someone adds or buys items',
+      'Assign shopping tasks to different family members',
       'Sync across all devices instantly',
-      'Track who bought what and when'
+      'Track purchases and shopping history'
+    ],
+    suggestedPlan: 'Premium',
+    planPrice: '$4.99/month'
+  },
+  storage_editing: {
+    title: 'Custom Storage Management',
+    icon: '📦',
+    description: 'Create and customize storage locations to match your unique kitchen setup.',
+    benefits: [
+      'Create custom storage locations and categories',
+      'Organize your pantry, fridge, and freezer your way',
+      'Generate printable QR code labels',
+      'Hierarchical storage organization',
+      'Custom location naming and descriptions'
+    ],
+    suggestedPlan: 'Premium',
+    planPrice: '$4.99/month'
+  },
+  barcode_scanning: {
+    title: 'Barcode Scanning',
+    icon: '📱',
+    description: 'Quickly add items to your inventory by scanning product barcodes.',
+    benefits: [
+      'Instant item recognition with barcode scanning',
+      'Automatic product information lookup',
+      'Quick inventory additions without typing',
+      'Support for UPC, EAN, and QR codes',
+      'Works with phone camera or dedicated scanner'
     ],
     suggestedPlan: 'Premium',
     planPrice: '$4.99/month'
   },
   advanced_reporting: {
-    title: 'Advanced Reporting',
+    title: 'Kitchen Analytics',
     icon: '📊',
-    description: 'Get detailed insights into your kitchen usage and food waste patterns.',
+    description: 'Get powerful insights into your food usage patterns and reduce waste with data-driven decisions.',
     benefits: [
-      'Detailed consumption analytics',
+      'Detailed food consumption analytics',
       'Food waste tracking and reduction insights',
       'Cost analysis and budget optimization',
-      'Expiration pattern analysis',
-      'Custom reporting and data export'
+      'Expiration pattern analysis and alerts',
+      'Custom reporting and data export capabilities'
     ],
     suggestedPlan: 'Pro',
     planPrice: '$9.99/month'

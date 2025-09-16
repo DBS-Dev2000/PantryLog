@@ -60,8 +60,9 @@ const baseNavigation = [
   { name: 'Recipes', href: '/recipes', icon: Restaurant, feature: 'recipes_enabled' },
   { name: 'Shopping List', href: '/shopping', icon: ShoppingCart, feature: 'shopping_list_sharing' },
   { name: 'Receipt Scan', href: '/inventory/receipt', icon: Receipt, feature: 'ai_features_enabled' },
+  { name: 'Storage Setup', href: '/settings/storage', icon: StorageIcon, feature: 'storage_editing' },
   { name: 'Help', href: '/help', icon: HelpIcon, feature: null },
-  { name: 'Settings', href: '/settings', icon: SettingsIcon, feature: 'storage_editing' },
+  { name: 'Settings', href: '/settings', icon: SettingsIcon, feature: null },
 ]
 
 export default function AppLayout({ children }: AppLayoutProps) {
