@@ -20,7 +20,15 @@ import {
   Alert,
   CircularProgress,
   Link,
-  IconButton
+  IconButton,
+  useTheme,
+  useMediaQuery,
+  Stack,
+  CardActions,
+  Divider,
+  SpeedDial,
+  SpeedDialAction,
+  SpeedDialIcon
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -42,6 +50,9 @@ export default function InventoryPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const dispatch = useAppDispatch()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'))
   const { items: reduxItems, loading: reduxLoading, error: reduxError } = useAppSelector((state) => state.inventory)
   const { household } = useAppSelector((state) => state.household)
   const [user, setUser] = useState<any>(null)
@@ -217,16 +228,33 @@ export default function InventoryPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
+    <Container maxWidth="lg" sx={{ mt: isMobile ? 2 : 4, px: isMobile ? 1 : 2 }}>
+      {/* Mobile-Responsive Header */}
+      <Box
+        display="flex"
+        flexDirection={isMobile ? 'column' : 'row'}
+        justifyContent="space-between"
+        alignItems={isMobile ? 'stretch' : 'center'}
+        mb={3}
+        gap={2}
+      >
+        <Box sx={{ mb: isMobile ? 2 : 0 }}>
+          <Typography
+            variant={isMobile ? "h5" : "h4"}
+            component="h1"
+            gutterBottom
+            sx={{ fontSize: isMobile ? '1.5rem' : '2rem' }}
+          >
             {storageLocation ? `${storageLocation.name}` : 'My Pantry'}
           </Typography>
-          <Typography variant="body1" color="textSecondary">
+          <Typography
+            variant={isMobile ? "body2" : "body1"}
+            color="textSecondary"
+            sx={{ fontSize: isMobile ? '0.875rem' : '1rem' }}
+          >
             {storageLocation
-              ? `Items stored in ${storageLocation.name}`
-              : 'Your complete pantry and freezer contents'
+              ? `Items in ${storageLocation.name}`
+              : 'Your pantry and freezer contents'
             }
           </Typography>
           {storageLocation && (
@@ -234,43 +262,83 @@ export default function InventoryPage() {
               icon={<LocationIcon />}
               label={`${storageLocation.type} - ${storageLocation.name}`}
               variant="outlined"
+              size={isMobile ? "small" : "medium"}
               sx={{ mt: 1 }}
             />
           )}
         </Box>
-        <Box display="flex" gap={2}>
-          <Button
-            variant="outlined"
-            startIcon={<VoiceIcon />}
-            onClick={() => setVoiceAssistantOpen(true)}
-            size="large"
-            color="secondary"
-          >
-            Voice Assistant
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => router.push('/inventory/quick-add')}
-            size="large"
-          >
-            Add Item
-          </Button>
-        </Box>
+
+        {/* Action Buttons - Stack on Mobile */}
+        {isMobile ? (
+          <Stack spacing={1} direction="column">
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => router.push('/inventory/quick-add')}
+              fullWidth
+              size="medium"
+            >
+              Add Item
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<VoiceIcon />}
+              onClick={() => setVoiceAssistantOpen(true)}
+              fullWidth
+              size="medium"
+              color="secondary"
+            >
+              Voice Assistant
+            </Button>
+          </Stack>
+        ) : (
+          <Box display="flex" gap={2}>
+            <Button
+              variant="outlined"
+              startIcon={<VoiceIcon />}
+              onClick={() => setVoiceAssistantOpen(true)}
+              size="large"
+              color="secondary"
+            >
+              Voice Assistant
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => router.push('/inventory/quick-add')}
+              size="large"
+            >
+              Add Item
+            </Button>
+          </Box>
+        )}
       </Box>
 
-      {/* Quick Stats */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+      {/* Quick Stats - Responsive Grid */}
+      <Grid container spacing={isMobile ? 2 : 3} sx={{ mb: 3 }}>
+        <Grid item xs={6} sm={6} md={3}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
               <Box display="flex" alignItems="center">
-                <PantryIcon color="primary" sx={{ mr: 2 }} />
+                <PantryIcon
+                  color="primary"
+                  sx={{
+                    mr: isMobile ? 1 : 2,
+                    fontSize: isMobile ? 24 : 30
+                  }}
+                />
                 <Box>
-                  <Typography variant="h6">
+                  <Typography
+                    variant={isMobile ? "body1" : "h6"}
+                    sx={{ fontWeight: 'bold', fontSize: isMobile ? '1rem' : '1.25rem' }}
+                  >
                     {storageLocation ? filteredItems.length : items.length}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography
+                    variant="caption"
+                    color="textSecondary"
+                    sx={{ fontSize: isMobile ? '0.7rem' : '0.875rem' }}
+                  >
                     Total Items
                   </Typography>
                 </Box>
@@ -279,19 +347,32 @@ export default function InventoryPage() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
+        <Grid item xs={6} sm={6} md={3}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
               <Box display="flex" alignItems="center">
-                <CalendarIcon color="warning" sx={{ mr: 2 }} />
+                <CalendarIcon
+                  color="warning"
+                  sx={{
+                    mr: isMobile ? 1 : 2,
+                    fontSize: isMobile ? 24 : 30
+                  }}
+                />
                 <Box>
-                  <Typography variant="h6">
+                  <Typography
+                    variant={isMobile ? "body1" : "h6"}
+                    sx={{ fontWeight: 'bold', fontSize: isMobile ? '1rem' : '1.25rem' }}
+                  >
                     {items.filter(item => {
                       const days = getDaysUntilExpiration(item.expiration_date)
                       return days !== null && days <= 7
                     }).length}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography
+                    variant="caption"
+                    color="textSecondary"
+                    sx={{ fontSize: isMobile ? '0.7rem' : '0.875rem' }}
+                  >
                     Expiring Soon
                   </Typography>
                 </Box>
@@ -335,7 +416,103 @@ export default function InventoryPage() {
             Add Your First Item
           </Button>
         </Paper>
+      ) : isMobile ? (
+        // Mobile Card View
+        <Stack spacing={2}>
+          {filteredItems.map((item) => (
+            <Card key={item.id} variant="outlined">
+              <CardContent sx={{ pb: 1 }}>
+                {/* Product Name and Brand */}
+                <Box mb={1}>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    onClick={() => {
+                      if (item.products?.id) {
+                        router.push(`/inventory/product/${item.products.id}`)
+                      }
+                    }}
+                    sx={{
+                      color: item.products?.id ? 'primary.main' : 'text.primary',
+                      textDecoration: 'none',
+                      '&:active': { opacity: 0.8 }
+                    }}
+                  >
+                    {item.products?.name || 'Unknown Product'}
+                  </Typography>
+                  {item.products?.brand && (
+                    <Typography variant="caption" color="textSecondary" display="block">
+                      {item.products.brand}
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Quantity and Location Row */}
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                  <Chip
+                    label={`${item.quantity} ${item.unit}`}
+                    size="small"
+                    variant="outlined"
+                  />
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    onClick={() => {
+                      if (item.storage_locations?.id) {
+                        router.push(`/inventory?location=${item.storage_locations.id}`)
+                      }
+                    }}
+                    sx={{ '&:active': { opacity: 0.8 } }}
+                  >
+                    <LocationIcon fontSize="small" sx={{ mr: 0.5, fontSize: 16 }} />
+                    <Typography variant="body2" color="primary">
+                      {item.storage_locations?.name || 'Unknown'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Dates Row */}
+                <Box display="flex" justifyContent="space-between" mb={1}>
+                  <Typography variant="caption" color="textSecondary">
+                    Purchased: {formatDate(item.purchase_date)}
+                  </Typography>
+                  {item.expiration_date && (
+                    <Typography variant="caption" color="textSecondary">
+                      Expires: {formatDate(item.expiration_date)}
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Status and Actions */}
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  {item.expiration_date && (
+                    <Chip
+                      size="small"
+                      label={
+                        getDaysUntilExpiration(item.expiration_date)! < 0
+                          ? 'Expired'
+                          : getDaysUntilExpiration(item.expiration_date) === 0
+                          ? 'Today'
+                          : `${getDaysUntilExpiration(item.expiration_date)} days`
+                      }
+                      color={getExpirationColor(item.expiration_date)}
+                    />
+                  )}
+                  <Button
+                    size="small"
+                    startIcon={<EditIcon />}
+                    onClick={() => router.push(`/inventory/edit/${item.id}`)}
+                    sx={{ ml: 'auto' }}
+                  >
+                    Edit
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+        </Stack>
       ) : (
+        // Desktop Table View
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -464,6 +641,30 @@ export default function InventoryPage() {
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+
+      {/* Mobile Floating Action Button */}
+      {isMobile && (
+        <SpeedDial
+          ariaLabel="Quick actions"
+          sx={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16
+          }}
+          icon={<SpeedDialIcon />}
+        >
+          <SpeedDialAction
+            icon={<AddIcon />}
+            tooltipTitle="Add Item"
+            onClick={() => router.push('/inventory/quick-add')}
+          />
+          <SpeedDialAction
+            icon={<VoiceIcon />}
+            tooltipTitle="Voice Assistant"
+            onClick={() => setVoiceAssistantOpen(true)}
+          />
+        </SpeedDial>
       )}
 
       {/* Voice Assistant Dialog */}
