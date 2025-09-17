@@ -28,13 +28,15 @@ import {
   LocationOn as LocationIcon,
   CalendarToday as CalendarIcon,
   Launch as LaunchIcon,
-  Edit as EditIcon
+  Edit as EditIcon,
+  RecordVoiceOver as VoiceIcon
 } from '@mui/icons-material'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from '@/hooks/redux'
 import { fetchInventoryItems } from '@/store/slices/inventorySlice'
 import { fetchHousehold } from '@/store/slices/householdSlice'
 import { supabase } from '@/lib/supabase'
+import VoiceAssistant from '@/components/VoiceAssistant'
 
 export default function InventoryPage() {
   const router = useRouter()
@@ -48,6 +50,7 @@ export default function InventoryPage() {
   const [filteredItems, setFilteredItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false)
 
   // Build full breadcrumb path for a storage location
   const buildLocationPath = async (locationId: string, allLocations: any[]): Promise<string> => {
@@ -235,14 +238,25 @@ export default function InventoryPage() {
             />
           )}
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => router.push('/inventory/quick-add')}
-          size="large"
-        >
-          Add Item
-        </Button>
+        <Box display="flex" gap={2}>
+          <Button
+            variant="outlined"
+            startIcon={<VoiceIcon />}
+            onClick={() => setVoiceAssistantOpen(true)}
+            size="large"
+            color="secondary"
+          >
+            Voice Assistant
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => router.push('/inventory/quick-add')}
+            size="large"
+          >
+            Add Item
+          </Button>
+        </Box>
       </Box>
 
       {/* Quick Stats */}
@@ -450,6 +464,15 @@ export default function InventoryPage() {
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+
+      {/* Voice Assistant Dialog */}
+      {user && (
+        <VoiceAssistant
+          open={voiceAssistantOpen}
+          onClose={() => setVoiceAssistantOpen(false)}
+          userId={user.id}
+        />
       )}
     </Container>
   )
