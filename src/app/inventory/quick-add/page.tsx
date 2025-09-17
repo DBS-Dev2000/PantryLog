@@ -54,7 +54,7 @@ import QRScanner from '@/components/QRScanner'
 import VisualItemScanner from '@/components/VisualItemScanner'
 import VoiceAssistant from '@/components/VoiceAssistant'
 import WhisperVoiceAssistant from '@/components/WhisperVoiceAssistant'
-import { canUseVoiceAssistant } from '@/lib/features'
+import { canUseVoiceAssistant, getVoiceAssistantType } from '@/lib/features'
 
 interface ProductData {
   name: string
@@ -101,7 +101,7 @@ function QuickAddPageContent() {
   const [lastInputMethod, setLastInputMethod] = useState<'barcode' | 'ai' | 'search'>('barcode')
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false)
   const [voiceAssistantEnabled, setVoiceAssistantEnabled] = useState(false)
-  const [useWhisper, setUseWhisper] = useState(true) // Use Whisper by default
+  const [voiceAssistantType, setVoiceAssistantType] = useState<'basic' | 'whisper'>('whisper')
 
   useEffect(() => {
     const getUser = async () => {
@@ -114,6 +114,12 @@ function QuickAddPageContent() {
         // Check if Voice Assistant is enabled for this user's household
         const canUseVA = await canUseVoiceAssistant(session.user.id)
         setVoiceAssistantEnabled(canUseVA)
+
+        // Get voice assistant type for this page
+        if (canUseVA) {
+          const vaType = await getVoiceAssistantType('quick_add', session.user.id)
+          setVoiceAssistantType(vaType)
+        }
       } else {
         router.push('/auth')
       }
@@ -1007,8 +1013,8 @@ function QuickAddPageContent() {
         </Fab>
       )}
 
-      {/* Voice Assistant Dialog - Use Whisper if available */}
-      {useWhisper ? (
+      {/* Voice Assistant Dialog */}
+      {user && voiceAssistantType === 'whisper' ? (
         <WhisperVoiceAssistant
           open={voiceAssistantOpen}
           onClose={() => setVoiceAssistantOpen(false)}
@@ -1026,7 +1032,7 @@ function QuickAddPageContent() {
             }, 2000)
           }}
         />
-      ) : (
+      ) : user && voiceAssistantType === 'basic' ? (
         <VoiceAssistant
           open={voiceAssistantOpen}
           onClose={() => setVoiceAssistantOpen(false)}
@@ -1044,7 +1050,7 @@ function QuickAddPageContent() {
             }, 2000)
           }}
         />
-      )}
+      ) : null}
     </Container>
   )
 }

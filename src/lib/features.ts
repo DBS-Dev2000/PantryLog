@@ -16,6 +16,11 @@ export interface FeaturePermissions {
   custom_labels: boolean
   barcode_scanning: boolean
 
+  // Voice assistant settings per page
+  voice_assistant_type_inventory?: 'basic' | 'whisper'
+  voice_assistant_type_quick_add?: 'basic' | 'whisper'
+  voice_assistant_type_quick_use?: 'basic' | 'whisper'
+
   // Enforcement settings
   enforcement_mode: 'upsell' | 'hide' | 'system_default'
   enforce_api_limits: boolean
@@ -95,6 +100,11 @@ export async function getUserHouseholdFeatures(userId?: string): Promise<Feature
       advanced_reporting: household.features?.advanced_reporting ?? false,
       custom_labels: household.features?.custom_labels ?? true,
       barcode_scanning: household.features?.barcode_scanning ?? true,
+
+      // Voice assistant type per page (default to whisper for better accuracy)
+      voice_assistant_type_inventory: household.features?.voice_assistant_type_inventory ?? 'whisper',
+      voice_assistant_type_quick_add: household.features?.voice_assistant_type_quick_add ?? 'whisper',
+      voice_assistant_type_quick_use: household.features?.voice_assistant_type_quick_use ?? 'whisper',
 
       // Enforcement settings (hierarchical resolution)
       enforcement_mode: userOverrides?.enforcement_mode ||
@@ -188,6 +198,9 @@ function getDefaultFeatures(): FeaturePermissions {
     advanced_reporting: false,
     custom_labels: true,
     barcode_scanning: true,
+    voice_assistant_type_inventory: 'whisper',
+    voice_assistant_type_quick_add: 'whisper',
+    voice_assistant_type_quick_use: 'whisper',
     enforcement_mode: 'upsell',
     enforce_api_limits: true,
     show_upgrade_prompts: true,
@@ -215,6 +228,21 @@ export async function canEditStorage(userId?: string): Promise<boolean> {
 export async function canUseVoiceAssistant(userId?: string): Promise<boolean> {
   const permissions = await getUserHouseholdFeatures(userId)
   return permissions.voice_assistant_enabled || permissions.is_admin
+}
+
+export async function getVoiceAssistantType(page: 'inventory' | 'quick_add' | 'quick_use', userId?: string): Promise<'basic' | 'whisper'> {
+  const permissions = await getUserHouseholdFeatures(userId)
+
+  switch (page) {
+    case 'inventory':
+      return permissions.voice_assistant_type_inventory ?? 'whisper'
+    case 'quick_add':
+      return permissions.voice_assistant_type_quick_add ?? 'whisper'
+    case 'quick_use':
+      return permissions.voice_assistant_type_quick_use ?? 'whisper'
+    default:
+      return 'whisper'
+  }
 }
 
 export async function getEnforcementMode(userId?: string): Promise<'upsell' | 'hide'> {

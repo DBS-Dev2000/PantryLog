@@ -420,6 +420,9 @@ export default function AdminPage() {
       recipes_enabled: household.features?.recipes_enabled ?? true,
       ai_features_enabled: household.features?.ai_features_enabled ?? true,
       voice_assistant_enabled: household.features?.voice_assistant_enabled ?? false, // Default to disabled
+      voice_assistant_type_inventory: household.features?.voice_assistant_type_inventory ?? 'whisper',
+      voice_assistant_type_quick_add: household.features?.voice_assistant_type_quick_add ?? 'whisper',
+      voice_assistant_type_quick_use: household.features?.voice_assistant_type_quick_use ?? 'whisper',
       shopping_list_sharing: household.features?.shopping_list_sharing ?? true,
       storage_editing: household.features?.storage_editing ?? true,
       multiple_households: household.features?.multiple_households ?? false,
@@ -1793,18 +1796,93 @@ export default function AdminPage() {
                         />
                       </Box>
 
-                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                        <Box>
-                          <Typography variant="body1">Voice Assistant</Typography>
-                          <Typography variant="body2" color="textSecondary">Voice-controlled inventory management (experimental)</Typography>
+                      <Box sx={{ mb: 2 }}>
+                        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                          <Box>
+                            <Typography variant="body1">Voice Assistant</Typography>
+                            <Typography variant="body2" color="textSecondary">Voice-controlled inventory management</Typography>
+                          </Box>
+                          <Switch
+                            checked={editingFeatures.voice_assistant_enabled}
+                            onChange={(e) => setEditingFeatures({
+                              ...editingFeatures,
+                              voice_assistant_enabled: e.target.checked
+                            })}
+                          />
                         </Box>
-                        <Switch
-                          checked={editingFeatures.voice_assistant_enabled}
-                          onChange={(e) => setEditingFeatures({
-                            ...editingFeatures,
-                            voice_assistant_enabled: e.target.checked
-                          })}
-                        />
+
+                        {/* Voice Assistant Type Selection */}
+                        {editingFeatures.voice_assistant_enabled && (
+                          <Box sx={{ ml: 4, mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                            <Typography variant="subtitle2" gutterBottom>Voice Assistant Type per Page</Typography>
+
+                            <Box sx={{ mt: 1 }}>
+                              <Grid container spacing={2}>
+                                <Grid item xs={4}>
+                                  <Typography variant="body2" color="textSecondary">Inventory Page</Typography>
+                                </Grid>
+                                <Grid item xs={8}>
+                                  <Select
+                                    size="small"
+                                    fullWidth
+                                    value={editingFeatures.voice_assistant_type_inventory || 'whisper'}
+                                    onChange={(e) => setEditingFeatures({
+                                      ...editingFeatures,
+                                      voice_assistant_type_inventory: e.target.value as 'basic' | 'whisper'
+                                    })}
+                                  >
+                                    <MenuItem value="basic">Basic (Browser Speech API)</MenuItem>
+                                    <MenuItem value="whisper">Whisper (OpenAI - More Accurate)</MenuItem>
+                                  </Select>
+                                </Grid>
+                              </Grid>
+                            </Box>
+
+                            <Box sx={{ mt: 1 }}>
+                              <Grid container spacing={2}>
+                                <Grid item xs={4}>
+                                  <Typography variant="body2" color="textSecondary">Quick Add Page</Typography>
+                                </Grid>
+                                <Grid item xs={8}>
+                                  <Select
+                                    size="small"
+                                    fullWidth
+                                    value={editingFeatures.voice_assistant_type_quick_add || 'whisper'}
+                                    onChange={(e) => setEditingFeatures({
+                                      ...editingFeatures,
+                                      voice_assistant_type_quick_add: e.target.value as 'basic' | 'whisper'
+                                    })}
+                                  >
+                                    <MenuItem value="basic">Basic (Browser Speech API)</MenuItem>
+                                    <MenuItem value="whisper">Whisper (OpenAI - More Accurate)</MenuItem>
+                                  </Select>
+                                </Grid>
+                              </Grid>
+                            </Box>
+
+                            <Box sx={{ mt: 1 }}>
+                              <Grid container spacing={2}>
+                                <Grid item xs={4}>
+                                  <Typography variant="body2" color="textSecondary">Grab & Go Page</Typography>
+                                </Grid>
+                                <Grid item xs={8}>
+                                  <Select
+                                    size="small"
+                                    fullWidth
+                                    value={editingFeatures.voice_assistant_type_quick_use || 'whisper'}
+                                    onChange={(e) => setEditingFeatures({
+                                      ...editingFeatures,
+                                      voice_assistant_type_quick_use: e.target.value as 'basic' | 'whisper'
+                                    })}
+                                  >
+                                    <MenuItem value="basic">Basic (Browser Speech API)</MenuItem>
+                                    <MenuItem value="whisper">Whisper (OpenAI - More Accurate)</MenuItem>
+                                  </Select>
+                                </Grid>
+                              </Grid>
+                            </Box>
+                          </Box>
+                        )}
                       </Box>
 
                       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>

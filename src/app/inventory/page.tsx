@@ -58,7 +58,7 @@ import { fetchHousehold } from '@/store/slices/householdSlice'
 import { supabase } from '@/lib/supabase'
 import VoiceAssistant from '@/components/VoiceAssistant'
 import WhisperVoiceAssistant from '@/components/WhisperVoiceAssistant'
-import { canUseVoiceAssistant } from '@/lib/features'
+import { canUseVoiceAssistant, getVoiceAssistantType } from '@/lib/features'
 
 function InventoryPageContent() {
   const router = useRouter()
@@ -77,6 +77,7 @@ function InventoryPageContent() {
   const [error, setError] = useState<string | null>(null)
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false)
   const [voiceAssistantEnabled, setVoiceAssistantEnabled] = useState(false)
+  const [voiceAssistantType, setVoiceAssistantType] = useState<'basic' | 'whisper'>('whisper')
 
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('')
@@ -182,6 +183,12 @@ function InventoryPageContent() {
         // Check if Voice Assistant is enabled for this user's household
         const canUseVA = await canUseVoiceAssistant(session.user.id)
         setVoiceAssistantEnabled(canUseVA)
+
+        // Get voice assistant type for this page
+        if (canUseVA) {
+          const vaType = await getVoiceAssistantType('inventory', session.user.id)
+          setVoiceAssistantType(vaType)
+        }
 
         // Check if we're filtering by a specific storage location
         const locationId = searchParams.get('location')
@@ -842,7 +849,7 @@ function InventoryPageContent() {
       )}
 
       {/* Voice Assistant Dialog */}
-      {user && (
+      {user && voiceAssistantType === 'whisper' ? (
         <WhisperVoiceAssistant
           open={voiceAssistantOpen}
           onClose={() => setVoiceAssistantOpen(false)}
@@ -852,7 +859,13 @@ function InventoryPageContent() {
             await loadInventoryItems(user.id)
           }}
         />
-      )}
+      ) : user && voiceAssistantType === 'basic' ? (
+        <VoiceAssistant
+          open={voiceAssistantOpen}
+          onClose={() => setVoiceAssistantOpen(false)}
+          userId={user.id}
+        />
+      ) : null}
     </Container>
   )
 }

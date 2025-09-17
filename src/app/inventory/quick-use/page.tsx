@@ -57,7 +57,7 @@ import QRScanner from '@/components/QRScanner'
 import VisualItemScanner from '@/components/VisualItemScanner'
 import VoiceAssistant from '@/components/VoiceAssistant'
 import WhisperVoiceAssistant from '@/components/WhisperVoiceAssistant'
-import { canUseVoiceAssistant } from '@/lib/features'
+import { canUseVoiceAssistant, getVoiceAssistantType } from '@/lib/features'
 
 interface ProductData {
   id: string
@@ -116,6 +116,7 @@ function QuickUsePageContent() {
   const [storageLocations, setStorageLocations] = useState<any[]>([])
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false)
   const [voiceAssistantEnabled, setVoiceAssistantEnabled] = useState(false)
+  const [voiceAssistantType, setVoiceAssistantType] = useState<'basic' | 'whisper'>('whisper')
 
   useEffect(() => {
     const getUser = async () => {
@@ -127,6 +128,12 @@ function QuickUsePageContent() {
         // Check if Voice Assistant is enabled for this user's household
         const canUseVA = await canUseVoiceAssistant(session.user.id)
         setVoiceAssistantEnabled(canUseVA)
+
+        // Get voice assistant type for this page
+        if (canUseVA) {
+          const vaType = await getVoiceAssistantType('quick_use', session.user.id)
+          setVoiceAssistantType(vaType)
+        }
       } else {
         router.push('/auth')
       }
@@ -1150,23 +1157,31 @@ function QuickUsePageContent() {
       )}
 
       {/* Voice Assistant Dialog */}
-      <WhisperVoiceAssistant
-        open={voiceAssistantOpen}
-        onClose={() => setVoiceAssistantOpen(false)}
-        userId={user?.id}
-        onSuccess={() => {
-          // Refresh inventory after successful voice command
-          window.location.reload()
-        }
-        mode="remove"
-        onItemRemoved={(item) => {
-          // Refresh available items or show success
-          setSuccess(true)
-          setTimeout(() => {
-            router.push('/inventory')
-          }, 2000)
-        }}
-      />
+      {user && voiceAssistantType === 'whisper' ? (
+        <WhisperVoiceAssistant
+          open={voiceAssistantOpen}
+          onClose={() => setVoiceAssistantOpen(false)}
+          userId={user?.id}
+          onSuccess={() => {
+            // Refresh inventory after successful voice command
+            window.location.reload()
+          }
+          mode="remove"
+          onItemRemoved={(item) => {
+            // Refresh available items or show success
+            setSuccess(true)
+            setTimeout(() => {
+              router.push('/inventory')
+            }, 2000)
+          }}
+        />
+      ) : user && voiceAssistantType === 'basic' ? (
+        <VoiceAssistant
+          open={voiceAssistantOpen}
+          onClose={() => setVoiceAssistantOpen(false)}
+          userId={user?.id}
+        />
+      ) : null}
     </Container>
   )
 }
