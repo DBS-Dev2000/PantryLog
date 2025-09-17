@@ -53,6 +53,7 @@ import BarcodeScanner from '@/components/BarcodeScanner'
 import QRScanner from '@/components/QRScanner'
 import VisualItemScanner from '@/components/VisualItemScanner'
 import VoiceAssistant from '@/components/VoiceAssistant'
+import WhisperVoiceAssistant from '@/components/WhisperVoiceAssistant'
 import { canUseVoiceAssistant } from '@/lib/features'
 
 interface ProductData {
@@ -100,6 +101,7 @@ function QuickAddPageContent() {
   const [lastInputMethod, setLastInputMethod] = useState<'barcode' | 'ai' | 'search'>('barcode')
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false)
   const [voiceAssistantEnabled, setVoiceAssistantEnabled] = useState(false)
+  const [useWhisper, setUseWhisper] = useState(true) // Use Whisper by default
 
   useEffect(() => {
     const getUser = async () => {
@@ -995,24 +997,44 @@ function QuickAddPageContent() {
         </Fab>
       )}
 
-      {/* Voice Assistant Dialog */}
-      <VoiceAssistant
-        open={voiceAssistantOpen}
-        onClose={() => setVoiceAssistantOpen(false)}
-        userId={user?.id}
-        mode="add"
-        onItemAdded={(item) => {
-          // Refresh the page or show success message
-          setSuccess(true)
-          setTimeout(() => {
-            if (continuousMode) {
-              resetForNextItem()
-            } else {
-              router.push('/inventory')
-            }
-          }, 2000)
-        }}
-      />
+      {/* Voice Assistant Dialog - Use Whisper if available */}
+      {useWhisper ? (
+        <WhisperVoiceAssistant
+          open={voiceAssistantOpen}
+          onClose={() => setVoiceAssistantOpen(false)}
+          userId={user?.id}
+          mode="add"
+          onItemAdded={(item) => {
+            // Refresh the page or show success message
+            setSuccess(true)
+            setTimeout(() => {
+              if (continuousMode) {
+                resetForContinuous()
+              } else {
+                router.push('/inventory')
+              }
+            }, 2000)
+          }}
+        />
+      ) : (
+        <VoiceAssistant
+          open={voiceAssistantOpen}
+          onClose={() => setVoiceAssistantOpen(false)}
+          userId={user?.id}
+          mode="add"
+          onItemAdded={(item) => {
+            // Refresh the page or show success message
+            setSuccess(true)
+            setTimeout(() => {
+              if (continuousMode) {
+                resetForContinuous()
+              } else {
+                router.push('/inventory')
+              }
+            }, 2000)
+          }}
+        />
+      )}
     </Container>
   )
 }
