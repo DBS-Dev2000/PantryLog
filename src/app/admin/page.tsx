@@ -418,6 +418,7 @@ export default function AdminPage() {
     const initialFeatures = {
       recipes_enabled: household.features?.recipes_enabled ?? true,
       ai_features_enabled: household.features?.ai_features_enabled ?? true,
+      voice_assistant_enabled: household.features?.voice_assistant_enabled ?? false, // Default to disabled
       shopping_list_sharing: household.features?.shopping_list_sharing ?? true,
       storage_editing: household.features?.storage_editing ?? true,
       multiple_households: household.features?.multiple_households ?? false,
@@ -1657,6 +1658,20 @@ export default function AdminPage() {
                           onChange={(e) => setEditingFeatures({
                             ...editingFeatures,
                             ai_features_enabled: e.target.checked
+                          })}
+                        />
+                      </Box>
+
+                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                        <Box>
+                          <Typography variant="body1">Voice Assistant</Typography>
+                          <Typography variant="body2" color="textSecondary">Voice-controlled inventory management (experimental)</Typography>
+                        </Box>
+                        <Switch
+                          checked={editingFeatures.voice_assistant_enabled}
+                          onChange={(e) => setEditingFeatures({
+                            ...editingFeatures,
+                            voice_assistant_enabled: e.target.checked
                           })}
                         />
                       </Box>

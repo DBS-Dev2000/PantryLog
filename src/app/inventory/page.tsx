@@ -45,6 +45,7 @@ import { fetchInventoryItems } from '@/store/slices/inventorySlice'
 import { fetchHousehold } from '@/store/slices/householdSlice'
 import { supabase } from '@/lib/supabase'
 import VoiceAssistant from '@/components/VoiceAssistant'
+import { canUseVoiceAssistant } from '@/lib/features'
 
 function InventoryPageContent() {
   const router = useRouter()
@@ -62,6 +63,7 @@ function InventoryPageContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false)
+  const [voiceAssistantEnabled, setVoiceAssistantEnabled] = useState(false)
 
   // Build full breadcrumb path for a storage location
   const buildLocationPath = async (locationId: string, allLocations: any[]): Promise<string> => {
@@ -150,6 +152,10 @@ function InventoryPageContent() {
       if (session?.user) {
         setUser(session.user)
         await loadInventoryItems(session.user.id)
+
+        // Check if Voice Assistant is enabled for this user's household
+        const canUseVA = await canUseVoiceAssistant(session.user.id)
+        setVoiceAssistantEnabled(canUseVA)
 
         // Check if we're filtering by a specific storage location
         const locationId = searchParams.get('location')
@@ -280,28 +286,32 @@ function InventoryPageContent() {
             >
               Add Item
             </Button>
-            <Button
-              variant="outlined"
-              startIcon={<VoiceIcon />}
-              onClick={() => setVoiceAssistantOpen(true)}
-              fullWidth
-              size="medium"
-              color="secondary"
-            >
-              Voice Assistant
-            </Button>
+            {voiceAssistantEnabled && (
+              <Button
+                variant="outlined"
+                startIcon={<VoiceIcon />}
+                onClick={() => setVoiceAssistantOpen(true)}
+                fullWidth
+                size="medium"
+                color="secondary"
+              >
+                Voice Assistant
+              </Button>
+            )}
           </Stack>
         ) : (
           <Box display="flex" gap={2}>
-            <Button
-              variant="outlined"
-              startIcon={<VoiceIcon />}
-              onClick={() => setVoiceAssistantOpen(true)}
-              size="large"
-              color="secondary"
-            >
-              Voice Assistant
-            </Button>
+            {voiceAssistantEnabled && (
+              <Button
+                variant="outlined"
+                startIcon={<VoiceIcon />}
+                onClick={() => setVoiceAssistantOpen(true)}
+                size="large"
+                color="secondary"
+              >
+                Voice Assistant
+              </Button>
+            )}
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -659,11 +669,13 @@ function InventoryPageContent() {
             tooltipTitle="Add Item"
             onClick={() => router.push('/inventory/quick-add')}
           />
-          <SpeedDialAction
-            icon={<VoiceIcon />}
-            tooltipTitle="Voice Assistant"
-            onClick={() => setVoiceAssistantOpen(true)}
-          />
+          {voiceAssistantEnabled && (
+            <SpeedDialAction
+              icon={<VoiceIcon />}
+              tooltipTitle="Voice Assistant"
+              onClick={() => setVoiceAssistantOpen(true)}
+            />
+          )}
         </SpeedDial>
       )}
 

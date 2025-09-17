@@ -53,6 +53,7 @@ import BarcodeScanner from '@/components/BarcodeScanner'
 import QRScanner from '@/components/QRScanner'
 import VisualItemScanner from '@/components/VisualItemScanner'
 import VoiceAssistant from '@/components/VoiceAssistant'
+import { canUseVoiceAssistant } from '@/lib/features'
 
 interface ProductData {
   name: string
@@ -98,6 +99,7 @@ function QuickAddPageContent() {
   const [lastLocation, setLastLocation] = useState<string>('')
   const [lastInputMethod, setLastInputMethod] = useState<'barcode' | 'ai' | 'search'>('barcode')
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false)
+  const [voiceAssistantEnabled, setVoiceAssistantEnabled] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -106,6 +108,10 @@ function QuickAddPageContent() {
         setUser(session.user)
         await loadStorageLocations(session.user.id)
         await loadAvailableProducts(session.user.id)
+
+        // Check if Voice Assistant is enabled for this user's household
+        const canUseVA = await canUseVoiceAssistant(session.user.id)
+        setVoiceAssistantEnabled(canUseVA)
       } else {
         router.push('/auth')
       }
@@ -972,8 +978,8 @@ function QuickAddPageContent() {
         userId={user?.id}
       />
 
-      {/* Voice Assistant Floating Action Button */}
-      {isMobile && (
+      {/* Voice Assistant Floating Action Button - Only show if enabled */}
+      {isMobile && voiceAssistantEnabled && (
         <Fab
           color="secondary"
           aria-label="voice assistant"

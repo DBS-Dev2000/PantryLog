@@ -8,6 +8,7 @@ export interface FeaturePermissions {
   // Core features
   recipes_enabled: boolean
   ai_features_enabled: boolean
+  voice_assistant_enabled: boolean
   shopping_list_sharing: boolean
   storage_editing: boolean
   multiple_households: boolean
@@ -87,6 +88,7 @@ export async function getUserHouseholdFeatures(userId?: string): Promise<Feature
       // Feature toggles (household level)
       recipes_enabled: household.features?.recipes_enabled ?? true,
       ai_features_enabled: household.features?.ai_features_enabled ?? true,
+      voice_assistant_enabled: household.features?.voice_assistant_enabled ?? false, // Default to disabled
       shopping_list_sharing: household.features?.shopping_list_sharing ?? true,
       storage_editing: household.features?.storage_editing ?? true,
       multiple_households: household.features?.multiple_households ?? false,
@@ -179,6 +181,7 @@ function getDefaultFeatures(): FeaturePermissions {
   return {
     recipes_enabled: true,
     ai_features_enabled: true,
+    voice_assistant_enabled: false, // Default to disabled
     shopping_list_sharing: true,
     storage_editing: true,
     multiple_households: false,
@@ -207,6 +210,11 @@ export async function canUseAI(userId?: string): Promise<boolean> {
 export async function canEditStorage(userId?: string): Promise<boolean> {
   const permissions = await getUserHouseholdFeatures(userId)
   return permissions.storage_editing || permissions.is_admin
+}
+
+export async function canUseVoiceAssistant(userId?: string): Promise<boolean> {
+  const permissions = await getUserHouseholdFeatures(userId)
+  return permissions.voice_assistant_enabled || permissions.is_admin
 }
 
 export async function getEnforcementMode(userId?: string): Promise<'upsell' | 'hide'> {
