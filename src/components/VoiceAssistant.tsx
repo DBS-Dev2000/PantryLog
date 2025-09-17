@@ -48,6 +48,9 @@ interface VoiceAssistantProps {
   open: boolean
   onClose: () => void
   userId: string
+  mode?: 'both' | 'add' | 'remove' // Default is 'both' for full functionality
+  onItemAdded?: (item: any) => void // Callback when item is added
+  onItemRemoved?: (item: any) => void // Callback when item is removed
 }
 
 type ConversationState =
@@ -79,7 +82,14 @@ interface ParsedLocation {
   raw: string
 }
 
-export default function VoiceAssistant({ open, onClose, userId }: VoiceAssistantProps) {
+export default function VoiceAssistant({
+  open,
+  onClose,
+  userId,
+  mode = 'both',
+  onItemAdded,
+  onItemRemoved
+}: VoiceAssistantProps) {
   const [state, setState] = useState<ConversationState>('idle')
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
@@ -372,6 +382,17 @@ export default function VoiceAssistant({ open, onClose, userId }: VoiceAssistant
         setState('complete')
         addMessage('assistant', `✅ Successfully added ${productMatch.name} to your inventory!`)
         speak(`Successfully added ${productMatch.name}`)
+
+        // Call the callback if provided
+        if (onItemAdded) {
+          onItemAdded({
+            productId,
+            productName: productMatch.name,
+            quantity,
+            locationId: selectedLocationId
+          })
+        }
+
         setTimeout(() => onClose(), 3000)
 
       } else if (action === 'remove' && productMatch) {
@@ -401,6 +422,16 @@ export default function VoiceAssistant({ open, onClose, userId }: VoiceAssistant
           setState('complete')
           addMessage('assistant', `✅ Successfully removed ${productMatch.name} from your inventory!`)
           speak(`Successfully removed ${productMatch.name}`)
+
+          // Call the callback if provided
+          if (onItemRemoved) {
+            onItemRemoved({
+              productId: productMatch.id,
+              productName: productMatch.name,
+              itemId: item.id
+            })
+          }
+
           setTimeout(() => onClose(), 3000)
         } else {
           throw new Error('Item not found in inventory')
@@ -442,9 +473,26 @@ export default function VoiceAssistant({ open, onClose, userId }: VoiceAssistant
 
   const handleStart = () => {
     reset()
-    setState('listening-action')
-    addMessage('assistant', "Hi! I'm your inventory assistant. Say 'add' to add items or 'remove' to use items from your inventory.")
-    speak("Hi! Say add or remove to manage your inventory")
+
+    if (mode === 'add') {
+      // Skip action selection for add-only mode
+      setAction('add')
+      setState('listening-product')
+      addMessage('assistant', "What would you like to add to your inventory? Just tell me the product name and quantity.")
+      speak("What would you like to add?")
+    } else if (mode === 'remove') {
+      // Skip action selection for remove-only mode
+      setAction('remove')
+      setState('listening-product')
+      addMessage('assistant', "What would you like to remove from your inventory? Just tell me what you're using.")
+      speak("What are you using from inventory?")
+    } else {
+      // Both mode - ask for action
+      setState('listening-action')
+      addMessage('assistant', "Hi! I'm your inventory assistant. Say 'add' to add items or 'remove' to use items from your inventory.")
+      speak("Hi! Say add or remove to manage your inventory")
+    }
+
     startListening()
   }
 
@@ -468,7 +516,11 @@ export default function VoiceAssistant({ open, onClose, userId }: VoiceAssistant
               <AIIcon />
             </Avatar>
             <Box>
-              <Typography variant="h6">Voice Inventory Assistant</Typography>
+              <Typography variant="h6">
+                {mode === 'add' ? 'Voice Stock Up' :
+                 mode === 'remove' ? 'Voice Grab & Go' :
+                 'Voice Inventory Assistant'}
+              </Typography>
               <Typography variant="caption" color="textSecondary">
                 Powered by AI
               </Typography>

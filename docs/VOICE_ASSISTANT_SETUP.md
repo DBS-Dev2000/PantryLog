@@ -39,7 +39,7 @@ PantryIQ supports three ways to manage inventory with voice commands:
 
 2. **Configure Webhook**
    ```
-   Webhook URL: https://bite.prolongedpantry.com/api/voice/google-assistant
+   Webhook URL: https://PantryIQ.prolongedpantry.com/api/voice/google-assistant
    ```
 
 3. **Define Intents**
@@ -66,8 +66,8 @@ PantryIQ supports three ways to manage inventory with voice commands:
 
 4. **Account Linking**
    ```
-   Authorization URL: https://bite.prolongedpantry.com/auth/google
-   Token URL: https://bite.prolongedpantry.com/api/auth/google/token
+   Authorization URL: https://PantryIQ.prolongedpantry.com/auth/google
+   Token URL: https://PantryIQ.prolongedpantry.com/api/auth/google/token
    Client ID: [Your Google Client ID]
    Client Secret: [Your Google Client Secret]
    ```
@@ -98,7 +98,7 @@ PantryIQ supports three ways to manage inventory with voice commands:
 2. **Configure Endpoint**
    ```
    Service Endpoint Type: HTTPS
-   Default Region URL: https://bite.prolongedpantry.com/api/voice/alexa
+   Default Region URL: https://PantryIQ.prolongedpantry.com/api/voice/alexa
    ```
 
 3. **Interaction Model**
@@ -151,8 +151,8 @@ PantryIQ supports three ways to manage inventory with voice commands:
 
 4. **Account Linking**
    ```
-   Authorization URI: https://bite.prolongedpantry.com/auth/alexa
-   Access Token URI: https://bite.prolongedpantry.com/api/auth/alexa/token
+   Authorization URI: https://PantryIQ.prolongedpantry.com/auth/alexa
+   Access Token URI: https://PantryIQ.prolongedpantry.com/api/auth/alexa/token
    Client ID: [Your Alexa Client ID]
    Client Secret: [Your Alexa Client Secret]
    Authorization Grant Type: Auth Code Grant

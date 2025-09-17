@@ -25,7 +25,10 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Autocomplete
+  Autocomplete,
+  Fab,
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -41,13 +44,15 @@ import {
   Backspace as BackspaceIcon,
   ExpandMore as ExpandMoreIcon,
   Visibility as EyeIcon,
-  Edit as EditIcon
+  Edit as EditIcon,
+  RecordVoiceOver as VoiceIcon
 } from '@mui/icons-material'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import BarcodeScanner from '@/components/BarcodeScanner'
 import QRScanner from '@/components/QRScanner'
 import VisualItemScanner from '@/components/VisualItemScanner'
+import VoiceAssistant from '@/components/VoiceAssistant'
 
 interface ProductData {
   name: string
@@ -70,6 +75,8 @@ export default function QuickAddPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const productInputRef = useRef<HTMLInputElement>(null)
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   const [user, setUser] = useState<any>(null)
   const [activeStep, setActiveStep] = useState(0)
@@ -90,6 +97,7 @@ export default function QuickAddPage() {
   const [continuousMode, setContinuousMode] = useState(false)
   const [lastLocation, setLastLocation] = useState<string>('')
   const [lastInputMethod, setLastInputMethod] = useState<'barcode' | 'ai' | 'search'>('barcode')
+  const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -962,6 +970,42 @@ export default function QuickAddPage() {
         onItemSelected={handleVisualItemSelected}
         title="AI Item Recognition"
         userId={user?.id}
+      />
+
+      {/* Voice Assistant Floating Action Button */}
+      {isMobile && (
+        <Fab
+          color="secondary"
+          aria-label="voice assistant"
+          sx={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            zIndex: 1000
+          }}
+          onClick={() => setVoiceAssistantOpen(true)}
+        >
+          <VoiceIcon />
+        </Fab>
+      )}
+
+      {/* Voice Assistant Dialog */}
+      <VoiceAssistant
+        open={voiceAssistantOpen}
+        onClose={() => setVoiceAssistantOpen(false)}
+        userId={user?.id}
+        mode="add"
+        onItemAdded={(item) => {
+          // Refresh the page or show success message
+          setSuccess(true)
+          setTimeout(() => {
+            if (continuousMode) {
+              resetForNextItem()
+            } else {
+              router.push('/inventory')
+            }
+          }, 2000)
+        }}
       />
     </Container>
   )

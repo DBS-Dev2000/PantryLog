@@ -30,7 +30,10 @@ import {
   Radio,
   RadioGroup,
   FormControlLabel,
-  Autocomplete
+  Autocomplete,
+  Fab,
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -44,13 +47,15 @@ import {
   Add as AddIcon,
   Backspace as BackspaceIcon,
   SwapHoriz as SwapIcon,
-  Visibility as EyeIcon
+  Visibility as EyeIcon,
+  RecordVoiceOver as VoiceIcon
 } from '@mui/icons-material'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import BarcodeScanner from '@/components/BarcodeScanner'
 import QRScanner from '@/components/QRScanner'
 import VisualItemScanner from '@/components/VisualItemScanner'
+import VoiceAssistant from '@/components/VoiceAssistant'
 
 interface ProductData {
   id: string
@@ -84,6 +89,8 @@ export default function QuickUsePage() {
   const searchParams = useSearchParams()
   const itemInputRef = useRef<HTMLInputElement>(null)
   const locationInputRef = useRef<HTMLInputElement>(null)
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   const [user, setUser] = useState<any>(null)
   const [workflowMode, setWorkflowMode] = useState<WorkflowMode>('item-first')
@@ -105,6 +112,7 @@ export default function QuickUsePage() {
   const [inventoryProducts, setInventoryProducts] = useState<any[]>([])
   const [inventoryLocations, setInventoryLocations] = useState<any[]>([])
   const [storageLocations, setStorageLocations] = useState<any[]>([])
+  const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -1115,6 +1123,38 @@ export default function QuickUsePage() {
         onItemSelected={handleVisualItemSelected}
         title="AI Item Recognition"
         userId={user?.id}
+      />
+
+      {/* Voice Assistant Floating Action Button */}
+      {isMobile && (
+        <Fab
+          color="secondary"
+          aria-label="voice assistant"
+          sx={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            zIndex: 1000
+          }}
+          onClick={() => setVoiceAssistantOpen(true)}
+        >
+          <VoiceIcon />
+        </Fab>
+      )}
+
+      {/* Voice Assistant Dialog */}
+      <VoiceAssistant
+        open={voiceAssistantOpen}
+        onClose={() => setVoiceAssistantOpen(false)}
+        userId={user?.id}
+        mode="remove"
+        onItemRemoved={(item) => {
+          // Refresh available items or show success
+          setSuccess(true)
+          setTimeout(() => {
+            router.push('/inventory')
+          }, 2000)
+        }}
       />
     </Container>
   )

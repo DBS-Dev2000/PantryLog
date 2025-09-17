@@ -10,7 +10,7 @@ PantryIQ is a comprehensive, AI-powered kitchen management ecosystem that combin
 ### Platform Evolution
 - **Original Concept**: Basic pantry inventory tracking (PFIMS)
 - **Current Reality**: Complete kitchen intelligence ecosystem with AI integration
-- **Deployment**: Live at https://bite.prolongedpantry.com (PantryIQ rebrand)
+- **Deployment**: Live at https://PantryIQ.prolongedpantry.com
 - **Monetization**: Subscription tiers with feature gating ready for commercial deployment
 
 ### Business Value & Revenue Model
@@ -859,3 +859,4 @@ public class RecipeAvailabilityDto
 **Author**: Product Owner / Senior Developer
 **Status**: Production Ready with Enterprise Admin Capabilities
 **Next Review**: After feature enforcement completion
+- the url to this project is no longer bite.prolongedpantry.com, but updated to PantryIQ.prolongedpantry.com
