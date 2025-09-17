@@ -330,27 +330,174 @@ export default function WhisperVoiceAssistant({
         itemName = itemName.replace(quantityMatch[0], '').trim()
       }
 
-      setFeedback(`${action === 'add' ? 'Adding' : 'Removing'} ${quantity} ${itemName}...`)
+      // Extract location if mentioned
+      let locationHint: string | null = null
+      const locationKeywords = ['refrigerator', 'fridge', 'freezer', 'pantry', 'cabinet', 'shelf', 'door', 'drawer']
+      const fullText = text.toLowerCase()
 
-      // For now, just show success (you can integrate with your existing add/remove logic)
-      setTimeout(() => {
+      for (const keyword of locationKeywords) {
+        if (fullText.includes(keyword)) {
+          // Extract the location phrase
+          const locationMatch = fullText.match(new RegExp(`(\\w+\\s+)?${keyword}(\\s+\\w+)?`, 'i'))
+          if (locationMatch) {
+            locationHint = locationMatch[0].trim()
+            // Remove location from item name if it's there
+            itemName = itemName.replace(new RegExp(locationHint, 'gi'), '').trim()
+          }
+          break
+        }
+      }
+
+      console.log('Parsed command:', { action, quantity, itemName, locationHint })
+      setFeedback(`${action === 'add' ? 'Adding' : 'Removing'} ${quantity} ${itemName}${locationHint ? ` to ${locationHint}` : ''}...`)
+
+      // Actually add the item to inventory
+      if (action === 'add') {
+        try {
+          // First, try to find or create the product
+          let productId: string | null = null
+
+          // Search for existing product by name
+          const { data: existingProducts } = await supabase
+            .from('products')
+            .select('id, name')
+            .ilike('name', `%${itemName}%`)
+            .limit(1)
+
+          if (existingProducts && existingProducts.length > 0) {
+            productId = existingProducts[0].id
+            console.log('Found existing product:', existingProducts[0].name)
+          } else {
+            // Create new product
+            const { data: newProduct, error: productError } = await supabase
+              .from('products')
+              .insert([{
+                name: itemName,
+                created_by: userId
+              }])
+              .select('id')
+              .single()
+
+            if (productError) throw productError
+            productId = newProduct.id
+            console.log('Created new product:', itemName)
+          }
+
+          // Find the appropriate storage location
+          let locationId: string
+          let locationName: string
+
+          if (locationHint) {
+            // Try to find locations matching the hint
+            const { data: matchingLocations } = await supabase
+              .from('storage_locations')
+              .select('id, name')
+              .eq('household_id', userId)
+              .eq('is_active', true)
+              .ilike('name', `%${locationHint}%`)
+
+            if (matchingLocations && matchingLocations.length > 0) {
+              if (matchingLocations.length === 1) {
+                // Perfect - found exactly one match
+                locationId = matchingLocations[0].id
+                locationName = matchingLocations[0].name
+                console.log('Found matching location:', locationName)
+              } else {
+                // Multiple matches - list them and use the first one for now
+                const locationNames = matchingLocations.map(l => l.name).join(', ')
+                console.log('Multiple matching locations found:', locationNames)
+
+                // Use the first match but inform the user
+                locationId = matchingLocations[0].id
+                locationName = matchingLocations[0].name
+                setFeedback(`Found multiple locations matching "${locationHint}": ${locationNames}. Using ${locationName}.`)
+
+                // In future, could ask user to be more specific
+              }
+            } else {
+              // No match for the hint, fall back to default
+              console.log(`No location found matching "${locationHint}", using default`)
+              const { data: defaultLocation } = await supabase
+                .from('storage_locations')
+                .select('id, name')
+                .eq('household_id', userId)
+                .eq('is_active', true)
+                .limit(1)
+
+              if (!defaultLocation || defaultLocation.length === 0) {
+                throw new Error('No storage locations found. Please create a storage location first.')
+              }
+
+              locationId = defaultLocation[0].id
+              locationName = defaultLocation[0].name
+              setFeedback(`Couldn't find "${locationHint}", using default location: ${locationName}`)
+            }
+          } else {
+            // No location specified, use default
+            const { data: defaultLocation } = await supabase
+              .from('storage_locations')
+              .select('id, name')
+              .eq('household_id', userId)
+              .eq('is_active', true)
+              .limit(1)
+
+            if (!defaultLocation || defaultLocation.length === 0) {
+              throw new Error('No storage locations found. Please create a storage location first.')
+            }
+
+            locationId = defaultLocation[0].id
+            locationName = defaultLocation[0].name
+            console.log('Using default storage location:', locationName)
+          }
+
+          // Add to inventory
+          const { error: inventoryError } = await supabase
+            .from('inventory_items')
+            .insert([{
+              product_id: productId,
+              storage_location_id: locationId,
+              household_id: userId,
+              quantity: quantity,
+              unit: 'pieces',
+              purchase_date: new Date().toISOString().split('T')[0],
+              created_by: userId,
+              last_modified_by: userId,
+              last_modified_at: new Date().toISOString()
+            }])
+
+          if (inventoryError) throw inventoryError
+
+          setState('complete')
+          setFeedback(`✅ Successfully added ${quantity} ${itemName} to ${locationName}`)
+
+          // Call the callback
+          if (onItemAdded) {
+            onItemAdded({ name: itemName, quantity, location: locationName })
+          }
+
+        } catch (err: any) {
+          console.error('Failed to add item:', err)
+          setError(`Failed to add item: ${err.message}`)
+          setState('error')
+          return
+        }
+      } else {
+        // Handle remove action (to be implemented)
         setState('complete')
         setFeedback(`✅ Successfully ${action === 'add' ? 'added' : 'removed'} ${quantity} ${itemName}`)
 
-        // Call the appropriate callback
-        if (action === 'add' && onItemAdded) {
-          onItemAdded({ name: itemName, quantity })
-        } else if (action === 'remove' && onItemRemoved) {
+        if (onItemRemoved) {
           onItemRemoved({ name: itemName, quantity })
         }
+      }
 
-        // Reset after 2 seconds
-        setTimeout(() => {
-          setState('idle')
-          setTranscript('')
-          setFeedback('')
-        }, 2000)
-      }, 1000)
+      // Reset after 3 seconds
+      setTimeout(() => {
+        setState('idle')
+        setTranscript('')
+        setFeedback('')
+        setError(null)
+      }, 3000)
 
     } catch (err: any) {
       console.error('Command processing error:', err)
