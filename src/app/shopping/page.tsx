@@ -45,6 +45,7 @@ import {
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import FeatureGuard from '@/components/FeatureGuard'
 
 interface ShoppingListItem {
   id: string
@@ -362,8 +363,9 @@ export default function ShoppingPage() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Box display="flex" alignItems="center" mb={4}>
+    <FeatureGuard feature="shopping_list_sharing">
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Box display="flex" alignItems="center" mb={4}>
         <ShoppingIcon sx={{ mr: 2, fontSize: 32, color: 'primary.main' }} />
         <Box sx={{ flexGrow: 1 }}>
           <Typography variant="h4" component="h1" gutterBottom>
@@ -680,6 +682,7 @@ export default function ShoppingPage() {
       >
         <AddIcon />
       </Fab>
-    </Container>
+      </Container>
+    </FeatureGuard>
   )
 }

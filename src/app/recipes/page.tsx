@@ -55,6 +55,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import RecipePhotoScanner from '@/components/RecipePhotoScanner'
+import FeatureGuard from '@/components/FeatureGuard'
 
 interface Recipe {
   id: string
@@ -281,8 +282,9 @@ export default function RecipesPage() {
   const filteredRecipes = getFilteredRecipes()
 
   return (
-    <Container maxWidth={isMobile ? "sm" : "lg"} sx={{ mt: 4, px: isMobile ? 2 : 3 }}>
-      <Box sx={{ mb: 3 }}>
+    <FeatureGuard feature="recipes_enabled">
+      <Container maxWidth={isMobile ? "sm" : "lg"} sx={{ mt: 4, px: isMobile ? 2 : 3 }}>
+        <Box sx={{ mb: 3 }}>
         <Box display="flex" alignItems="center" mb={2}>
           <RecipeIcon sx={{ mr: 2, fontSize: isMobile ? 28 : 32, color: 'primary.main' }} />
           <Box sx={{ flexGrow: 1 }}>
@@ -640,6 +642,7 @@ export default function RecipesPage() {
       >
         <AddIcon />
       </Fab>
-    </Container>
+      </Container>
+    </FeatureGuard>
   )
 }
