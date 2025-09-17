@@ -56,15 +56,19 @@ interface VoiceAssistantProps {
 type ConversationState =
   | 'idle'
   | 'listening-action'
+  | 'listening-location-first'
+  | 'processing-location-first'
   | 'listening-product'
   | 'processing-product'
   | 'confirming-product'
+  | 'listening-quantity'
   | 'listening-location'
   | 'processing-location'
   | 'confirming-action'
   | 'executing'
   | 'complete'
   | 'error'
+  | 'bulk-adding'
 
 interface ProductMatch {
   id?: string
@@ -117,11 +121,15 @@ export default function VoiceAssistant({
         recognition.lang = 'en-US'
 
         recognition.onresult = (event: any) => {
+          console.log('🎤 Speech recognition result event:', event)
           let interim = ''
           let final = ''
 
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript
+            const confidence = event.results[i][0].confidence
+            console.log(`🗣️ Result ${i}: "${transcript}" (confidence: ${confidence}, final: ${event.results[i].isFinal})`)
+
             if (event.results[i].isFinal) {
               final += transcript + ' '
             } else {
@@ -129,11 +137,17 @@ export default function VoiceAssistant({
             }
           }
 
-          if (final) {
-            setTranscript(prev => prev + final)
+          if (final.trim()) {
+            console.log('✅ Final transcript:', final.trim())
+            setTranscript(prev => {
+              const newTranscript = prev + final
+              console.log('📝 Updated transcript:', newTranscript)
+              return newTranscript
+            })
             setInterimTranscript('')
             processTranscript(final.trim())
-          } else {
+          } else if (interim.trim()) {
+            console.log('⏳ Interim transcript:', interim.trim())
             setInterimTranscript(interim)
           }
         }
@@ -171,10 +185,23 @@ export default function VoiceAssistant({
 
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
-      setTranscript('')
-      setInterimTranscript('')
-      recognitionRef.current.start()
-      setIsListening(true)
+      try {
+        console.log('🎙️ Starting speech recognition...')
+        setTranscript('')
+        setInterimTranscript('')
+        setError(null)
+        recognitionRef.current.start()
+        setIsListening(true)
+        console.log('✅ Speech recognition started successfully')
+      } catch (error) {
+        console.error('❌ Failed to start speech recognition:', error)
+        setError('Failed to start speech recognition. Please try again.')
+      }
+    } else if (isListening) {
+      console.log('⚠️ Speech recognition already listening')
+    } else {
+      console.log('❌ Speech recognition not available')
+      setError('Speech recognition not available')
     }
   }
 
@@ -187,11 +214,18 @@ export default function VoiceAssistant({
 
   const processTranscript = async (text: string) => {
     const lowerText = text.toLowerCase()
+    console.log(`🧠 Processing transcript: "${text}" in state: ${state}`)
 
     switch (state) {
       case 'idle':
       case 'listening-action':
-        if (lowerText.includes('add') || lowerText.includes('put') || lowerText.includes('store')) {
+        // Check for location-first bulk adding workflow
+        if (lowerText.includes('load') && (lowerText.includes('pantry') || lowerText.includes('shelf') || lowerText.includes('freezer') || lowerText.includes('fridge'))) {
+          setAction('add')
+          setState('processing-location-first')
+          stopListening()
+          parseLocationFirst(text)
+        } else if (lowerText.includes('add') || lowerText.includes('put') || lowerText.includes('store')) {
           setAction('add')
           setState('listening-product')
           addMessage('assistant', "What product would you like to add? You can describe it like 'Coca Cola 12 pack' or 'Organic whole milk gallon'")
@@ -211,6 +245,33 @@ export default function VoiceAssistant({
         await lookupProduct(text)
         break
 
+      case 'listening-quantity':
+        addMessage('user', text)
+        const parsedQuantity = parseQuantity(text)
+        if (parsedQuantity > 0) {
+          setQuantity(parsedQuantity)
+          setState('executing')
+          stopListening()
+          executeAction()
+        } else {
+          addMessage('assistant', "I didn't understand the quantity. Please say a number like '1', '2', or 'three'.")
+          speak("Please say a number")
+        }
+        break
+
+      case 'bulk-adding':
+        addMessage('user', text)
+        if (lowerText.includes('done') || lowerText.includes('finished') || lowerText.includes('stop')) {
+          setState('complete')
+          addMessage('assistant', "Great! I've added all your items. Anything else?")
+          speak("All done! Anything else?")
+        } else {
+          setState('processing-product')
+          stopListening()
+          await lookupProduct(text)
+        }
+        break
+
       case 'listening-location':
         addMessage('user', text)
         setState('processing-location')
@@ -221,18 +282,29 @@ export default function VoiceAssistant({
       case 'confirming-product':
         if (lowerText.includes('yes') || lowerText.includes('correct') || lowerText.includes('right')) {
           if (action === 'add') {
-            setState('listening-location')
-            addMessage('assistant', "Where should I store this? You can say something like 'hall pantry, right side, second shelf' or just pick from the list below.")
-            speak("Where should I store this?")
+            // Check if we're in bulk mode with location already set
+            if (selectedLocationId && location?.raw?.toLowerCase().includes('load')) {
+              setState('listening-quantity')
+              addMessage('assistant', "How many? Say a number like '1', '2', or 'three'.")
+              speak("How many?")
+            } else {
+              setState('listening-location')
+              addMessage('assistant', "Where should I store this? You can say something like 'hall pantry, right side, second shelf' or just pick from the list below.")
+              speak("Where should I store this?")
+            }
           } else {
             // For remove, go straight to execution
             setState('executing')
             executeAction()
           }
         } else if (lowerText.includes('no') || lowerText.includes('wrong')) {
-          setState('listening-product')
-          addMessage('assistant', "Let's try again. Please describe the product.")
-          speak("Please describe the product again")
+          // Try a different AI model for better recognition
+          setState('processing-product')
+          addMessage('assistant', "Let me try a different approach to find that product...")
+          speak("Let me try again")
+          setTimeout(() => {
+            lookupProductWithFallback(transcript.split(' ').slice(-5).join(' ')) // Use last few words
+          }, 1000)
         }
         break
 
@@ -250,6 +322,8 @@ export default function VoiceAssistant({
 
   const lookupProduct = async (description: string) => {
     try {
+      console.log('🔍 Looking up product:', description)
+
       // First try to find in existing products
       const { data: products } = await supabase
         .from('products')
@@ -287,6 +361,58 @@ export default function VoiceAssistant({
     }
   }
 
+  const lookupProductWithFallback = async (description: string) => {
+    try {
+      console.log('🔄 Fallback product lookup:', description)
+
+      // Try different variations and broader search
+      const searches = [
+        description,
+        description.split(' ').slice(0, 2).join(' '), // First 2 words
+        description.split(' ').slice(-2).join(' '), // Last 2 words
+        description.replace(/\d+/g, '').trim() // Remove numbers
+      ]
+
+      for (const search of searches) {
+        if (search.length < 2) continue
+
+        const { data: products } = await supabase
+          .from('products')
+          .select('*')
+          .or(`name.ilike.%${search}%, brand.ilike.%${search}%, category.ilike.%${search}%`)
+          .limit(3)
+
+        if (products && products.length > 0) {
+          const product = products[0]
+          setProductMatch({
+            id: product.id,
+            upc: product.upc,
+            name: product.name,
+            brand: product.brand,
+            size: product.size,
+            category: product.category,
+            confidence: 0.7
+          })
+          setState('confirming-product')
+          addMessage('assistant', `How about "${product.name}"${product.brand ? ` by ${product.brand}` : ''}? Is this what you meant?`)
+          speak(`How about ${product.name}?`)
+          return
+        }
+      }
+
+      // If nothing found, ask for clarification
+      setState('listening-product')
+      addMessage('assistant', "I'm having trouble finding that product. Can you describe it differently? For example, say the brand name or be more specific.")
+      speak("Can you describe it differently?")
+
+    } catch (error) {
+      console.error('Fallback lookup error:', error)
+      setState('listening-product')
+      addMessage('assistant', "Let's try again. What product are you looking for?")
+      speak("What product are you looking for?")
+    }
+  }
+
   const extractProductInfo = async (description: string): Promise<ProductMatch> => {
     // Use AI to parse the product description
     try {
@@ -309,6 +435,67 @@ export default function VoiceAssistant({
       name: description,
       confidence: 0.5
     }
+  }
+
+  const parseLocationFirst = (text: string) => {
+    const lowerText = text.toLowerCase()
+    console.log('🏠 Parsing location-first command:', text)
+
+    // Try to match with existing locations
+    const matchedLocation = storageLocations.find(loc =>
+      lowerText.includes(loc.name.toLowerCase())
+    )
+
+    if (matchedLocation) {
+      setSelectedLocationId(matchedLocation.id)
+      setLocation({
+        area: matchedLocation.name,
+        specific: text.replace(new RegExp(matchedLocation.name, 'gi'), '').trim(),
+        raw: text
+      })
+      setState('bulk-adding')
+      addMessage('assistant', `Perfect! I'll add items to ${matchedLocation.name}. What's the first item?`)
+      speak("What's the first item?")
+      startListening()
+    } else {
+      // Create a new location or ask for clarification
+      setLocation({
+        area: text.replace(/load\s*/gi, '').trim(),
+        specific: '',
+        raw: text
+      })
+      addMessage('assistant', `I'll create a new location called "${text.replace(/load\s*/gi, '').trim()}". What's the first item to add here?`)
+      speak("What's the first item?")
+      setState('bulk-adding')
+      startListening()
+    }
+  }
+
+  const parseQuantity = (text: string): number => {
+    const lowerText = text.toLowerCase()
+
+    // Handle spelled out numbers
+    const numberWords: Record<string, number> = {
+      'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+      'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+      'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+      'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20
+    }
+
+    // Check for spelled out numbers
+    for (const [word, value] of Object.entries(numberWords)) {
+      if (lowerText.includes(word)) {
+        return value
+      }
+    }
+
+    // Extract numbers from the text
+    const numberMatch = text.match(/(\d+)/);
+    if (numberMatch) {
+      return parseInt(numberMatch[1])
+    }
+
+    return 0
   }
 
   const parseLocation = (text: string) => {
@@ -379,9 +566,22 @@ export default function VoiceAssistant({
 
         if (inventoryError) throw inventoryError
 
-        setState('complete')
-        addMessage('assistant', `✅ Successfully added ${productMatch.name} to your inventory!`)
-        speak(`Successfully added ${productMatch.name}`)
+        // Check if we're in bulk adding mode
+        if (location?.raw?.toLowerCase().includes('load')) {
+          setState('bulk-adding')
+          addMessage('assistant', `✅ Successfully added ${quantity} ${productMatch.name}! What's the next item? Or say 'done' to finish.`)
+          speak("What's the next item?")
+
+          // Reset for next item but keep location
+          setProductMatch(null)
+          setQuantity(1)
+          setTimeout(() => startListening(), 1000)
+        } else {
+          setState('complete')
+          addMessage('assistant', `✅ Successfully added ${productMatch.name} to your inventory!`)
+          speak(`Successfully added ${productMatch.name}`)
+          setTimeout(() => onClose(), 3000)
+        }
 
         // Call the callback if provided
         if (onItemAdded) {
@@ -392,8 +592,6 @@ export default function VoiceAssistant({
             locationId: selectedLocationId
           })
         }
-
-        setTimeout(() => onClose(), 3000)
 
       } else if (action === 'remove' && productMatch) {
         // Find and mark item as consumed
