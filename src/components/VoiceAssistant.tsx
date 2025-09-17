@@ -153,9 +153,8 @@ export default function VoiceAssistant({
         recognition.maxAlternatives = 1
 
         // Additional configuration for better speech detection
-        if ('grammars' in recognition) {
-          recognition.grammars = null // Use default grammars for better recognition
-        }
+        // Note: grammars property is not universally supported
+        // and setting it to null can cause errors in some browsers
 
         console.log('⚙️ Speech recognition configured:', {
           continuous: recognition.continuous,
