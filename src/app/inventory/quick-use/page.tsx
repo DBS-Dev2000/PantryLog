@@ -56,6 +56,7 @@ import BarcodeScanner from '@/components/BarcodeScanner'
 import QRScanner from '@/components/QRScanner'
 import VisualItemScanner from '@/components/VisualItemScanner'
 import VoiceAssistant from '@/components/VoiceAssistant'
+import WhisperVoiceAssistant from '@/components/WhisperVoiceAssistant'
 import { canUseVoiceAssistant } from '@/lib/features'
 
 interface ProductData {
@@ -1149,10 +1150,14 @@ function QuickUsePageContent() {
       )}
 
       {/* Voice Assistant Dialog */}
-      <VoiceAssistant
+      <WhisperVoiceAssistant
         open={voiceAssistantOpen}
         onClose={() => setVoiceAssistantOpen(false)}
         userId={user?.id}
+        onSuccess={() => {
+          // Refresh inventory after successful voice command
+          window.location.reload()
+        }
         mode="remove"
         onItemRemoved={(item) => {
           // Refresh available items or show success

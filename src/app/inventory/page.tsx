@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useMemo } from 'react'
 import {
   Container,
   Typography,
@@ -28,7 +28,14 @@ import {
   Divider,
   SpeedDial,
   SpeedDialAction,
-  SpeedDialIcon
+  SpeedDialIcon,
+  TextField,
+  InputAdornment,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Collapse
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -37,7 +44,12 @@ import {
   CalendarToday as CalendarIcon,
   Launch as LaunchIcon,
   Edit as EditIcon,
-  RecordVoiceOver as VoiceIcon
+  RecordVoiceOver as VoiceIcon,
+  Search as SearchIcon,
+  FilterList as FilterIcon,
+  Clear as ClearIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from '@/hooks/redux'
@@ -45,6 +57,7 @@ import { fetchInventoryItems } from '@/store/slices/inventorySlice'
 import { fetchHousehold } from '@/store/slices/householdSlice'
 import { supabase } from '@/lib/supabase'
 import VoiceAssistant from '@/components/VoiceAssistant'
+import WhisperVoiceAssistant from '@/components/WhisperVoiceAssistant'
 import { canUseVoiceAssistant } from '@/lib/features'
 
 function InventoryPageContent() {
@@ -64,6 +77,14 @@ function InventoryPageContent() {
   const [error, setError] = useState<string | null>(null)
   const [voiceAssistantOpen, setVoiceAssistantOpen] = useState(false)
   const [voiceAssistantEnabled, setVoiceAssistantEnabled] = useState(false)
+
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [selectedLocation, setSelectedLocation] = useState<string>('all')
+  const [showFilters, setShowFilters] = useState(false)
+  const [categories, setCategories] = useState<string[]>([])
+  const [locations, setLocations] = useState<any[]>([])
 
   // Build full breadcrumb path for a storage location
   const buildLocationPath = async (locationId: string, allLocations: any[]): Promise<string> => {
@@ -138,6 +159,11 @@ function InventoryPageContent() {
       console.log('🗂️ Built location paths for', inventoryData?.length || 0, 'items')
       setItems(inventoryData || [])
 
+      // Extract unique categories and locations for filters
+      const uniqueCategories = [...new Set(inventoryData?.map(item => item.products?.category).filter(Boolean) || [])]
+      setCategories(uniqueCategories.sort())
+      setLocations(allStorageLocations || [])
+
     } catch (err: any) {
       console.error('💥 Failed to load inventory:', err)
       setError(`Failed to load inventory: ${err.message}`)
@@ -189,18 +215,54 @@ function InventoryPageContent() {
     }
   }
 
-  // Filter items by storage location when items or storageLocation changes
-  useEffect(() => {
-    if (storageLocation && items) {
-      const filtered = items.filter((item: any) =>
+  // Apply search and filters
+  const applyFilters = useMemo(() => {
+    let filtered = [...items]
+
+    // Apply storage location filter from URL
+    if (storageLocation) {
+      filtered = filtered.filter((item: any) =>
         item.storage_location_id === storageLocation.id
       )
-      console.log('🔍 Filtered items for', storageLocation.name, ':', filtered.length)
-      setFilteredItems(filtered)
-    } else {
-      setFilteredItems(items || [])
     }
-  }, [items, storageLocation])
+
+    // Apply search term filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      filtered = filtered.filter((item: any) => {
+        const productName = item.products?.name?.toLowerCase() || ''
+        const brandName = item.products?.brand?.toLowerCase() || ''
+        const locationName = item.storage_locations?.name?.toLowerCase() || ''
+        const notes = item.notes?.toLowerCase() || ''
+
+        return productName.includes(searchLower) ||
+               brandName.includes(searchLower) ||
+               locationName.includes(searchLower) ||
+               notes.includes(searchLower)
+      })
+    }
+
+    // Apply category filter
+    if (selectedCategory && selectedCategory !== 'all') {
+      filtered = filtered.filter((item: any) =>
+        item.products?.category === selectedCategory
+      )
+    }
+
+    // Apply location filter
+    if (selectedLocation && selectedLocation !== 'all') {
+      filtered = filtered.filter((item: any) =>
+        item.storage_location_id === selectedLocation
+      )
+    }
+
+    return filtered
+  }, [items, storageLocation, searchTerm, selectedCategory, selectedLocation])
+
+  // Update filtered items when filters change
+  useEffect(() => {
+    setFilteredItems(applyFilters)
+  }, [applyFilters])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString()
@@ -323,6 +385,106 @@ function InventoryPageContent() {
           </Box>
         )}
       </Box>
+
+      {/* Search and Filters */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Box sx={{ mb: showFilters ? 2 : 0 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                placeholder="Search products, brands, locations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchTerm && (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        onClick={() => setSearchTerm('')}
+                      >
+                        <ClearIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                size={isMobile ? "small" : "medium"}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box display="flex" gap={1}>
+                <Button
+                  variant="outlined"
+                  startIcon={showFilters ? <ExpandLessIcon /> : <FilterIcon />}
+                  onClick={() => setShowFilters(!showFilters)}
+                  fullWidth={isMobile}
+                >
+                  {showFilters ? 'Hide Filters' : `Filters ${(selectedCategory !== 'all' || selectedLocation !== 'all') ? `(${[selectedCategory !== 'all' && 'category', selectedLocation !== 'all' && 'location'].filter(Boolean).length})` : ''}`}
+                </Button>
+                {(searchTerm || selectedCategory !== 'all' || selectedLocation !== 'all') && (
+                  <Button
+                    variant="text"
+                    color="secondary"
+                    onClick={() => {
+                      setSearchTerm('')
+                      setSelectedCategory('all')
+                      setSelectedLocation('all')
+                    }}
+                  >
+                    Clear All
+                  </Button>
+                )}
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+
+        <Collapse in={showFilters}>
+          <Divider sx={{ my: 2 }} />
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  label="Category"
+                >
+                  <MenuItem value="all">All Categories</MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category} value={category}>
+                      {category}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                <InputLabel>Storage Location</InputLabel>
+                <Select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  label="Storage Location"
+                  disabled={!!storageLocation} // Disable if filtered from URL
+                >
+                  <MenuItem value="all">All Locations</MenuItem>
+                  {locations.map((location) => (
+                    <MenuItem key={location.id} value={location.id}>
+                      {location.name} ({location.type})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </Collapse>
+      </Paper>
 
       {/* Quick Stats - Responsive Grid */}
       <Grid container spacing={isMobile ? 2 : 3} sx={{ mb: 3 }}>
@@ -681,10 +843,14 @@ function InventoryPageContent() {
 
       {/* Voice Assistant Dialog */}
       {user && (
-        <VoiceAssistant
+        <WhisperVoiceAssistant
           open={voiceAssistantOpen}
           onClose={() => setVoiceAssistantOpen(false)}
           userId={user.id}
+          onSuccess={async () => {
+            // Reload inventory after successful voice command
+            await loadInventoryItems(user.id)
+          }}
         />
       )}
     </Container>
