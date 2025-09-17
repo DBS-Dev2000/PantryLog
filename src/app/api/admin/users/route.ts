@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       if (adminCheckError || !isAdmin) {
         // Fallback admin check for development
         const { data: userData } = await supabaseAdmin.auth.admin.getUserById(requestingUserId)
-        const adminEmails = ['daren@prolongedpantry.com']
+        const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || []
 
         if (!userData.user || !adminEmails.includes(userData.user.email || '')) {
           return NextResponse.json(
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     } catch (rpcError) {
       // RPC function doesn't exist, use fallback admin check
       const { data: userData } = await supabaseAdmin.auth.admin.getUserById(requestingUserId)
-      const adminEmails = ['daren@prolongedpantry.com']
+      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || []
 
       if (!userData.user || !adminEmails.includes(userData.user.email || '')) {
         return NextResponse.json(
