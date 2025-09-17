@@ -108,29 +108,84 @@ export default function VoiceAssistant({
   const [error, setError] = useState<string | null>(null)
   const recognitionRef = useRef<any>(null)
   const [speechSupported, setSpeechSupported] = useState(false)
+  const [micPermission, setMicPermission] = useState<'granted' | 'denied' | 'prompt' | 'unknown'>('unknown')
+
+  // Check microphone permissions
+  const checkMicrophonePermission = async () => {
+    try {
+      if (navigator.permissions) {
+        const permission = await navigator.permissions.query({ name: 'microphone' as any })
+        setMicPermission(permission.state as any)
+        console.log('🎤 Microphone permission status:', permission.state)
+
+        permission.onchange = () => {
+          setMicPermission(permission.state as any)
+          console.log('🎤 Microphone permission changed to:', permission.state)
+        }
+      } else {
+        console.log('🎤 Permissions API not available')
+        setMicPermission('unknown')
+      }
+    } catch (error) {
+      console.error('🎤 Error checking microphone permission:', error)
+      setMicPermission('unknown')
+    }
+  }
 
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Check microphone permissions
+      checkMicrophonePermission()
+
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      console.log('🗣️ Speech Recognition API available:', !!SpeechRecognition)
+      console.log('🌐 User Agent:', navigator.userAgent)
+
       if (SpeechRecognition) {
         setSpeechSupported(true)
         const recognition = new SpeechRecognition()
+
+        // Enhanced configuration for better compatibility
         recognition.continuous = true
         recognition.interimResults = true
         recognition.lang = 'en-US'
+        recognition.maxAlternatives = 1
+
+        console.log('⚙️ Speech recognition configured:', {
+          continuous: recognition.continuous,
+          interimResults: recognition.interimResults,
+          lang: recognition.lang,
+          maxAlternatives: recognition.maxAlternatives
+        })
+
+        recognition.onstart = () => {
+          console.log('🎤 Speech recognition started')
+          setIsListening(true)
+          setError(null)
+        }
 
         recognition.onresult = (event: any) => {
           console.log('🎤 Speech recognition result event:', event)
+          console.log('🎤 Event results length:', event.results.length)
+          console.log('🎤 Event resultIndex:', event.resultIndex)
+
           let interim = ''
           let final = ''
 
           for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript
-            const confidence = event.results[i][0].confidence
-            console.log(`🗣️ Result ${i}: "${transcript}" (confidence: ${confidence}, final: ${event.results[i].isFinal})`)
+            const result = event.results[i]
+            const transcript = result[0].transcript
+            const confidence = result[0].confidence
 
-            if (event.results[i].isFinal) {
+            console.log(`🗣️ Result ${i}:`, {
+              transcript: `"${transcript}"`,
+              confidence: confidence,
+              isFinal: result.isFinal,
+              alternatives: result.length
+            })
+
+            if (result.isFinal) {
               final += transcript + ' '
             } else {
               interim += transcript
@@ -149,16 +204,72 @@ export default function VoiceAssistant({
           } else if (interim.trim()) {
             console.log('⏳ Interim transcript:', interim.trim())
             setInterimTranscript(interim)
+          } else {
+            console.log('🤔 No transcript detected in result event')
           }
         }
 
+        recognition.onspeechstart = () => {
+          console.log('🎤 Speech input detected!')
+          setError(null) // Clear any "no speech detected" errors
+        }
+
+        recognition.onspeechend = () => {
+          console.log('🎤 Speech input ended')
+        }
+
+        recognition.onaudiostart = () => {
+          console.log('🎤 Audio capturing started')
+        }
+
+        recognition.onaudioend = () => {
+          console.log('🎤 Audio capturing ended')
+        }
+
+        recognition.onsoundstart = () => {
+          console.log('🎤 Sound detected')
+        }
+
+        recognition.onsoundend = () => {
+          console.log('🎤 Sound ended')
+        }
+
+        recognition.onnomatch = () => {
+          console.log('🎤 No speech match found')
+          setError('No speech recognized. Please try speaking more clearly.')
+        }
+
         recognition.onerror = (event: any) => {
-          console.error('Speech recognition error:', event.error)
+          console.error('🎤 Speech recognition error:', event.error)
           setIsListening(false)
-          setError(`Speech recognition error: ${event.error}`)
+
+          switch (event.error) {
+            case 'no-speech':
+              setError('No speech detected. Please try speaking into your microphone.')
+              break
+            case 'audio-capture':
+              setError('No microphone found. Please check your microphone connection.')
+              break
+            case 'not-allowed':
+              setError('Microphone access denied. Please allow microphone access and try again.')
+              setMicPermission('denied')
+              break
+            case 'network':
+              setError('Network error occurred. Please check your internet connection.')
+              break
+            case 'aborted':
+              setError('Speech recognition was aborted.')
+              break
+            case 'bad-grammar':
+              setError('Grammar error in speech recognition.')
+              break
+            default:
+              setError(`Speech recognition error: ${event.error}`)
+          }
         }
 
         recognition.onend = () => {
+          console.log('🎤 Speech recognition ended')
           setIsListening(false)
         }
 
@@ -183,25 +294,81 @@ export default function VoiceAssistant({
     }
   }
 
-  const startListening = () => {
+  const requestMicrophonePermission = async () => {
+    try {
+      console.log('🎤 Requesting microphone permission...')
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      console.log('✅ Microphone permission granted')
+      setMicPermission('granted')
+
+      // Stop the stream since we just needed permission
+      stream.getTracks().forEach(track => track.stop())
+      return true
+    } catch (error) {
+      console.error('❌ Microphone permission denied:', error)
+      setMicPermission('denied')
+      setError('Microphone permission is required for voice assistant. Please allow microphone access and try again.')
+      return false
+    }
+  }
+
+  const startListening = async () => {
+    console.log('🎙️ Attempting to start speech recognition...')
+    console.log('🎤 Current mic permission:', micPermission)
+    console.log('🗣️ Speech supported:', speechSupported)
+    console.log('👂 Currently listening:', isListening)
+
+    // Check microphone permission first
+    if (micPermission === 'denied') {
+      setError('Microphone access is blocked. Please enable microphone permissions in your browser settings.')
+      return
+    }
+
+    if (micPermission !== 'granted') {
+      const permissionGranted = await requestMicrophonePermission()
+      if (!permissionGranted) {
+        return
+      }
+    }
+
     if (recognitionRef.current && !isListening) {
       try {
         console.log('🎙️ Starting speech recognition...')
         setTranscript('')
         setInterimTranscript('')
         setError(null)
+
         recognitionRef.current.start()
         setIsListening(true)
         console.log('✅ Speech recognition started successfully')
-      } catch (error) {
+
+        // Add a timeout to detect if speech recognition is not working
+        setTimeout(() => {
+          if (isListening && !transcript && !interimTranscript) {
+            console.log('⚠️ No speech detected after 5 seconds, check microphone')
+            setError('No speech detected. Please check your microphone and try speaking clearly.')
+          }
+        }, 5000)
+
+      } catch (error: any) {
         console.error('❌ Failed to start speech recognition:', error)
-        setError('Failed to start speech recognition. Please try again.')
+        setIsListening(false)
+
+        if (error.name === 'InvalidStateError') {
+          setError('Speech recognition is already running. Please wait a moment and try again.')
+        } else if (error.name === 'NotAllowedError') {
+          setError('Microphone access denied. Please allow microphone access and refresh the page.')
+        } else if (error.name === 'NotSupportedError') {
+          setError('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.')
+        } else {
+          setError(`Speech recognition error: ${error.message}`)
+        }
       }
     } else if (isListening) {
       console.log('⚠️ Speech recognition already listening')
     } else {
       console.log('❌ Speech recognition not available')
-      setError('Speech recognition not available')
+      setError('Speech recognition not available. Please check browser compatibility.')
     }
   }
 
@@ -754,7 +921,30 @@ export default function VoiceAssistant({
                       size="small"
                     />
                   )}
+                  <Chip
+                    label={`Mic: ${micPermission.toUpperCase()}`}
+                    color={micPermission === 'granted' ? 'success' : micPermission === 'denied' ? 'error' : 'warning'}
+                    size="small"
+                    icon={<MicIcon />}
+                  />
                 </Box>
+
+                {/* Microphone Test */}
+                {(micPermission === 'denied' || micPermission === 'prompt') && (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    <Typography variant="body2" gutterBottom>
+                      Microphone access is required for voice commands.
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={requestMicrophonePermission}
+                      startIcon={<MicIcon />}
+                    >
+                      Grant Microphone Access
+                    </Button>
+                  </Alert>
+                )}
 
                 {/* Live Transcript */}
                 {(transcript || interimTranscript) && (
@@ -921,6 +1111,45 @@ export default function VoiceAssistant({
               <Alert severity="error" sx={{ mt: 2 }}>
                 {error}
               </Alert>
+            )}
+
+            {/* Debug Information */}
+            {process.env.NODE_ENV === 'development' && (
+              <Card variant="outlined" sx={{ mt: 2, bgcolor: 'grey.50' }}>
+                <CardContent>
+                  <Typography variant="subtitle2" gutterBottom>
+                    🔧 Debug Information
+                  </Typography>
+                  <Typography variant="caption" component="div">
+                    Browser: {navigator.userAgent.split(' ').slice(-2).join(' ')}
+                  </Typography>
+                  <Typography variant="caption" component="div">
+                    Speech Recognition: {speechSupported ? '✅ Supported' : '❌ Not Supported'}
+                  </Typography>
+                  <Typography variant="caption" component="div">
+                    Microphone Permission: {micPermission}
+                  </Typography>
+                  <Typography variant="caption" component="div">
+                    Is Listening: {isListening ? 'Yes' : 'No'}
+                  </Typography>
+                  <Typography variant="caption" component="div">
+                    Current State: {state}
+                  </Typography>
+                  {typeof window !== 'undefined' && (
+                    <Typography variant="caption" component="div">
+                      Protocol: {window.location.protocol} (HTTPS required for mic access)
+                    </Typography>
+                  )}
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => console.log('🎤 Manual test - try saying "hello"')}
+                    sx={{ mt: 1 }}
+                  >
+                    Test Console Logging
+                  </Button>
+                </CardContent>
+              </Card>
             )}
           </>
         )}
