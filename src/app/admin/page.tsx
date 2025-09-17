@@ -23,6 +23,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormHelperText,
+  Divider,
   TextField,
   IconButton,
   Dialog,
@@ -872,42 +874,172 @@ export default function AdminPage() {
           <Card sx={{ mb: 4 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                🤖 AI Provider Configuration
+                🤖 AI Provider Status
+              </Typography>
+
+              <Box sx={{ mb: 3 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <Card variant="outlined" sx={{
+                      borderColor: process.env.CLAUDE_API_KEY ? 'success.main' : 'grey.300',
+                      borderWidth: 2
+                    }}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          Claude (Anthropic)
+                        </Typography>
+                        <Chip
+                          label={process.env.CLAUDE_API_KEY ? '✅ Configured' : '❌ Not Configured'}
+                          color={process.env.CLAUDE_API_KEY ? 'success' : 'default'}
+                          size="small"
+                        />
+                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                          Best for: Complex reasoning, code generation
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  <Grid item xs={12} sm={4}>
+                    <Card variant="outlined" sx={{
+                      borderColor: process.env.GEMINI_API_KEY ? 'success.main' : 'grey.300',
+                      borderWidth: 2
+                    }}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          Gemini (Google)
+                        </Typography>
+                        <Chip
+                          label={process.env.GEMINI_API_KEY ? '✅ Configured' : '❌ Not Configured'}
+                          color={process.env.GEMINI_API_KEY ? 'success' : 'default'}
+                          size="small"
+                        />
+                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                          Best for: Visual recognition, fast responses
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  <Grid item xs={12} sm={4}>
+                    <Card variant="outlined" sx={{
+                      borderColor: process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY_HERE' ? 'success.main' : 'grey.300',
+                      borderWidth: 2
+                    }}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          OpenAI (GPT/Whisper)
+                        </Typography>
+                        <Chip
+                          label={process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY_HERE' ? '✅ Configured' : '❌ Not Configured'}
+                          color={process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY_HERE' ? 'success' : 'default'}
+                          size="small"
+                        />
+                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                          Best for: Voice transcription, general tasks
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Divider sx={{ my: 3 }} />
+
+              <Typography variant="h6" gutterBottom>
+                🎯 Feature-Specific AI Selection
               </Typography>
 
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} md={6}>
                   <FormControl fullWidth>
-                    <InputLabel>Primary AI Provider</InputLabel>
+                    <InputLabel>Visual Item Recognition</InputLabel>
                     <Select
-                      value={adminSettings.default_ai_provider}
-                      label="Primary AI Provider"
-                      onChange={(e) => setAdminSettings({ ...adminSettings, default_ai_provider: e.target.value })}
+                      value={adminSettings.visual_recognition_provider || 'gemini'}
+                      label="Visual Item Recognition"
+                      onChange={(e) => setAdminSettings({ ...adminSettings, visual_recognition_provider: e.target.value })}
                     >
-                      <MenuItem value="claude">Claude (Anthropic)</MenuItem>
-                      <MenuItem value="gemini">Gemini (Google)</MenuItem>
+                      <MenuItem value="claude" disabled={!process.env.CLAUDE_API_KEY}>
+                        Claude (Anthropic) {!process.env.CLAUDE_API_KEY && '- Not Available'}
+                      </MenuItem>
+                      <MenuItem value="gemini" disabled={!process.env.GEMINI_API_KEY}>
+                        Gemini (Google) {!process.env.GEMINI_API_KEY && '- Not Available'}
+                      </MenuItem>
                     </Select>
+                    <FormHelperText>Primary AI for product image recognition</FormHelperText>
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <Box>
-                    <Typography variant="body2" color="textSecondary" gutterBottom>
-                      Provider Status:
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Voice Transcription</InputLabel>
+                    <Select
+                      value="whisper"
+                      label="Voice Transcription"
+                      disabled
+                    >
+                      <MenuItem value="whisper">
+                        Whisper (OpenAI) - Required
+                      </MenuItem>
+                    </Select>
+                    <FormHelperText>Whisper is the only supported voice provider</FormHelperText>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Recipe Analysis</InputLabel>
+                    <Select
+                      value={adminSettings.recipe_analysis_provider || 'claude'}
+                      label="Recipe Analysis"
+                      onChange={(e) => setAdminSettings({ ...adminSettings, recipe_analysis_provider: e.target.value })}
+                    >
+                      <MenuItem value="claude" disabled={!process.env.CLAUDE_API_KEY}>
+                        Claude (Anthropic) {!process.env.CLAUDE_API_KEY && '- Not Available'}
+                      </MenuItem>
+                      <MenuItem value="gemini" disabled={!process.env.GEMINI_API_KEY}>
+                        Gemini (Google) {!process.env.GEMINI_API_KEY && '- Not Available'}
+                      </MenuItem>
+                      <MenuItem value="gpt4" disabled={!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'YOUR_OPENAI_API_KEY_HERE'}>
+                        GPT-4 (OpenAI) {(!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'YOUR_OPENAI_API_KEY_HERE') && '- Not Available'}
+                      </MenuItem>
+                    </Select>
+                    <FormHelperText>AI for recipe extraction and analysis</FormHelperText>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Fallback Provider</InputLabel>
+                    <Select
+                      value={adminSettings.fallback_provider || 'gemini'}
+                      label="Fallback Provider"
+                      onChange={(e) => setAdminSettings({ ...adminSettings, fallback_provider: e.target.value })}
+                    >
+                      <MenuItem value="claude" disabled={!process.env.CLAUDE_API_KEY}>
+                        Claude (Anthropic) {!process.env.CLAUDE_API_KEY && '- Not Available'}
+                      </MenuItem>
+                      <MenuItem value="gemini" disabled={!process.env.GEMINI_API_KEY}>
+                        Gemini (Google) {!process.env.GEMINI_API_KEY && '- Not Available'}
+                      </MenuItem>
+                      <MenuItem value="gpt4" disabled={!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'YOUR_OPENAI_API_KEY_HERE'}>
+                        GPT-4 (OpenAI) {(!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'YOUR_OPENAI_API_KEY_HERE') && '- Not Available'}
+                      </MenuItem>
+                    </Select>
+                    <FormHelperText>Backup AI when primary provider fails</FormHelperText>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Alert severity="info">
+                    <Typography variant="body2">
+                      <strong>Cost Optimization Tips:</strong><br />
+                      • Gemini: Free tier available, fast for visual tasks<br />
+                      • Claude: Best accuracy but higher cost<br />
+                      • OpenAI: Required for voice, competitive pricing<br />
+                      • Set different providers per feature to optimize cost vs performance
                     </Typography>
-                    <Box display="flex" gap={1}>
-                      <Chip
-                        label="Claude"
-                        color={process.env.CLAUDE_API_KEY ? 'success' : 'default'}
-                        size="small"
-                      />
-                      <Chip
-                        label="Gemini"
-                        color={process.env.GEMINI_API_KEY ? 'success' : 'default'}
-                        size="small"
-                      />
-                    </Box>
-                  </Box>
+                  </Alert>
                 </Grid>
 
                 <Grid item xs={12}>
@@ -915,9 +1047,9 @@ export default function AdminPage() {
                     <Button
                       variant="contained"
                       onClick={updateAdminSettings}
-                      startIcon={<SettingsIcon />}
+                      startIcon={<SaveIcon />}
                     >
-                      Update Settings
+                      Save AI Configuration
                     </Button>
                   </Box>
                 </Grid>

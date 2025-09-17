@@ -761,6 +761,16 @@ function QuickAddPageContent() {
                   >
                     Manual Add
                   </Button>
+                  {voiceAssistantEnabled && (
+                    <Button
+                      variant="outlined"
+                      onClick={() => setVoiceAssistantOpen(true)}
+                      startIcon={<VoiceIcon />}
+                      color="secondary"
+                    >
+                      Voice Add
+                    </Button>
+                  )}
                 </Box>
 
                 {productData && (
@@ -980,8 +990,8 @@ function QuickAddPageContent() {
         userId={user?.id}
       />
 
-      {/* Voice Assistant Floating Action Button - Only show if enabled */}
-      {isMobile && voiceAssistantEnabled && (
+      {/* Voice Assistant Floating Action Button - Show on all devices if enabled */}
+      {voiceAssistantEnabled && (
         <Fab
           color="secondary"
           aria-label="voice assistant"
