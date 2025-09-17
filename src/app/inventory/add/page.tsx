@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import {
   Container,
   Typography,
@@ -207,7 +207,7 @@ const mapApiCategory = (apiCategory?: string): string | undefined => {
   return 'Other'
 }
 
-export default function AddItemPage() {
+function AddItemPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const barcodeInputRef = useRef<HTMLInputElement>(null)
@@ -1434,5 +1434,19 @@ export default function AddItemPage() {
         userId={user?.id}
       />
     </Container>
+  )
+}
+
+export default function AddItemPage() {
+  return (
+    <Suspense fallback={
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <CircularProgress />
+        </Box>
+      </Container>
+    }>
+      <AddItemPageContent />
+    </Suspense>
   )
 }

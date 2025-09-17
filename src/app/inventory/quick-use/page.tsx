@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import {
   Container,
   Typography,
@@ -84,7 +84,7 @@ interface InventoryItem {
 
 type WorkflowMode = 'location-first' | 'item-first'
 
-export default function QuickUsePage() {
+function QuickUsePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const itemInputRef = useRef<HTMLInputElement>(null)
@@ -1157,5 +1157,19 @@ export default function QuickUsePage() {
         }}
       />
     </Container>
+  )
+}
+
+export default function QuickUsePage() {
+  return (
+    <Suspense fallback={
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <CircularProgress />
+        </Box>
+      </Container>
+    }>
+      <QuickUsePageContent />
+    </Suspense>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import {
   Container,
   Typography,
@@ -46,7 +46,7 @@ interface RecipeStep {
   time_minutes: number
 }
 
-export default function CreateRecipePage() {
+function CreateRecipePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [user, setUser] = useState<any>(null)
@@ -738,5 +738,19 @@ export default function CreateRecipePage() {
         </Paper>
       </Backdrop>
     </Container>
+  )
+}
+
+export default function CreateRecipePage() {
+  return (
+    <Suspense fallback={
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <CircularProgress />
+        </Box>
+      </Container>
+    }>
+      <CreateRecipePageContent />
+    </Suspense>
   )
 }
