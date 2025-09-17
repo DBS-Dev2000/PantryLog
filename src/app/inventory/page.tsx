@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import {
   Container,
   Typography,
@@ -46,7 +46,7 @@ import { fetchHousehold } from '@/store/slices/householdSlice'
 import { supabase } from '@/lib/supabase'
 import VoiceAssistant from '@/components/VoiceAssistant'
 
-export default function InventoryPage() {
+function InventoryPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const dispatch = useAppDispatch()
@@ -676,5 +676,19 @@ export default function InventoryPage() {
         />
       )}
     </Container>
+  )
+}
+
+export default function InventoryPage() {
+  return (
+    <Suspense fallback={
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <CircularProgress />
+        </Box>
+      </Container>
+    }>
+      <InventoryPageContent />
+    </Suspense>
   )
 }

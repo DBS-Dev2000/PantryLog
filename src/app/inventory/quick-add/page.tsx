@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import {
   Container,
   Typography,
@@ -71,7 +71,7 @@ interface StorageLocationData {
   full_path?: string
 }
 
-export default function QuickAddPage() {
+function QuickAddPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const productInputRef = useRef<HTMLInputElement>(null)
@@ -1008,5 +1008,19 @@ export default function QuickAddPage() {
         }}
       />
     </Container>
+  )
+}
+
+export default function QuickAddPage() {
+  return (
+    <Suspense fallback={
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <CircularProgress />
+        </Box>
+      </Container>
+    }>
+      <QuickAddPageContent />
+    </Suspense>
   )
 }
