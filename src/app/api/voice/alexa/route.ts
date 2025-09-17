@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { voiceApiLimiter, rateLimitExceededResponse } from '@/lib/rate-limit'
 
 interface AlexaRequest {
   version: string
@@ -45,6 +46,17 @@ interface AlexaRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting for voice API
+    const rateLimitResult = voiceApiLimiter.check(request)
+    if (!rateLimitResult.success) {
+      console.log('🚫 Rate limit exceeded for Alexa voice endpoint')
+      // For Alexa, return a voice response instead of HTTP 429
+      return NextResponse.json(createAlexaResponse(
+        "You're using voice commands too frequently. Please wait a moment and try again.",
+        true
+      ))
+    }
+
     const body: AlexaRequest = await request.json()
     console.log('Alexa Request:', JSON.stringify(body, null, 2))
 

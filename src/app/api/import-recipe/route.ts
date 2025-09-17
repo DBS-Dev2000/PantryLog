@@ -1,15 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { aiEndpointLimiter, rateLimitResponse, rateLimitExceededResponse } from '@/lib/rate-limit'
+import { RecipeImportSchema, validateRequest } from '@/lib/validation'
 
 export async function POST(request: NextRequest) {
   try {
-    const { url, user_id } = await request.json()
-
-    if (!url) {
-      return NextResponse.json(
-        { error: 'URL is required' },
-        { status: 400 }
-      )
+    // Apply rate limiting for AI-powered recipe import
+    const rateLimitResult = aiEndpointLimiter.check(request)
+    if (!rateLimitResult.success) {
+      console.log('🚫 Rate limit exceeded for import-recipe endpoint')
+      return rateLimitExceededResponse(rateLimitResult.resetTime)
     }
+
+    const requestBody = await request.json()
+
+    // Validate and sanitize input
+    const validation = await validateRequest(RecipeImportSchema)(requestBody)
+    if (!validation.success) {
+      return NextResponse.json({
+        error: 'Invalid input',
+        details: validation.errors
+      }, { status: 400 })
+    }
+
+    const { url, user_id } = validation.data
 
     console.log('🍳 Recipe import request for URL:', url)
 
@@ -36,7 +49,16 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('✅ Recipe extraction complete:', recipeData.title)
-    return NextResponse.json(recipeData)
+
+    const response = NextResponse.json(recipeData)
+
+    // Add rate limit headers
+    const rateLimitHeaders = rateLimitResponse(rateLimitResult.remaining, rateLimitResult.resetTime)
+    rateLimitHeaders.forEach((value, key) => {
+      response.headers.set(key, value)
+    })
+
+    return response
 
   } catch (error: any) {
     console.error('🚨 Recipe import server error:', error)

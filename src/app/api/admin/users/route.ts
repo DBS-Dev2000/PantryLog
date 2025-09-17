@@ -189,14 +189,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { action, target_user_id, requesting_user_id, admin_level, notes } = await request.json()
+    const requestBody = await request.json()
 
-    if (!requesting_user_id) {
-      return NextResponse.json(
-        { error: 'Requesting user ID required' },
-        { status: 400 }
-      )
+    // Validate and sanitize input
+    const { AdminActionSchema, validateRequest } = await import('@/lib/validation')
+    const validation = await validateRequest(AdminActionSchema)(requestBody)
+    if (!validation.success) {
+      return NextResponse.json({
+        error: 'Invalid input',
+        details: validation.errors
+      }, { status: 400 })
     }
+
+    const { action, target_user_id, requesting_user_id, admin_level, notes } = validation.data
 
     // Verify requesting user is admin
     const { data: isAdmin, error: adminCheckError } = await supabaseAdmin

@@ -1,13 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { aiEndpointLimiter, rateLimitResponse, rateLimitExceededResponse } from '@/lib/rate-limit'
+import { ProductDescriptionSchema, validateRequest } from '@/lib/validation'
 
 export async function POST(request: NextRequest) {
   try {
-    const { description, userId } = await request.json()
-
-    if (!description) {
-      return NextResponse.json({ error: 'Description required' }, { status: 400 })
+    // Apply rate limiting
+    const rateLimitResult = aiEndpointLimiter.check(request)
+    if (!rateLimitResult.success) {
+      console.log('🚫 Rate limit exceeded for AI extract-product endpoint')
+      return rateLimitExceededResponse(rateLimitResult.resetTime)
     }
+
+    const requestBody = await request.json()
+
+    // Validate and sanitize input
+    const validation = await validateRequest(ProductDescriptionSchema)(requestBody)
+    if (!validation.success) {
+      return NextResponse.json({
+        error: 'Invalid input',
+        details: validation.errors
+      }, { status: 400 })
+    }
+
+    const { description, userId } = validation.data
 
     // Parse common patterns in product descriptions
     const productInfo = parseProductDescription(description)
@@ -21,11 +37,19 @@ export async function POST(request: NextRequest) {
     // Use AI to enhance the product information
     const enhancedInfo = await enhanceWithAI(description, productInfo)
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       ...enhancedInfo,
       upc: upcMatch?.upc,
       confidence: calculateConfidence(enhancedInfo, upcMatch)
     })
+
+    // Add rate limit headers
+    const rateLimitHeaders = rateLimitResponse(rateLimitResult.remaining, rateLimitResult.resetTime)
+    rateLimitHeaders.forEach((value, key) => {
+      response.headers.set(key, value)
+    })
+
+    return response
 
   } catch (error: any) {
     console.error('Product extraction error:', error)

@@ -146,11 +146,16 @@ export default function VoiceAssistant({
         setSpeechSupported(true)
         const recognition = new SpeechRecognition()
 
-        // Enhanced configuration for better compatibility
+        // Enhanced configuration for better compatibility and sensitivity
         recognition.continuous = true
         recognition.interimResults = true
         recognition.lang = 'en-US'
         recognition.maxAlternatives = 1
+
+        // Additional configuration for better speech detection
+        if ('grammars' in recognition) {
+          recognition.grammars = null // Use default grammars for better recognition
+        }
 
         console.log('⚙️ Speech recognition configured:', {
           continuous: recognition.continuous,
@@ -245,7 +250,16 @@ export default function VoiceAssistant({
 
           switch (event.error) {
             case 'no-speech':
-              setError('No speech detected. Please try speaking into your microphone.')
+              console.log('🔄 No speech detected, will auto-restart in 2 seconds...')
+              setError('Listening... Please speak clearly into your microphone.')
+
+              // Auto-restart speech recognition after a brief pause
+              setTimeout(() => {
+                if (state !== 'idle' && state !== 'complete') {
+                  console.log('🔄 Auto-restarting speech recognition...')
+                  startListening()
+                }
+              }, 2000)
               break
             case 'audio-capture':
               setError('No microphone found. Please check your microphone connection.')
@@ -345,10 +359,10 @@ export default function VoiceAssistant({
         // Add a timeout to detect if speech recognition is not working
         setTimeout(() => {
           if (isListening && !transcript && !interimTranscript) {
-            console.log('⚠️ No speech detected after 5 seconds, check microphone')
-            setError('No speech detected. Please check your microphone and try speaking clearly.')
+            console.log('⚠️ No speech detected after 10 seconds')
+            setError('Still listening... Please speak louder or closer to your microphone. Or click the microphone button to restart.')
           }
-        }, 5000)
+        }, 10000)
 
       } catch (error: any) {
         console.error('❌ Failed to start speech recognition:', error)
