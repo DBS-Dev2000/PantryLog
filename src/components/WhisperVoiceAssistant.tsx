@@ -105,9 +105,23 @@ export default function WhisperVoiceAssistant({
       // Start visualizing audio levels
       visualizeAudio()
 
-      // Set up MediaRecorder
+      // Set up MediaRecorder with better settings
+      let mimeType = 'audio/webm'
+
+      // Try different mime types based on browser support
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        mimeType = 'audio/webm;codecs=opus'
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = 'audio/webm'
+      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+        mimeType = 'audio/ogg;codecs=opus'
+      }
+
+      console.log('🎙️ Using mime type:', mimeType)
+
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm'
+        mimeType: mimeType,
+        audioBitsPerSecond: 128000 // Higher quality audio
       })
 
       mediaRecorderRef.current = mediaRecorder
@@ -116,12 +130,27 @@ export default function WhisperVoiceAssistant({
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data)
+          console.log('📊 Audio chunk received:', event.data.size, 'bytes')
         }
       }
 
       mediaRecorder.onstop = async () => {
         // Create audio blob
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
+        console.log('🎵 Total audio size:', audioBlob.size, 'bytes')
+        console.log('🎵 Audio chunks count:', audioChunksRef.current.length)
+
+        // Check if we actually recorded something
+        if (audioBlob.size < 1000) {
+          setError('No audio was recorded. Please check your microphone.')
+          setState('error')
+          return
+        }
+
+        // Create a URL for the audio blob to test playback (for debugging)
+        const audioUrl = URL.createObjectURL(audioBlob)
+        console.log('🔊 Audio playback URL:', audioUrl)
+        console.log('🔊 To test audio, paste this in console: new Audio("' + audioUrl + '").play()')
 
         // Send to Whisper API
         await transcribeAudio(audioBlob)
@@ -233,28 +262,63 @@ export default function WhisperVoiceAssistant({
 
       const lowerText = text.toLowerCase()
 
+      // Check if this looks like a command at all
+      const commandKeywords = ['add', 'adding', 'stock', 'put', 'store', 'remove', 'removing', 'use', 'take', 'grab']
+      const hasCommandWord = commandKeywords.some(word => lowerText.includes(word))
+
+      if (!hasCommandWord) {
+        // Check for common non-command phrases
+        if (lowerText.includes('www.') || lowerText.includes('http') || lowerText.includes('.com') || lowerText.includes('.gov')) {
+          setError('That doesn\'t sound like an inventory command. Try saying something like "Add milk" or "Remove eggs"')
+        } else if (lowerText.length < 3) {
+          setError('Command too short. Please say "add" or "remove" followed by the item name')
+        } else {
+          setError(`I heard: "${text}"\n\nPlease use commands like:\n• "Add 2 gallons of milk"\n• "Remove eggs"\n• "Stock up on bread"`)
+        }
+        setState('error')
+
+        // Auto-reset after 3 seconds for retry
+        setTimeout(() => {
+          setState('idle')
+          setError(null)
+          setTranscript('')
+        }, 3000)
+        return
+      }
+
       // Detect action (add or remove)
       let action: 'add' | 'remove' | null = null
       if (lowerText.includes('add') || lowerText.includes('stock') || lowerText.includes('put')) {
         action = 'add'
-      } else if (lowerText.includes('remove') || lowerText.includes('use') || lowerText.includes('take')) {
+      } else if (lowerText.includes('remove') || lowerText.includes('use') || lowerText.includes('take') || lowerText.includes('grab')) {
         action = 'remove'
       }
 
       if (!action) {
-        setError('Please say "add" or "remove" followed by the item name')
+        setError('Could not determine if you want to add or remove items. Please be more specific.')
         setState('error')
+        setTimeout(() => {
+          setState('idle')
+          setError(null)
+          setTranscript('')
+        }, 3000)
         return
       }
 
       // Extract item name (remove action words)
       let itemName = text
         .replace(/\b(add|adding|stock|put|store|remove|removing|use|take|grab)\b/gi, '')
+        .replace(/\b(to|from|in|the|my|our)\b/gi, '') // Remove common filler words
         .trim()
 
-      if (!itemName) {
+      if (!itemName || itemName.length < 2) {
         setError('Could not understand the item name. Please try again.')
         setState('error')
+        setTimeout(() => {
+          setState('idle')
+          setError(null)
+          setTranscript('')
+        }, 3000)
         return
       }
 

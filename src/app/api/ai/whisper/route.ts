@@ -33,12 +33,29 @@ export async function POST(request: NextRequest) {
       size: audioFile.size
     })
 
+    // Convert the audio file to a format OpenAI accepts
+    // OpenAI Whisper accepts: mp3, mp4, mpeg, mpga, m4a, wav, or webm
+    let fileToSend: File = audioFile
+
+    // If the file doesn't have a proper extension, rename it
+    if (!audioFile.name.includes('.')) {
+      const buffer = await audioFile.arrayBuffer()
+      const blob = new Blob([buffer], { type: audioFile.type || 'audio/webm' })
+      fileToSend = new File([blob], 'recording.webm', { type: 'audio/webm' })
+    }
+
+    console.log('🎵 Sending to Whisper:', {
+      name: fileToSend.name,
+      type: fileToSend.type,
+      size: fileToSend.size
+    })
+
     // Convert File to the format OpenAI expects
     const transcription = await openai.audio.transcriptions.create({
-      file: audioFile,
+      file: fileToSend,
       model: 'whisper-1',
       language: 'en', // Specify English for better accuracy
-      prompt: 'Commands: add item, remove item, load location. Products: milk, bread, eggs, cheese, chicken, vegetables, fruits.', // Context hints
+      prompt: 'The user is giving voice commands to add or remove items from their pantry inventory. Common commands include: add milk, remove eggs, stock bread.', // Better context
     })
 
     console.log('✅ Whisper transcription:', transcription.text)
@@ -51,24 +68,42 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('❌ Whisper API error:', error)
+    console.error('Error details:', {
+      message: error?.message,
+      type: error?.error?.type,
+      code: error?.error?.code,
+      statusCode: error?.status,
+      response: error?.response?.data
+    })
 
     // Handle specific OpenAI errors
-    if (error?.error?.type === 'invalid_api_key') {
+    if (error?.error?.type === 'invalid_api_key' || error?.status === 401) {
       return NextResponse.json(
-        { error: 'Invalid OpenAI API key' },
+        { error: 'Invalid OpenAI API key. Please check your API key in .env.local' },
         { status: 401 }
       )
     }
 
-    if (error?.error?.type === 'insufficient_quota') {
+    if (error?.error?.type === 'insufficient_quota' || error?.status === 429) {
       return NextResponse.json(
-        { error: 'OpenAI API quota exceeded' },
+        { error: 'OpenAI API quota exceeded. Please check your OpenAI account.' },
         { status: 429 }
       )
     }
 
+    if (error?.message?.includes('format')) {
+      return NextResponse.json(
+        { error: 'Audio format not supported. Please try recording again.' },
+        { status: 400 }
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Failed to transcribe audio', details: error.message },
+      {
+        error: 'Failed to transcribe audio',
+        details: error?.message || 'Unknown error occurred',
+        hint: 'Check the console for more details'
+      },
       { status: 500 }
     )
   }

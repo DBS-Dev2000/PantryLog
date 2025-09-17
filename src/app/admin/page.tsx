@@ -33,8 +33,7 @@ import {
   DialogActions,
   CircularProgress,
   Tabs,
-  Tab,
-  Divider
+  Tab
 } from '@mui/material'
 import {
   AdminPanelSettings as AdminIcon,
