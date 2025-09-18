@@ -260,12 +260,21 @@ export default function WhisperVoiceAssistant({
       setState('executing')
       setFeedback('Processing your command...')
 
-      // First, load all storage locations for this user
-      const { data: storageLocations } = await supabase
-        .from('storage_locations')
-        .select('id, name')
-        .eq('household_id', userId)
-        .eq('is_active', true)
+      // First, load all storage locations and existing products for this user
+      const [locationsResult, productsResult] = await Promise.all([
+        supabase
+          .from('storage_locations')
+          .select('id, name, parent_id, type')
+          .eq('household_id', userId)
+          .eq('is_active', true),
+        supabase
+          .from('products')
+          .select('id, name, brand, category')
+          .limit(1000) // Get common products
+      ])
+
+      const storageLocations = locationsResult.data
+      const existingProducts = productsResult.data
 
       const lowerText = text.toLowerCase()
 
@@ -331,47 +340,77 @@ export default function WhisperVoiceAssistant({
       if (storageLocations && storageLocations.length > 0) {
         const lowerItemName = itemName.toLowerCase()
 
-        // Sort locations by name length (descending) to match longer names first
-        // This prevents "Pantry" from matching before "Left Pantry Floor"
-        const sortedLocations = [...storageLocations].sort((a, b) => b.name.length - a.name.length)
+        // Build hierarchical location names (e.g., "Hall Pantry > Top Shelf")
+        const locationsWithPaths = storageLocations.map(loc => {
+          let path = loc.name
+          let currentLoc = loc
 
-        for (const location of sortedLocations) {
-          const locationName = location.name.toLowerCase()
-          const locationWords = locationName.split(/\s+/)
-
-          // Check if all words from the location name appear in the command
-          let foundLocation = false
-
-          // First try exact match
-          if (lowerItemName.includes(locationName)) {
-            foundLocation = true
-            locationHint = locationName
-            matchedLocation = location
-            // Remove the location from item name
-            const locationPattern = new RegExp(`\\b(?:to|in|on|into|onto|at|from)?\\s*(?:the\\s+)?${location.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
-            itemName = itemName.replace(locationPattern, '').trim()
-            break
-          }
-
-          // If no exact match, try partial matching for key words
-          if (!foundLocation) {
-            // Check for key location words like "counter", "fridge", "pantry", etc.
-            const keyWords = ['refrigerator', 'fridge', 'freezer', 'pantry', 'cabinet', 'shelf', 'door', 'drawer', 'counter', 'countertop', 'cupboard', 'floor', 'left', 'right', 'top', 'bottom', 'upper', 'lower']
-
-            for (const keyWord of keyWords) {
-              if (locationName.includes(keyWord) && lowerItemName.includes(keyWord)) {
-                locationHint = location.name
-                matchedLocation = location
-                // Remove the keyword from item name
-                const keywordPattern = new RegExp(`\\b(?:to|in|on|into|onto|at|from)?\\s*(?:the\\s+)?${keyWord}\\b`, 'gi')
-                itemName = itemName.replace(keywordPattern, '').trim()
-                foundLocation = true
-                break
-              }
+          // Build full path by traversing parent locations
+          while (currentLoc.parent_id) {
+            const parent = storageLocations.find(l => l.id === currentLoc.parent_id)
+            if (parent) {
+              path = `${parent.name} ${path}`
+              currentLoc = parent
+            } else {
+              break
             }
           }
 
-          if (foundLocation) break
+          return { ...loc, fullPath: path }
+        })
+
+        // Sort locations by path length (descending) to match longer, more specific names first
+        const sortedLocations = locationsWithPaths.sort((a, b) => b.fullPath.length - a.fullPath.length)
+
+        // Try to find the best matching location
+        let bestMatch = null
+        let bestScore = 0
+
+        for (const location of sortedLocations) {
+          const locationName = location.name.toLowerCase()
+          const fullPath = location.fullPath.toLowerCase()
+          const locationWords = fullPath.split(/\s+/)
+
+          let score = 0
+          let foundWords = []
+
+          // Check how many words from the location match the command
+          for (const word of locationWords) {
+            if (lowerItemName.includes(word)) {
+              score++
+              foundWords.push(word)
+            }
+          }
+
+          // Bonus points for exact name match or full path match
+          if (lowerItemName.includes(fullPath)) {
+            score += 10
+          } else if (lowerItemName.includes(locationName)) {
+            score += 5
+          }
+
+          // If this is the best match so far, remember it
+          if (score > bestScore) {
+            bestScore = score
+            bestMatch = location
+          }
+        }
+
+        // If we found a good match, use it
+        if (bestMatch && bestScore > 0) {
+          matchedLocation = bestMatch
+          locationHint = bestMatch.name
+
+          // Remove all matched location words from item name
+          const fullPath = bestMatch.fullPath
+          const words = fullPath.split(/\s+/)
+
+          for (const word of words) {
+            const wordPattern = new RegExp(`\\b(?:to|in|on|into|onto|at|from)?\\s*(?:the\\s+)?${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
+            itemName = itemName.replace(wordPattern, ' ')
+          }
+
+          itemName = itemName.replace(/\s+/g, ' ').trim()
         }
       }
 
@@ -399,20 +438,80 @@ export default function WhisperVoiceAssistant({
       // Actually add the item to inventory
       if (action === 'add') {
         try {
-          // First, try to find or create the product
+          // First, try to find the best matching product
           let productId: string | null = null
+          let productName: string = itemName
 
-          // Search for existing product by name
-          const { data: existingProducts } = await supabase
-            .from('products')
-            .select('id, name')
-            .ilike('name', `%${itemName}%`)
-            .limit(1)
-
+          // Try to find the best matching product from our loaded list
           if (existingProducts && existingProducts.length > 0) {
-            productId = existingProducts[0].id
-            console.log('Found existing product:', existingProducts[0].name)
-          } else {
+            const lowerItemName = itemName.toLowerCase()
+            let bestProductMatch = null
+            let bestProductScore = 0
+
+            for (const product of existingProducts) {
+              const productNameLower = product.name.toLowerCase()
+              let score = 0
+
+              // Exact match
+              if (productNameLower === lowerItemName) {
+                score = 100
+              }
+              // Product name contains the item name
+              else if (productNameLower.includes(lowerItemName)) {
+                score = 50 + (lowerItemName.length / productNameLower.length) * 30
+              }
+              // Item name contains the product name
+              else if (lowerItemName.includes(productNameLower)) {
+                score = 40 + (productNameLower.length / lowerItemName.length) * 30
+              }
+              // Word-by-word matching
+              else {
+                const itemWords = lowerItemName.split(/\s+/)
+                const productWords = productNameLower.split(/\s+/)
+                let matchedWords = 0
+
+                for (const itemWord of itemWords) {
+                  if (productWords.some(pw => pw.includes(itemWord) || itemWord.includes(pw))) {
+                    matchedWords++
+                  }
+                }
+
+                if (matchedWords > 0) {
+                  score = (matchedWords / Math.max(itemWords.length, productWords.length)) * 30
+                }
+              }
+
+              if (score > bestProductScore) {
+                bestProductScore = score
+                bestProductMatch = product
+              }
+            }
+
+            // Use the best match if it's good enough
+            if (bestProductMatch && bestProductScore > 20) {
+              productId = bestProductMatch.id
+              productName = bestProductMatch.name
+              console.log(`Found matching product: ${productName} (score: ${bestProductScore})`)
+            }
+          }
+
+          // If no good match found, search the database
+          if (!productId) {
+            const { data: searchResults } = await supabase
+              .from('products')
+              .select('id, name')
+              .ilike('name', `%${itemName}%`)
+              .limit(1)
+
+            if (searchResults && searchResults.length > 0) {
+              productId = searchResults[0].id
+              productName = searchResults[0].name
+              console.log('Found product in database search:', productName)
+            }
+          }
+
+          // If still no match, create a new product
+          if (!productId) {
             // Create new product
             const { data: newProduct, error: productError } = await supabase
               .from('products')
@@ -516,7 +615,7 @@ export default function WhisperVoiceAssistant({
           if (inventoryError) throw inventoryError
 
           setState('complete')
-          setFeedback(`✅ Successfully added ${quantity} ${itemName} to ${locationName}`)
+          setFeedback(`✅ Successfully added ${quantity} ${productName} to ${locationName}`)
 
           // Call the callback
           if (onItemAdded) {

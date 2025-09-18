@@ -297,13 +297,32 @@ export default function VoiceAssistant({
   const loadStorageLocations = async () => {
     const { data, error } = await supabase
       .from('storage_locations')
-      .select('*')
+      .select('id, name, parent_id, type')
       .eq('household_id', userId)
       .eq('is_active', true)
       .order('name')
 
     if (!error && data) {
-      setStorageLocations(data)
+      // Build hierarchical location names
+      const locationsWithPaths = data.map(loc => {
+        let path = loc.name
+        let currentLoc = loc
+
+        // Build full path by traversing parent locations
+        while (currentLoc.parent_id) {
+          const parent = data.find(l => l.id === currentLoc.parent_id)
+          if (parent) {
+            path = `${parent.name} ${path}`
+            currentLoc = parent
+          } else {
+            break
+          }
+        }
+
+        return { ...loc, fullPath: path }
+      })
+
+      setStorageLocations(locationsWithPaths)
     }
   }
 
@@ -621,20 +640,54 @@ export default function VoiceAssistant({
     const lowerText = text.toLowerCase()
     console.log('🏠 Parsing location-first command:', text)
 
-    // Try to match with existing locations
-    const matchedLocation = storageLocations.find(loc =>
-      lowerText.includes(loc.name.toLowerCase())
+    // Sort locations by fullPath length (descending) to match longer names first
+    const sortedLocations = [...storageLocations].sort((a, b) =>
+      ((b as any).fullPath?.length || b.name.length) - ((a as any).fullPath?.length || a.name.length)
     )
 
-    if (matchedLocation) {
-      setSelectedLocationId(matchedLocation.id)
+    // Try to find the best matching location
+    let bestMatch = null
+    let bestScore = 0
+
+    for (const location of sortedLocations) {
+      const locationName = location.name.toLowerCase()
+      const fullPath = ((location as any).fullPath || location.name).toLowerCase()
+      const locationWords = fullPath.split(/\s+/)
+
+      let score = 0
+
+      // Check for exact full path match
+      if (lowerText.includes(fullPath)) {
+        score = 100
+      }
+      // Check for exact name match
+      else if (lowerText.includes(locationName)) {
+        score = 50
+      }
+      // Check for word matches
+      else {
+        for (const word of locationWords) {
+          if (lowerText.includes(word) && word.length > 2) {
+            score += 10
+          }
+        }
+      }
+
+      if (score > bestScore) {
+        bestScore = score
+        bestMatch = location
+      }
+    }
+
+    if (bestMatch && bestScore > 0) {
+      setSelectedLocationId(bestMatch.id)
       setLocation({
-        area: matchedLocation.name,
-        specific: text.replace(new RegExp(matchedLocation.name, 'gi'), '').trim(),
+        area: bestMatch.name,
+        specific: text.replace(new RegExp(bestMatch.name, 'gi'), '').trim(),
         raw: text
       })
       setState('bulk-adding')
-      addMessage('assistant', `Perfect! I'll add items to ${matchedLocation.name}. What's the first item?`)
+      addMessage('assistant', `Perfect! I'll add items to ${bestMatch.name}. What's the first item?`)
       speak("What's the first item?")
       startListening()
     } else {
@@ -681,20 +734,54 @@ export default function VoiceAssistant({
   const parseLocation = (text: string) => {
     const lowerText = text.toLowerCase()
 
-    // Try to match with existing locations
-    const matchedLocation = storageLocations.find(loc =>
-      lowerText.includes(loc.name.toLowerCase())
+    // Sort locations by fullPath length (descending) to match longer names first
+    const sortedLocations = [...storageLocations].sort((a, b) =>
+      ((b as any).fullPath?.length || b.name.length) - ((a as any).fullPath?.length || a.name.length)
     )
 
-    if (matchedLocation) {
-      setSelectedLocationId(matchedLocation.id)
+    // Try to find the best matching location
+    let bestMatch = null
+    let bestScore = 0
+
+    for (const location of sortedLocations) {
+      const locationName = location.name.toLowerCase()
+      const fullPath = ((location as any).fullPath || location.name).toLowerCase()
+      const locationWords = fullPath.split(/\s+/)
+
+      let score = 0
+
+      // Check for exact full path match
+      if (lowerText.includes(fullPath)) {
+        score = 100
+      }
+      // Check for exact name match
+      else if (lowerText.includes(locationName)) {
+        score = 50
+      }
+      // Check for word matches
+      else {
+        for (const word of locationWords) {
+          if (lowerText.includes(word) && word.length > 2) {
+            score += 10
+          }
+        }
+      }
+
+      if (score > bestScore) {
+        bestScore = score
+        bestMatch = location
+      }
+    }
+
+    if (bestMatch && bestScore > 0) {
+      setSelectedLocationId(bestMatch.id)
       setLocation({
-        area: matchedLocation.name,
-        specific: text.replace(new RegExp(matchedLocation.name, 'gi'), '').trim(),
+        area: bestMatch.name,
+        specific: text.replace(new RegExp(bestMatch.name, 'gi'), '').trim(),
         raw: text
       })
       setState('confirming-action')
-      addMessage('assistant', `Got it! I'll ${action} "${productMatch?.name}" ${action === 'add' ? `to ${matchedLocation.name}` : 'from your inventory'}. Confirm?`)
+      addMessage('assistant', `Got it! I'll ${action} "${productMatch?.name}" ${action === 'add' ? `to ${bestMatch.name}` : 'from your inventory'}. Confirm?`)
       speak(`Ready to ${action} ${productMatch?.name}. Confirm?`)
     } else {
       // Parse location description
