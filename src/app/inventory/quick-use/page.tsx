@@ -1165,7 +1165,7 @@ function QuickUsePageContent() {
           onSuccess={() => {
             // Refresh inventory after successful voice command
             window.location.reload()
-          }
+          }}
           mode="remove"
           onItemRemoved={(item) => {
             // Refresh available items or show success
