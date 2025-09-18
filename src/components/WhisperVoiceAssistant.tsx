@@ -305,10 +305,38 @@ export default function WhisperVoiceAssistant({
         return
       }
 
-      // Extract item name (remove action words)
+      // Start with the original text
       let itemName = text
-        .replace(/\b(add|adding|stock|put|store|remove|removing|use|take|grab)\b/gi, '')
-        .replace(/\b(to|from|in|the|my|our)\b/gi, '') // Remove common filler words
+
+      // Extract quantity first if mentioned
+      let quantity = 1
+      const quantityMatch = text.match(/\b(\d+)\b/)
+      if (quantityMatch) {
+        quantity = parseInt(quantityMatch[1])
+        itemName = itemName.replace(quantityMatch[0], '').trim()
+      }
+
+      // Extract location if mentioned
+      let locationHint: string | null = null
+      const locationKeywords = ['refrigerator', 'fridge', 'freezer', 'pantry', 'cabinet', 'shelf', 'door', 'drawer', 'counter', 'countertop', 'cupboard']
+
+      // Look for location patterns like "to the counter", "in the fridge", "on the shelf"
+      for (const keyword of locationKeywords) {
+        // Create pattern to match location with prepositions
+        const locationPattern = new RegExp(`\\b(?:to|in|on|into|onto|at|from)?\\s*(?:the\\s+)?${keyword}\\b`, 'gi')
+        if (text.toLowerCase().includes(keyword)) {
+          locationHint = keyword
+          // Remove the location phrase from item name
+          itemName = itemName.replace(locationPattern, '').trim()
+          break
+        }
+      }
+
+      // Now remove action words from the cleaned item name
+      itemName = itemName
+        .replace(/\b(add|adding|stock|put|store|remove|removing|use|take|grab|an?)\b/gi, '')
+        .replace(/\b(to|from|in|on|at|the|my|our)\b/gi, '')
+        .replace(/\s+/g, ' ') // Collapse multiple spaces
         .trim()
 
       if (!itemName || itemName.length < 2) {
@@ -320,32 +348,6 @@ export default function WhisperVoiceAssistant({
           setTranscript('')
         }, 3000)
         return
-      }
-
-      // Extract quantity if mentioned
-      let quantity = 1
-      const quantityMatch = itemName.match(/\b(\d+)\b/)
-      if (quantityMatch) {
-        quantity = parseInt(quantityMatch[1])
-        itemName = itemName.replace(quantityMatch[0], '').trim()
-      }
-
-      // Extract location if mentioned
-      let locationHint: string | null = null
-      const locationKeywords = ['refrigerator', 'fridge', 'freezer', 'pantry', 'cabinet', 'shelf', 'door', 'drawer']
-      const fullText = text.toLowerCase()
-
-      for (const keyword of locationKeywords) {
-        if (fullText.includes(keyword)) {
-          // Extract the location phrase
-          const locationMatch = fullText.match(new RegExp(`(\\w+\\s+)?${keyword}(\\s+\\w+)?`, 'i'))
-          if (locationMatch) {
-            locationHint = locationMatch[0].trim()
-            // Remove location from item name if it's there
-            itemName = itemName.replace(new RegExp(locationHint, 'gi'), '').trim()
-          }
-          break
-        }
       }
 
       console.log('Parsed command:', { action, quantity, itemName, locationHint })
