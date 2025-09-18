@@ -1139,8 +1139,8 @@ function QuickUsePageContent() {
         userId={user?.id}
       />
 
-      {/* Voice Assistant Floating Action Button - Only show if enabled */}
-      {isMobile && voiceAssistantEnabled && (
+      {/* Voice Assistant Floating Action Button - Show on all devices if enabled */}
+      {voiceAssistantEnabled && (
         <Fab
           color="secondary"
           aria-label="voice assistant"
