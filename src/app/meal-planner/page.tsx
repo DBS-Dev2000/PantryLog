@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { getUserHouseholdFeatures } from '@/lib/features'
 import {
   Box,
   Container,
@@ -53,7 +54,7 @@ import {
   Print,
   Share
 } from '@mui/icons-material'
-import { createClient } from '@/lib/supabase-client'
+import { supabase } from '@/lib/supabase'
 import { format, startOfWeek, endOfWeek, addDays } from 'date-fns'
 
 interface MealPlan {
@@ -101,13 +102,20 @@ export default function MealPlannerPage() {
   }, [])
 
   const checkProfileAndLoadPlans = async () => {
-    const supabase = createClient()
 
     try {
       // Check if household has completed setup
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/auth')
+        return
+      }
+
+      // Check if meal planning is enabled for this household
+      const features = await getUserHouseholdFeatures(user.id)
+      if (!features.meal_planner_enabled) {
+        // Redirect back to home with a message
+        router.push('/?feature=meal_planner_disabled')
         return
       }
 
@@ -160,8 +168,7 @@ export default function MealPlannerPage() {
   }
 
   const loadPlannedMeals = async (planId: string) => {
-    const supabase = createClient()
-
+  
     const { data } = await supabase
       .from('planned_meals')
       .select(`
@@ -176,8 +183,7 @@ export default function MealPlannerPage() {
 
   const handleGeneratePlan = async () => {
     setGenerating(true)
-    const supabase = createClient()
-
+  
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -218,8 +224,7 @@ export default function MealPlannerPage() {
   }
 
   const handleMarkComplete = async (mealId: string) => {
-    const supabase = createClient()
-
+  
     const { error } = await supabase
       .from('planned_meals')
       .update({ completed: true })
@@ -231,8 +236,7 @@ export default function MealPlannerPage() {
   }
 
   const handleRateMeal = async (mealId: string, rating: number) => {
-    const supabase = createClient()
-
+  
     const meal = plannedMeals.find(m => m.id === mealId)
     if (!meal) return
 
@@ -265,8 +269,7 @@ export default function MealPlannerPage() {
   }
 
   const handleToggleStaple = async (mealId: string) => {
-    const supabase = createClient()
-    const meal = plannedMeals.find(m => m.id === mealId)
+      const meal = plannedMeals.find(m => m.id === mealId)
     if (!meal || !meal.recipe_id) return
 
     // Toggle staple tag on the recipe

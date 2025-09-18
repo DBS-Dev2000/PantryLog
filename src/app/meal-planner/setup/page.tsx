@@ -65,6 +65,7 @@ import {
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { getUserHouseholdFeatures } from '@/lib/features'
 
 // Types
 interface HouseholdMember {
@@ -217,6 +218,12 @@ export default function MealPlannerSetup() {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
+        // Check if meal planning is enabled
+        const features = await getUserHouseholdFeatures(session.user.id)
+        if (!features.meal_planner_enabled) {
+          router.push('/?feature=meal_planner_disabled')
+          return
+        }
         setUser(session.user)
       } else {
         router.push('/auth')

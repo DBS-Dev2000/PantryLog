@@ -9,7 +9,11 @@ import {
   CardContent,
   Grid,
   Button,
-  Alert
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material'
 import {
   Kitchen as PantryIcon,
@@ -21,16 +25,26 @@ import {
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { getUserHouseholdFeatures } from '@/lib/features'
 
 export default function HomePage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [features, setFeatures] = useState<any>(null)
+  const [upsellDialog, setUpsellDialog] = useState(false)
 
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user)
+
+      // Load feature permissions
+      if (session?.user) {
+        const permissions = await getUserHouseholdFeatures(session.user.id)
+        setFeatures(permissions)
+      }
+
       setLoading(false)
     }
 
@@ -155,8 +169,19 @@ export default function HomePage() {
               <Typography variant="body2" color="textSecondary" paragraph>
                 AI-powered weekly meal planning
               </Typography>
-              <Button variant="outlined" fullWidth onClick={() => router.push('/meal-planner')}>
-                Plan Meals
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => {
+                  if (features?.meal_planner_enabled) {
+                    router.push('/meal-planner')
+                  } else {
+                    setUpsellDialog(true)
+                  }
+                }}
+                disabled={features?.enforcement_mode === 'hide' && !features?.meal_planner_enabled}
+              >
+                {features?.meal_planner_enabled ? 'Plan Meals' : 'Upgrade to Plan Meals'}
               </Button>
             </CardContent>
           </Card>
@@ -196,6 +221,79 @@ export default function HomePage() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Meal Planner Upsell Dialog */}
+      <Dialog
+        open={upsellDialog}
+        onClose={() => setUpsellDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center">
+            <CalendarIcon color="primary" sx={{ mr: 1 }} />
+            Unlock AI-Powered Meal Planning
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography paragraph>
+            Transform your kitchen efficiency with our intelligent meal planning system!
+          </Typography>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+            Premium Features Include:
+          </Typography>
+          <Box component="ul" sx={{ pl: 2 }}>
+            <li>
+              <Typography variant="body2">
+                <strong>AI-Generated Meal Plans</strong> - Personalized weekly menus based on your household preferences
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                <strong>Dietary Management</strong> - Track allergies, restrictions, and nutritional goals for each family member
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                <strong>Smart Recipe Rotation</strong> - Avoid meal fatigue with intelligent variety algorithms
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                <strong>Inventory Integration</strong> - Plans that use what you have and reduce waste
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                <strong>Shopping List Generation</strong> - Automated lists organized by store layout
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                <strong>Time-Based Planning</strong> - Quick weeknight meals, elaborate weekend dishes
+              </Typography>
+            </li>
+          </Box>
+          <Alert severity="info" sx={{ mt: 2 }}>
+            Upgrade to <strong>PantryIQ Premium</strong> to unlock meal planning and save hours every week!
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUpsellDialog(false)}>
+            Maybe Later
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              // TODO: Implement subscription upgrade flow
+              setUpsellDialog(false)
+            }}
+          >
+            Upgrade to Premium
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   )
 }

@@ -420,6 +420,7 @@ export default function AdminPage() {
       recipes_enabled: household.features?.recipes_enabled ?? true,
       ai_features_enabled: household.features?.ai_features_enabled ?? true,
       voice_assistant_enabled: household.features?.voice_assistant_enabled ?? false, // Default to disabled
+      meal_planner_enabled: household.features?.meal_planner_enabled ?? false, // Default to disabled (premium)
       voice_assistant_type_inventory: household.features?.voice_assistant_type_inventory ?? 'whisper',
       voice_assistant_type_quick_add: household.features?.voice_assistant_type_quick_add ?? 'whisper',
       voice_assistant_type_quick_use: household.features?.voice_assistant_type_quick_use ?? 'whisper',
@@ -1807,6 +1808,23 @@ export default function AdminPage() {
                             onChange={(e) => setEditingFeatures({
                               ...editingFeatures,
                               voice_assistant_enabled: e.target.checked
+                            })}
+                          />
+                        </Box>
+
+                        {/* Meal Planner Toggle */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                          <Box>
+                            <Typography>AI-Powered Meal Planning</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Premium feature: Weekly meal plans with dietary tracking
+                            </Typography>
+                          </Box>
+                          <Switch
+                            checked={editingFeatures.meal_planner_enabled}
+                            onChange={(e) => setEditingFeatures({
+                              ...editingFeatures,
+                              meal_planner_enabled: e.target.checked
                             })}
                           />
                         </Box>

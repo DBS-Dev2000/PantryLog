@@ -9,6 +9,7 @@ export interface FeaturePermissions {
   recipes_enabled: boolean
   ai_features_enabled: boolean
   voice_assistant_enabled: boolean
+  meal_planner_enabled: boolean
   shopping_list_sharing: boolean
   storage_editing: boolean
   multiple_households: boolean
@@ -94,6 +95,7 @@ export async function getUserHouseholdFeatures(userId?: string): Promise<Feature
       recipes_enabled: household.features?.recipes_enabled ?? true,
       ai_features_enabled: household.features?.ai_features_enabled ?? true,
       voice_assistant_enabled: household.features?.voice_assistant_enabled ?? false, // Default to disabled
+      meal_planner_enabled: household.features?.meal_planner_enabled ?? false, // Default to disabled (premium feature)
       shopping_list_sharing: household.features?.shopping_list_sharing ?? true,
       storage_editing: household.features?.storage_editing ?? true,
       multiple_households: household.features?.multiple_households ?? false,
@@ -192,6 +194,7 @@ function getDefaultFeatures(): FeaturePermissions {
     recipes_enabled: true,
     ai_features_enabled: true,
     voice_assistant_enabled: false, // Default to disabled
+    meal_planner_enabled: false, // Default to disabled (premium feature)
     shopping_list_sharing: true,
     storage_editing: true,
     multiple_households: false,
