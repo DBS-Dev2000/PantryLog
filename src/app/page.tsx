@@ -16,7 +16,8 @@ import {
   Add as AddIcon,
   Remove as RemoveIcon,
   Restaurant as RecipeIcon,
-  List as ListIcon
+  List as ListIcon,
+  CalendarMonth as CalendarIcon
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -144,7 +145,24 @@ export default function HomePage() {
 
       {/* Secondary Actions */}
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={4}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={2}>
+                <CalendarIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6">Meal Planner</Typography>
+              </Box>
+              <Typography variant="body2" color="textSecondary" paragraph>
+                AI-powered weekly meal planning
+              </Typography>
+              <Button variant="outlined" fullWidth onClick={() => router.push('/meal-planner')}>
+                Plan Meals
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
@@ -161,7 +179,7 @@ export default function HomePage() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
