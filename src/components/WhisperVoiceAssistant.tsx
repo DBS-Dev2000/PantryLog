@@ -260,6 +260,13 @@ export default function WhisperVoiceAssistant({
       setState('executing')
       setFeedback('Processing your command...')
 
+      // First, load all storage locations for this user
+      const { data: storageLocations } = await supabase
+        .from('storage_locations')
+        .select('id, name')
+        .eq('household_id', userId)
+        .eq('is_active', true)
+
       const lowerText = text.toLowerCase()
 
       // Check if this looks like a command at all
@@ -318,17 +325,53 @@ export default function WhisperVoiceAssistant({
 
       // Extract location if mentioned
       let locationHint: string | null = null
-      const locationKeywords = ['refrigerator', 'fridge', 'freezer', 'pantry', 'cabinet', 'shelf', 'door', 'drawer', 'counter', 'countertop', 'cupboard']
+      let matchedLocation: any = null
 
-      // Look for location patterns like "to the counter", "in the fridge", "on the shelf"
-      for (const keyword of locationKeywords) {
-        // Create pattern to match location with prepositions
-        const locationPattern = new RegExp(`\\b(?:to|in|on|into|onto|at|from)?\\s*(?:the\\s+)?${keyword}\\b`, 'gi')
-        if (text.toLowerCase().includes(keyword)) {
-          locationHint = keyword
-          // Remove the location phrase from item name
-          itemName = itemName.replace(locationPattern, '').trim()
-          break
+      // Check if any storage location name is mentioned in the command
+      if (storageLocations && storageLocations.length > 0) {
+        const lowerItemName = itemName.toLowerCase()
+
+        // Sort locations by name length (descending) to match longer names first
+        // This prevents "Pantry" from matching before "Left Pantry Floor"
+        const sortedLocations = [...storageLocations].sort((a, b) => b.name.length - a.name.length)
+
+        for (const location of sortedLocations) {
+          const locationName = location.name.toLowerCase()
+          const locationWords = locationName.split(/\s+/)
+
+          // Check if all words from the location name appear in the command
+          let foundLocation = false
+
+          // First try exact match
+          if (lowerItemName.includes(locationName)) {
+            foundLocation = true
+            locationHint = locationName
+            matchedLocation = location
+            // Remove the location from item name
+            const locationPattern = new RegExp(`\\b(?:to|in|on|into|onto|at|from)?\\s*(?:the\\s+)?${location.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
+            itemName = itemName.replace(locationPattern, '').trim()
+            break
+          }
+
+          // If no exact match, try partial matching for key words
+          if (!foundLocation) {
+            // Check for key location words like "counter", "fridge", "pantry", etc.
+            const keyWords = ['refrigerator', 'fridge', 'freezer', 'pantry', 'cabinet', 'shelf', 'door', 'drawer', 'counter', 'countertop', 'cupboard', 'floor', 'left', 'right', 'top', 'bottom', 'upper', 'lower']
+
+            for (const keyWord of keyWords) {
+              if (locationName.includes(keyWord) && lowerItemName.includes(keyWord)) {
+                locationHint = location.name
+                matchedLocation = location
+                // Remove the keyword from item name
+                const keywordPattern = new RegExp(`\\b(?:to|in|on|into|onto|at|from)?\\s*(?:the\\s+)?${keyWord}\\b`, 'gi')
+                itemName = itemName.replace(keywordPattern, '').trim()
+                foundLocation = true
+                break
+              }
+            }
+          }
+
+          if (foundLocation) break
         }
       }
 
@@ -389,8 +432,13 @@ export default function WhisperVoiceAssistant({
           let locationId: string
           let locationName: string
 
-          if (locationHint) {
-            // Try to find locations matching the hint
+          if (matchedLocation) {
+            // We already found the exact location during parsing
+            locationId = matchedLocation.id
+            locationName = matchedLocation.name
+            console.log('Using matched location:', locationName)
+          } else if (locationHint) {
+            // We have a hint but no exact match - try fuzzy matching
             const { data: matchingLocations } = await supabase
               .from('storage_locations')
               .select('id, name')
@@ -413,8 +461,6 @@ export default function WhisperVoiceAssistant({
                 locationId = matchingLocations[0].id
                 locationName = matchingLocations[0].name
                 setFeedback(`Found multiple locations matching "${locationHint}": ${locationNames}. Using ${locationName}.`)
-
-                // In future, could ask user to be more specific
               }
             } else {
               // No match for the hint, fall back to default
