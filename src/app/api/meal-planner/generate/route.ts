@@ -180,23 +180,30 @@ export async function POST(req: NextRequest) {
 }
 
 async function getHouseholdProfile(householdId: string, supabase: any): Promise<HouseholdProfile> {
-  const [members, restrictions, preferences, schedule, mealPrefs] = await Promise.all([
-    supabase.from('family_members')
-      .select('*')
-      .eq('household_id', householdId),
+  // Get family members (this table should exist)
+  const members = await supabase.from('family_members')
+    .select('*')
+    .eq('household_id', householdId)
+
+  // Get optional tables with fallback to empty arrays if tables don't exist
+  const [restrictions, preferences, schedule, mealPrefs] = await Promise.all([
     supabase.from('member_dietary_restrictions')
       .select('*')
-      .eq('household_id', householdId),
+      .eq('household_id', householdId)
+      .then((result: any) => result.error && result.error.code === '42703' ? { data: [], error: null } : result),
     supabase.from('food_preferences')
       .select('*')
-      .eq('household_id', householdId),
+      .eq('household_id', householdId)
+      .then((result: any) => result.error && result.error.code === '42703' ? { data: [], error: null } : result),
     supabase.from('household_schedules')
       .select('*')
-      .eq('household_id', householdId),
+      .eq('household_id', householdId)
+      .then((result: any) => result.error && result.error.code === '42703' ? { data: [], error: null } : result),
     supabase.from('household_meal_preferences')
       .select('*')
       .eq('household_id', householdId)
       .single()
+      .then((result: any) => result.error && result.error.code === '42703' ? { data: null, error: null } : result)
   ])
 
   console.log('Profile query results:', {
@@ -238,23 +245,42 @@ async function getHouseholdProfile(householdId: string, supabase: any): Promise<
 }
 
 async function getMealHistory(householdId: string, daysBack: number, supabase: any) {
-  const startDate = new Date()
-  startDate.setDate(startDate.getDate() - daysBack)
+  try {
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - daysBack)
 
-  const { data, error } = await supabase
-    .from('meal_history')
-    .select('*')
-    .eq('household_id', householdId)
-    .gte('served_date', startDate.toISOString())
-    .order('served_date', { ascending: false })
+    // Try with meal_date first, then fall back to served_date
+    let { data, error } = await supabase
+      .from('meal_history')
+      .select('*')
+      .eq('household_id', householdId)
+      .gte('meal_date', startDate.toISOString())
+      .order('meal_date', { ascending: false })
 
-  if (error) {
-    console.log('Error fetching meal history:', error)
-    // Return empty array if meal_history table doesn't exist
+    // If meal_date doesn't exist, try served_date
+    if (error && error.code === '42703') {
+      const result = await supabase
+        .from('meal_history')
+        .select('*')
+        .eq('household_id', householdId)
+        .gte('served_date', startDate.toISOString())
+        .order('served_date', { ascending: false })
+
+      data = result.data
+      error = result.error
+    }
+
+    if (error) {
+      console.log('Error fetching meal history:', error)
+      // Return empty array if meal_history table doesn't exist or has issues
+      return []
+    }
+
+    return data || []
+  } catch (err) {
+    console.log('Error fetching meal history:', err)
     return []
   }
-
-  return data || []
 }
 
 async function getCurrentInventory(householdId: string, supabase: any) {
