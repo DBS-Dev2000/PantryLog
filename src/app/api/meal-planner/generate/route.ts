@@ -65,6 +65,7 @@ interface HouseholdProfile {
   preferences: any[]
   schedule: any[]
   mealPreferences: any
+  combinedDietaryNeeds: string[] // Combined list of all family member restrictions
 }
 
 export async function POST(req: NextRequest) {
@@ -107,19 +108,19 @@ export async function POST(req: NextRequest) {
       // Search for new recipes online
       recipes = await discoverNewRecipes(profile, options)
     } else if (strategy === 'recipes') {
-      // Use only saved recipes
-      recipes = await getAvailableRecipes(householdId, supabase)
+      // Use only saved recipes, filtered by dietary restrictions
+      recipes = await getAvailableRecipes(householdId, supabase, profile.combinedDietaryNeeds)
     } else if (strategy === 'pantry') {
       // Get recipes that can be made with current inventory
-      recipes = await getRecipesForInventory(householdId, inventory, supabase)
+      recipes = await getRecipesForInventory(householdId, inventory, supabase, profile.combinedDietaryNeeds)
     } else {
       // Auto mode - mix of saved recipes and inventory-based
-      recipes = await getAvailableRecipes(householdId, supabase)
+      recipes = await getAvailableRecipes(householdId, supabase, profile.combinedDietaryNeeds)
     }
     console.log('Got recipes:', recipes.length, 'available')
 
     // Generate meal planning rules using AI
-    const rules = await generateMealPlanRules(profile, strategy, options)
+    const rules = await generateMealPlanRules(profile, strategy, options, supabase)
     console.log('Generated rules:', rules)
 
     // Generate the meal plan following the rules
@@ -206,12 +207,33 @@ async function getHouseholdProfile(householdId: string, supabase: any): Promise<
     mealPrefs: mealPrefs.error || 'loaded'
   })
 
+  // Combine all dietary restrictions from family members
+  const combinedDietaryNeeds = new Set<string>()
+  if (members.data) {
+    members.data.forEach((member: any) => {
+      if (member.dietary_restrictions && Array.isArray(member.dietary_restrictions)) {
+        member.dietary_restrictions.forEach((restriction: string) => {
+          combinedDietaryNeeds.add(restriction)
+        })
+      }
+      // Also add allergies as restrictions
+      if (member.food_allergies && Array.isArray(member.food_allergies)) {
+        member.food_allergies.forEach((allergy: string) => {
+          combinedDietaryNeeds.add(`allergy_${allergy.toLowerCase()}`)
+        })
+      }
+    })
+  }
+
+  console.log('Combined dietary needs:', Array.from(combinedDietaryNeeds))
+
   return {
     members: members.data || [],
     dietaryRestrictions: restrictions.data || [],
     preferences: preferences.data || [],
     schedule: schedule.data || [],
-    mealPreferences: mealPrefs.data
+    mealPreferences: mealPrefs.data,
+    combinedDietaryNeeds: Array.from(combinedDietaryNeeds)
   }
 }
 
@@ -249,7 +271,7 @@ async function getCurrentInventory(householdId: string, supabase: any) {
   return data || []
 }
 
-async function getAvailableRecipes(householdId: string, supabase: any) {
+async function getAvailableRecipes(householdId: string, supabase: any, dietaryRestrictions?: string[]) {
   // First try to get household recipes
   const { data: recipes, error } = await supabase
     .from('recipes')
@@ -271,6 +293,60 @@ async function getAvailableRecipes(householdId: string, supabase: any) {
         .eq('recipe_id', recipe.id)
 
       recipe.recipe_ingredients = ingredients || []
+    }
+  }
+
+  // Filter recipes based on dietary restrictions
+  if (dietaryRestrictions && dietaryRestrictions.length > 0 && recipes) {
+    // Get restriction details for filtering
+    const { data: restrictionDetails } = await supabase
+      .from('dietary_restrictions')
+      .select('*')
+      .in('name', dietaryRestrictions)
+
+    if (restrictionDetails && restrictionDetails.length > 0) {
+      return recipes.filter((recipe: any) => {
+        // Check if recipe violates any dietary restriction
+        for (const restriction of restrictionDetails) {
+          // Check excluded categories
+          if (restriction.excluded_categories && Array.isArray(restriction.excluded_categories)) {
+            // Check if recipe has a category that's excluded
+            if (recipe.category && restriction.excluded_categories.some((cat: string) =>
+              recipe.category.toLowerCase().includes(cat.toLowerCase()) ||
+              cat.toLowerCase().includes(recipe.category.toLowerCase())
+            )) {
+              console.log(`Recipe ${recipe.name} excluded due to category ${recipe.category} in restriction ${restriction.name}`)
+              return false // Exclude this recipe
+            }
+          }
+
+          // For highly restrictive diets like carnivore, only allow specific categories
+          if (restriction.name === 'carnivore' && restriction.allowed_categories) {
+            // For carnivore, recipe must be in allowed categories
+            if (!recipe.category || !restriction.allowed_categories.some((cat: string) =>
+              recipe.category.toLowerCase().includes(cat.toLowerCase()) ||
+              cat.toLowerCase().includes(recipe.category.toLowerCase())
+            )) {
+              console.log(`Recipe ${recipe.name} excluded - not in carnivore allowed categories`)
+              return false
+            }
+          }
+
+          // Check excluded ingredients in recipe
+          if (restriction.excluded_ingredients && Array.isArray(restriction.excluded_ingredients) && recipe.recipe_ingredients) {
+            for (const ingredient of recipe.recipe_ingredients) {
+              const ingredientName = (ingredient.ingredient_name || '').toLowerCase()
+              if (restriction.excluded_ingredients.some((excluded: string) =>
+                ingredientName.includes(excluded.toLowerCase())
+              )) {
+                console.log(`Recipe ${recipe.name} excluded due to ingredient ${ingredientName} in restriction ${restriction.name}`)
+                return false // Exclude this recipe
+              }
+            }
+          }
+        }
+        return true // Recipe passes all dietary restrictions
+      })
     }
   }
 
@@ -312,7 +388,7 @@ Format as JSON array with: name, description, prep_time_minutes, cook_time_minut
   }
 }
 
-async function getRecipesForInventory(householdId: string, inventory: any[], supabase: any) {
+async function getRecipesForInventory(householdId: string, inventory: any[], supabase: any, dietaryRestrictions?: string[]) {
   // Get recipes that can be made with current inventory
   const { data: recipes, error } = await supabase
     .from('recipes')
@@ -334,8 +410,57 @@ async function getRecipesForInventory(householdId: string, inventory: any[], sup
     recipe.recipe_ingredients = ingredients || []
   }
 
-  // Filter recipes where we have most ingredients
-  return recipes.filter(recipe => {
+  let filteredRecipes = recipes
+
+  // Filter by dietary restrictions first
+  if (dietaryRestrictions && dietaryRestrictions.length > 0) {
+    const { data: restrictionDetails } = await supabase
+      .from('dietary_restrictions')
+      .select('*')
+      .in('name', dietaryRestrictions)
+
+    if (restrictionDetails && restrictionDetails.length > 0) {
+      filteredRecipes = recipes.filter((recipe: any) => {
+        for (const restriction of restrictionDetails) {
+          // Check excluded categories
+          if (restriction.excluded_categories && Array.isArray(restriction.excluded_categories)) {
+            if (recipe.category && restriction.excluded_categories.some((cat: string) =>
+              recipe.category.toLowerCase().includes(cat.toLowerCase()) ||
+              cat.toLowerCase().includes(recipe.category.toLowerCase())
+            )) {
+              return false
+            }
+          }
+
+          // For carnivore, only allow specific categories
+          if (restriction.name === 'carnivore' && restriction.allowed_categories) {
+            if (!recipe.category || !restriction.allowed_categories.some((cat: string) =>
+              recipe.category.toLowerCase().includes(cat.toLowerCase()) ||
+              cat.toLowerCase().includes(recipe.category.toLowerCase())
+            )) {
+              return false
+            }
+          }
+
+          // Check excluded ingredients
+          if (restriction.excluded_ingredients && Array.isArray(restriction.excluded_ingredients) && recipe.recipe_ingredients) {
+            for (const ingredient of recipe.recipe_ingredients) {
+              const ingredientName = (ingredient.ingredient_name || '').toLowerCase()
+              if (restriction.excluded_ingredients.some((excluded: string) =>
+                ingredientName.includes(excluded.toLowerCase())
+              )) {
+                return false
+              }
+            }
+          }
+        }
+        return true
+      })
+    }
+  }
+
+  // Then filter recipes where we have most ingredients
+  return filteredRecipes.filter(recipe => {
     const ingredients = recipe.recipe_ingredients || []
     if (ingredients.length === 0) return true // Include recipes without ingredients
 
@@ -350,13 +475,25 @@ async function getRecipesForInventory(householdId: string, inventory: any[], sup
   })
 }
 
-async function generateMealPlanRules(profile: HouseholdProfile, strategy: string = 'auto', options: any = {}) {
+async function generateMealPlanRules(profile: HouseholdProfile, strategy: string = 'auto', options: any = {}, supabase: any) {
+
+  // Get dietary restriction details from database if there are any restrictions
+  let restrictionDetails = []
+  if (profile.combinedDietaryNeeds && profile.combinedDietaryNeeds.length > 0) {
+    const { data } = await supabase
+      .from('dietary_restrictions')
+      .select('*')
+      .in('name', profile.combinedDietaryNeeds)
+
+    restrictionDetails = data || []
+  }
 
   const rulesPrompt = `
 Based on this household profile, generate specific meal planning rules:
 
 Household Members: ${JSON.stringify(profile.members, null, 2)}
-Dietary Restrictions: ${JSON.stringify(profile.dietaryRestrictions, null, 2)}
+Active Dietary Restrictions: ${JSON.stringify(profile.combinedDietaryNeeds, null, 2)}
+Restriction Details: ${JSON.stringify(restrictionDetails, null, 2)}
 Food Preferences: ${JSON.stringify(profile.preferences, null, 2)}
 Weekly Schedule: ${JSON.stringify(profile.schedule, null, 2)}
 Meal Preferences: ${JSON.stringify(profile.mealPreferences, null, 2)}
@@ -587,8 +724,16 @@ async function saveMealPlan(householdId: string, mealPlan: any[], supabase: any)
     throw new Error('Cannot save empty meal plan')
   }
 
+  // Ensure we're using service role client
+  const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false
+    }
+  })
+
   // Create the meal plan record
-  const { data: planData, error: planError } = await supabase
+  const { data: planData, error: planError } = await serviceSupabase
     .from('meal_plans')
     .insert({
       household_id: householdId,
@@ -620,7 +765,7 @@ async function saveMealPlan(householdId: string, mealPlan: any[], supabase: any)
   }))
 
   console.log('Saving planned meals:', plannedMeals.length, 'meals')
-  const { error: mealsError } = await supabase
+  const { error: mealsError } = await serviceSupabase
     .from('planned_meals')
     .insert(plannedMeals)
 

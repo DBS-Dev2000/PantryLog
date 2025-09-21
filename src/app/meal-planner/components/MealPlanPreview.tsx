@@ -35,6 +35,7 @@ import {
   Edit
 } from '@mui/icons-material'
 import { format, startOfWeek, addDays } from 'date-fns'
+import MealAttendanceDialog from './MealAttendanceDialog'
 
 interface PlannedMeal {
   id?: string
@@ -89,6 +90,16 @@ export default function MealPlanPreview({
     return types
   })
   const [loading, setLoading] = useState(false)
+  const [attendanceDialog, setAttendanceDialog] = useState<{
+    open: boolean
+    date: string
+    mealType: string
+    mealName: string
+  } | null>(null)
+  const [mealAttendance, setMealAttendance] = useState<Record<string, {
+    attendingMembers: string[]
+    dietaryNeeds: string[]
+  }>>({})
 
   const getDaysOfWeek = () => {
     const days = []
@@ -172,10 +183,42 @@ export default function MealPlanPreview({
     }
   }
 
+  const handleAttendanceClick = (date: string, mealType: string, mealName: string) => {
+    setAttendanceDialog({
+      open: true,
+      date,
+      mealType,
+      mealName
+    })
+  }
+
+  const handleAttendanceConfirm = (attendingMembers: string[], dietaryNeeds: string[]) => {
+    if (attendanceDialog) {
+      const key = `${attendanceDialog.date}-${attendanceDialog.mealType}`
+      setMealAttendance(prev => ({
+        ...prev,
+        [key]: { attendingMembers, dietaryNeeds }
+      }))
+      setAttendanceDialog(null)
+    }
+  }
+
   const handleConfirm = () => {
     // Only include accepted meals
     const acceptedMeals = meals.filter(m => m.accepted !== false)
-    onConfirm(acceptedMeals, mealTypes)
+
+    // Add attendance information to meals
+    const mealsWithAttendance = acceptedMeals.map(meal => {
+      const key = `${meal.date}-${meal.mealType}`
+      const attendance = mealAttendance[key]
+      return {
+        ...meal,
+        attendingMembers: attendance?.attendingMembers,
+        dietaryNeeds: attendance?.dietaryNeeds
+      }
+    })
+
+    onConfirm(mealsWithAttendance, mealTypes)
   }
 
   const days = getDaysOfWeek()
@@ -317,6 +360,28 @@ export default function MealPlanPreview({
                                     {meal.servings} servings
                                   </Typography>
                                 )}
+
+                                <Box sx={{ mt: 1 }}>
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    onClick={() => handleAttendanceClick(
+                                      date,
+                                      mealType,
+                                      meal.recipeName || meal.customMealName || 'Unnamed Meal'
+                                    )}
+                                    sx={{ fontSize: '0.75rem' }}
+                                  >
+                                    Who's eating?
+                                    {mealAttendance[`${date}-${mealType}`] && (
+                                      <Chip
+                                        size="small"
+                                        label={mealAttendance[`${date}-${mealType}`].attendingMembers.length}
+                                        sx={{ ml: 0.5, height: 20, fontSize: '0.7rem' }}
+                                      />
+                                    )}
+                                  </Button>
+                                </Box>
                               </>
                             ) : (
                               <Box sx={{ py: 2, textAlign: 'center' }}>
@@ -366,6 +431,17 @@ export default function MealPlanPreview({
           Confirm Plan ({getAcceptedMealsCount()} meals)
         </Button>
       </DialogActions>
+
+      {attendanceDialog && (
+        <MealAttendanceDialog
+          open={attendanceDialog.open}
+          onClose={() => setAttendanceDialog(null)}
+          mealDate={attendanceDialog.date}
+          mealType={attendanceDialog.mealType}
+          mealName={attendanceDialog.mealName}
+          onConfirm={handleAttendanceConfirm}
+        />
+      )}
     </Dialog>
   )
 }

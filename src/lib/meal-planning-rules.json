@@ -1,0 +1,365 @@
+{
+  "mealTypes": {
+    "breakfast": {
+      "timing": {
+        "weekday_max_minutes": 15,
+        "weekend_max_minutes": 30,
+        "make_ahead_priority": "high"
+      },
+      "nutrition": {
+        "protein_grams": { "min": 15, "max": 30 },
+        "fiber_grams": { "min": 5, "max": 10 },
+        "characteristics": ["sustained_energy", "light_but_filling"]
+      },
+      "characteristics": [
+        "portable",
+        "grab_and_go",
+        "energizing",
+        "quick_prep"
+      ],
+      "categories": [
+        "eggs",
+        "oatmeal",
+        "overnight_oats",
+        "smoothies",
+        "yogurt_parfaits",
+        "whole_grain_toast",
+        "breakfast_burritos"
+      ],
+      "avoid_categories": [
+        "heavy_meats",
+        "complex_dinners"
+      ]
+    },
+    "lunch": {
+      "timing": {
+        "prep_method": "batch_friendly",
+        "reheat_max_minutes": 5,
+        "assembly_time": "minimal"
+      },
+      "nutrition": {
+        "vegetable_servings": { "min": 2, "max": 3 },
+        "protein_grams": { "min": 20, "max": 30 },
+        "characteristics": ["lighter_than_dinner", "avoid_afternoon_sluggishness"]
+      },
+      "characteristics": [
+        "portable",
+        "container_friendly",
+        "good_cold",
+        "easily_reheatable",
+        "component_based"
+      ],
+      "categories": [
+        "grain_bowls",
+        "salads",
+        "sandwiches",
+        "wraps",
+        "bento_boxes",
+        "soup",
+        "leftover_transformations"
+      ],
+      "avoid_categories": [
+        "heavy_casseroles",
+        "elaborate_dinners"
+      ]
+    },
+    "dinner": {
+      "timing": {
+        "weekday_max_minutes": 30,
+        "weekend_max_minutes": 90,
+        "friday_simplified": true
+      },
+      "nutrition": {
+        "vegetable_servings": { "min": 2, "max": 3 },
+        "protein_grams": { "min": 25, "max": 35 },
+        "complex_carbs_grams": { "min": 30, "max": 45 }
+      },
+      "characteristics": [
+        "hearty",
+        "family_style",
+        "leftover_friendly",
+        "satisfying",
+        "one_pot_options"
+      ],
+      "categories": {
+        "weekday": ["stir_fry", "pasta", "sheet_pan", "quick_casseroles"],
+        "weekend": ["grilled", "slow_cooker", "roasts", "elaborate_recipes"],
+        "friday": ["pizza", "takeout_style"]
+      }
+    },
+    "snack": {
+      "timing": {
+        "prep_required": false,
+        "grab_and_go": true
+      },
+      "nutrition": {
+        "protein_grams": { "min": 5, "max": 10 },
+        "characteristics": ["nutrient_dense", "not_empty_calories"]
+      },
+      "characteristics": [
+        "pre_portioned",
+        "no_prep",
+        "portable",
+        "satisfying"
+      ],
+      "categories": [
+        "nuts_seeds",
+        "fruit_with_nut_butter",
+        "vegetable_sticks_hummus",
+        "greek_yogurt",
+        "cheese_crackers"
+      ]
+    }
+  },
+  "themeNights": {
+    "0": {
+      "name": "Slow Cooker Sunday",
+      "description": "Minimal effort cooking, prep for week ahead",
+      "categories": ["slow_cooker", "soups", "roasts", "meal_prep"],
+      "cuisines": ["comfort_food", "american"],
+      "characteristics": ["hands_off", "batch_cooking", "leftover_friendly"]
+    },
+    "1": {
+      "name": "Meatless Monday",
+      "description": "Vegetarian meals to start week healthy and budget-friendly",
+      "categories": ["vegetarian_pasta", "grain_bowls", "veggie_stir_fry"],
+      "cuisines": ["mediterranean", "indian", "thai"],
+      "characteristics": ["plant_based", "budget_friendly", "healthy"]
+    },
+    "2": {
+      "name": "Taco Tuesday",
+      "description": "Mexican and Latin-inspired cuisine",
+      "categories": ["tacos", "burritos", "fajitas", "taco_bowls"],
+      "cuisines": ["mexican", "tex_mex", "latin"],
+      "characteristics": ["customizable", "fun", "family_friendly"]
+    },
+    "3": {
+      "name": "Whatever Wednesday",
+      "description": "Leftover night or international cuisine exploration",
+      "alternatives": ["Soup & Salad Wednesday", "Asian Wednesday", "Leftover Makeover"],
+      "categories": ["leftovers", "international", "soup", "salad"],
+      "characteristics": ["flexible", "creative", "use_what_you_have"]
+    },
+    "4": {
+      "name": "Comfort Food Thursday",
+      "description": "Family favorites and nostalgic meals",
+      "categories": ["casseroles", "pasta", "american_classics"],
+      "cuisines": ["american", "italian"],
+      "characteristics": ["comforting", "familiar", "crowd_pleasing"]
+    },
+    "5": {
+      "name": "Pizza Friday",
+      "description": "Easy end to the week with pizza or takeout",
+      "alternatives": ["Fun Food Friday", "Takeout Night"],
+      "categories": ["pizza", "flatbreads", "burgers", "nachos"],
+      "characteristics": ["easy", "fun", "minimal_effort"]
+    },
+    "6": {
+      "name": "Grill Saturday",
+      "description": "Outdoor cooking and social meals",
+      "categories": ["grilled", "bbq", "outdoor_cooking"],
+      "cuisines": ["american", "bbq"],
+      "characteristics": ["social", "seasonal", "outdoor"],
+      "winter_alternative": "Cozy Casserole Saturday"
+    }
+  },
+  "rotationRules": {
+    "frequency": {
+      "no_repeat_days": 7,
+      "staple_repeat_allowed": true,
+      "breakfast_options": { "min": 3, "max": 5 },
+      "lunch_repeat_days": 2
+    },
+    "variety": {
+      "new_recipe_percentage": 0.2,
+      "familiar_recipe_percentage": 0.8,
+      "minimum_cuisines_per_week": 3,
+      "protein_sources": ["chicken", "beef", "pork", "fish", "vegetarian"],
+      "minimum_different_proteins": 3
+    },
+    "leftovers": {
+      "planned_leftover_nights": 2,
+      "transformation_preferred": true,
+      "typical_days": ["thursday", "sunday"]
+    }
+  },
+  "dietaryAccommodations": {
+    "keto": {
+      "max_net_carbs_daily": 20,
+      "exclude_ingredients": ["bread", "pasta", "rice", "potatoes", "sugar", "most_fruits"],
+      "emphasize": ["high_fat", "moderate_protein", "very_low_carb"],
+      "substitutions": {
+        "pasta": ["zucchini_noodles", "shirataki"],
+        "rice": ["cauliflower_rice"],
+        "bread": ["lettuce_wraps", "cloud_bread"]
+      },
+      "preferred_categories": ["grilled", "salads", "egg_dishes"]
+    },
+    "vegetarian": {
+      "exclude_ingredients": ["meat", "poultry", "fish"],
+      "protein_sources": ["beans", "lentils", "tofu", "tempeh", "nuts", "quinoa"],
+      "nutritional_considerations": ["b12", "iron", "protein_combining"],
+      "preferred_categories": ["grain_bowls", "hearty_salads", "veggie_stir_fries"]
+    },
+    "vegan": {
+      "exclude_ingredients": ["meat", "poultry", "fish", "dairy", "eggs", "honey"],
+      "substitutions": {
+        "dairy": ["plant_milk", "cashew_cream", "nutritional_yeast"],
+        "eggs": ["flax_eggs", "chickpea_flour", "tofu_scramble"]
+      },
+      "nutritional_considerations": ["b12", "iron", "omega3", "calcium", "vitamin_d"]
+    },
+    "gluten_free": {
+      "exclude_ingredients": ["wheat", "barley", "rye"],
+      "hidden_sources": ["soy_sauce", "seasonings", "processed_foods"],
+      "substitutions": {
+        "pasta": ["rice_noodles", "chickpea_pasta"],
+        "bread": ["certified_gf_bread"],
+        "flour": ["almond_flour", "coconut_flour", "rice_flour"]
+      },
+      "safe_categories": ["grilled_meats", "salads", "rice_dishes"]
+    },
+    "dairy_free": {
+      "exclude_ingredients": ["milk", "cheese", "yogurt", "butter", "cream"],
+      "substitutions": {
+        "milk": ["almond_milk", "oat_milk", "coconut_milk"],
+        "butter": ["olive_oil", "coconut_oil"],
+        "cheese": ["nutritional_yeast", "cashew_cheese"]
+      }
+    }
+  },
+  "timeManagement": {
+    "weekly_schedule": {
+      "friday": {
+        "task": "meal_planning",
+        "duration_minutes": 30,
+        "activities": ["review_schedule", "check_inventory", "select_recipes"]
+      },
+      "saturday": {
+        "task": "shopping",
+        "activities": ["finalize_list", "grocery_shopping"]
+      },
+      "sunday": {
+        "task": "meal_prep",
+        "duration_hours": 2,
+        "activities": ["batch_cooking", "vegetable_prep", "portion_snacks"]
+      }
+    },
+    "batch_priorities": [
+      "proteins",
+      "grains",
+      "roasted_vegetables",
+      "sauces_dressings",
+      "snack_portions"
+    ]
+  },
+  "categoryMealTypeMapping": {
+    "eggs": {
+      "primary_meal_type": "breakfast",
+      "suitable_for": ["breakfast", "lunch"],
+      "prep_time_range": { "min": 5, "max": 15 },
+      "characteristics": ["quick", "protein_rich", "versatile"]
+    },
+    "oatmeal": {
+      "primary_meal_type": "breakfast",
+      "suitable_for": ["breakfast"],
+      "prep_time_range": { "min": 5, "max": 10 },
+      "characteristics": ["make_ahead", "filling", "fiber_rich"]
+    },
+    "smoothies": {
+      "primary_meal_type": "breakfast",
+      "suitable_for": ["breakfast", "snack"],
+      "prep_time_range": { "min": 3, "max": 5 },
+      "characteristics": ["portable", "quick", "customizable"]
+    },
+    "sandwiches": {
+      "primary_meal_type": "lunch",
+      "suitable_for": ["lunch", "dinner"],
+      "prep_time_range": { "min": 5, "max": 15 },
+      "characteristics": ["portable", "customizable", "no_reheat"]
+    },
+    "salads": {
+      "primary_meal_type": "lunch",
+      "suitable_for": ["lunch", "dinner"],
+      "prep_time_range": { "min": 10, "max": 20 },
+      "characteristics": ["light", "healthy", "vegetable_rich"]
+    },
+    "grain_bowls": {
+      "primary_meal_type": "lunch",
+      "suitable_for": ["lunch", "dinner"],
+      "prep_time_range": { "min": 15, "max": 30 },
+      "characteristics": ["batch_friendly", "filling", "balanced"]
+    },
+    "soup": {
+      "primary_meal_type": "dinner",
+      "suitable_for": ["lunch", "dinner"],
+      "prep_time_range": { "min": 20, "max": 60 },
+      "characteristics": ["freezer_friendly", "comforting", "warming"]
+    },
+    "pasta": {
+      "primary_meal_type": "dinner",
+      "suitable_for": ["dinner"],
+      "prep_time_range": { "min": 15, "max": 30 },
+      "characteristics": ["family_friendly", "filling", "quick"]
+    },
+    "stir_fry": {
+      "primary_meal_type": "dinner",
+      "suitable_for": ["dinner"],
+      "prep_time_range": { "min": 15, "max": 25 },
+      "characteristics": ["quick", "vegetable_rich", "one_pan"]
+    },
+    "casserole": {
+      "primary_meal_type": "dinner",
+      "suitable_for": ["dinner"],
+      "prep_time_range": { "min": 20, "max": 60 },
+      "characteristics": ["make_ahead", "family_style", "comfort_food"]
+    },
+    "sheet_pan": {
+      "primary_meal_type": "dinner",
+      "suitable_for": ["dinner"],
+      "prep_time_range": { "min": 10, "max": 40 },
+      "characteristics": ["easy_cleanup", "hands_off", "balanced"]
+    },
+    "slow_cooker": {
+      "primary_meal_type": "dinner",
+      "suitable_for": ["dinner"],
+      "prep_time_range": { "min": 15, "max": 480 },
+      "characteristics": ["hands_off", "batch_friendly", "tender"]
+    },
+    "grilled": {
+      "primary_meal_type": "dinner",
+      "suitable_for": ["lunch", "dinner"],
+      "prep_time_range": { "min": 15, "max": 30 },
+      "characteristics": ["seasonal", "outdoor", "lean_protein"]
+    }
+  },
+  "aiAgentGuidelines": {
+    "priority_order": [
+      { "level": 1, "rule": "meet_dietary_restrictions", "importance": "absolute" },
+      { "level": 2, "rule": "respect_time_constraints", "importance": "very_high" },
+      { "level": 3, "rule": "ensure_nutritional_balance", "importance": "high" },
+      { "level": 4, "rule": "provide_variety", "importance": "medium" },
+      { "level": 5, "rule": "consider_preferences", "importance": "medium" },
+      { "level": 6, "rule": "optimize_budget", "importance": "low_medium" }
+    ],
+    "context_considerations": [
+      "household_composition",
+      "schedule_constraints",
+      "recent_meal_history",
+      "seasonal_availability",
+      "budget_level",
+      "cooking_skill_level",
+      "available_equipment",
+      "climate_weather"
+    ],
+    "output_requirements": [
+      "day_and_meal_type",
+      "recipe_name_and_category",
+      "prep_and_cook_time",
+      "nutritional_highlights",
+      "make_ahead_instructions",
+      "leftover_potential",
+      "dietary_accommodation_notes"
+    ]
+  }
+}

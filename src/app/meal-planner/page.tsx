@@ -482,7 +482,7 @@ export default function MealPlannerPage() {
 
   const renderWeekView = () => {
     const mealsByDay = getMealsByDay()
-    const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
     if (!currentPlan) {
       return (
@@ -502,7 +502,9 @@ export default function MealPlannerPage() {
       )
     }
 
-    const startDate = new Date(currentPlan.start_date)
+    // Use startOfWeek to ensure we start on Sunday
+    const planStart = new Date(currentPlan.start_date)
+    const startDate = startOfWeek(planStart, { weekStartsOn: 0 }) // 0 = Sunday
 
     return (
       <Grid container spacing={2}>
