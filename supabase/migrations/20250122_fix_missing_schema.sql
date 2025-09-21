@@ -74,53 +74,56 @@ CREATE TABLE IF NOT EXISTS household_meal_preferences (
   updated_at timestamp with time zone DEFAULT now()
 );
 
--- Add indexes for performance (only if tables exist)
+-- Add indexes for performance (only if tables and columns exist)
 DO $$
 BEGIN
-  -- Only create indexes if the tables exist
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'meal_history') THEN
+  -- Only create indexes if both tables and columns exist
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meal_history' AND column_name = 'household_id') THEN
     CREATE INDEX IF NOT EXISTS idx_meal_history_household_id ON meal_history(household_id);
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meal_history' AND column_name = 'meal_date') THEN
     CREATE INDEX IF NOT EXISTS idx_meal_history_meal_date ON meal_history(meal_date);
   END IF;
 
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'member_dietary_restrictions') THEN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'member_dietary_restrictions' AND column_name = 'household_id') THEN
     CREATE INDEX IF NOT EXISTS idx_member_dietary_restrictions_household_id ON member_dietary_restrictions(household_id);
   END IF;
 
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'food_preferences') THEN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'food_preferences' AND column_name = 'household_id') THEN
     CREATE INDEX IF NOT EXISTS idx_food_preferences_household_id ON food_preferences(household_id);
   END IF;
 
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'household_schedules') THEN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'household_schedules' AND column_name = 'household_id') THEN
     CREATE INDEX IF NOT EXISTS idx_household_schedules_household_id ON household_schedules(household_id);
   END IF;
 
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'household_meal_preferences') THEN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'household_meal_preferences' AND column_name = 'household_id') THEN
     CREATE INDEX IF NOT EXISTS idx_household_meal_preferences_household_id ON household_meal_preferences(household_id);
   END IF;
 END $$;
 
--- Add RLS policies (only if tables exist)
+-- Add RLS policies (only if tables and household_id columns exist)
 DO $$
 BEGIN
-  -- Enable RLS only if tables exist
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'meal_history') THEN
+  -- Enable RLS only if tables and household_id columns exist
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meal_history' AND column_name = 'household_id') THEN
     ALTER TABLE meal_history ENABLE ROW LEVEL SECURITY;
   END IF;
 
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'member_dietary_restrictions') THEN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'member_dietary_restrictions' AND column_name = 'household_id') THEN
     ALTER TABLE member_dietary_restrictions ENABLE ROW LEVEL SECURITY;
   END IF;
 
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'food_preferences') THEN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'food_preferences' AND column_name = 'household_id') THEN
     ALTER TABLE food_preferences ENABLE ROW LEVEL SECURITY;
   END IF;
 
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'household_schedules') THEN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'household_schedules' AND column_name = 'household_id') THEN
     ALTER TABLE household_schedules ENABLE ROW LEVEL SECURITY;
   END IF;
 
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'household_meal_preferences') THEN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'household_meal_preferences' AND column_name = 'household_id') THEN
     ALTER TABLE household_meal_preferences ENABLE ROW LEVEL SECURITY;
   END IF;
 END $$;
@@ -129,35 +132,35 @@ END $$;
 DO $$
 BEGIN
   -- meal_history policies
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'meal_history') AND
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meal_history' AND column_name = 'household_id') AND
      NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'meal_history' AND policyname = 'meal_history_policy') THEN
     CREATE POLICY meal_history_policy ON meal_history
       FOR ALL USING (household_id = auth.uid());
   END IF;
 
   -- member_dietary_restrictions policies
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'member_dietary_restrictions') AND
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'member_dietary_restrictions' AND column_name = 'household_id') AND
      NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'member_dietary_restrictions' AND policyname = 'member_dietary_restrictions_policy') THEN
     CREATE POLICY member_dietary_restrictions_policy ON member_dietary_restrictions
       FOR ALL USING (household_id = auth.uid());
   END IF;
 
   -- food_preferences policies
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'food_preferences') AND
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'food_preferences' AND column_name = 'household_id') AND
      NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'food_preferences' AND policyname = 'food_preferences_policy') THEN
     CREATE POLICY food_preferences_policy ON food_preferences
       FOR ALL USING (household_id = auth.uid());
   END IF;
 
   -- household_schedules policies
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'household_schedules') AND
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'household_schedules' AND column_name = 'household_id') AND
      NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'household_schedules' AND policyname = 'household_schedules_policy') THEN
     CREATE POLICY household_schedules_policy ON household_schedules
       FOR ALL USING (household_id = auth.uid());
   END IF;
 
   -- household_meal_preferences policies
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'household_meal_preferences') AND
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'household_meal_preferences' AND column_name = 'household_id') AND
      NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'household_meal_preferences' AND policyname = 'household_meal_preferences_policy') THEN
     CREATE POLICY household_meal_preferences_policy ON household_meal_preferences
       FOR ALL USING (household_id = auth.uid());
