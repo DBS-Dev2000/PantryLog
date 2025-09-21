@@ -156,6 +156,11 @@ export default function RecipeDetailPage() {
   const [makingRecipe, setMakingRecipe] = useState(false)
   const [loadingSubstitutions, setLoadingSubstitutions] = useState<{[key: string]: boolean}>({})
 
+  // Substitution modal state
+  const [substitutionDialog, setSubstitutionDialog] = useState(false)
+  const [currentSubstitutionIngredient, setCurrentSubstitutionIngredient] = useState<string>('')
+  const [availableSubstitutions, setAvailableSubstitutions] = useState<any[]>([])
+
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -825,21 +830,15 @@ export default function RecipeDetailPage() {
 
                               // Handle both array and object responses
                               const substitutions = Array.isArray(data.substitutions) ? data.substitutions : []
-                              const bestSub = substitutions.find((sub: any) => sub.quality === 'excellent')
-                              if (bestSub) {
-                                setIngredientSubstitutions(prev => ({
-                                  ...prev,
-                                  [ingredient.ingredient_name]: bestSub.substitute
-                                }))
-                                console.log(`🔄 Auto-substituted: ${ingredient.ingredient_name} → ${bestSub.substitute}`)
-                              } else if (substitutions.length > 0) {
-                                // Use first substitution if no excellent ones found
-                                const firstSub = substitutions[0]
-                                setIngredientSubstitutions(prev => ({
-                                  ...prev,
-                                  [ingredient.ingredient_name]: firstSub.substitute
-                                }))
-                                console.log(`🔄 Auto-substituted: ${ingredient.ingredient_name} → ${firstSub.substitute}`)
+
+                              if (substitutions.length > 0) {
+                                // Show modal with all substitution options
+                                setCurrentSubstitutionIngredient(ingredient.ingredient_name)
+                                setAvailableSubstitutions(substitutions)
+                                setSubstitutionDialog(true)
+                              } else {
+                                console.log('⚠️ No substitutions found for:', ingredient.ingredient_name)
+                                alert(`Sorry, no substitutions found for ${ingredient.ingredient_name}`)
                               }
                             }
                           } catch (err) {
@@ -1276,6 +1275,114 @@ export default function RecipeDetailPage() {
             color="secondary"
           >
             Add to List
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Substitution Selection Dialog */}
+      <Dialog
+        open={substitutionDialog}
+        onClose={() => setSubstitutionDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Choose a Substitution for {currentSubstitutionIngredient}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Select the best substitution based on what you have available:
+          </Typography>
+          <List>
+            {availableSubstitutions.map((sub, index) => (
+              <ListItem
+                key={index}
+                button
+                onClick={() => {
+                  // Apply the selected substitution
+                  setIngredientSubstitutions(prev => ({
+                    ...prev,
+                    [currentSubstitutionIngredient]: sub.substitute
+                  }))
+                  console.log(`✅ Selected substitution: ${currentSubstitutionIngredient} → ${sub.substitute}`)
+                  setSubstitutionDialog(false)
+                  setAvailableSubstitutions([])
+                }}
+                sx={{
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  mb: 1,
+                  '&:hover': {
+                    backgroundColor: 'action.hover'
+                  }
+                }}
+              >
+                <ListItemText
+                  primary={
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Typography variant="subtitle1" fontWeight="medium">
+                        {sub.substitute}
+                      </Typography>
+                      {sub.quality === 'excellent' && (
+                        <Chip label="Best Match" size="small" color="success" />
+                      )}
+                      {sub.quality === 'good' && (
+                        <Chip label="Good" size="small" color="primary" />
+                      )}
+                      {sub.quality === 'fair' && (
+                        <Chip label="Fair" size="small" color="warning" />
+                      )}
+                    </Box>
+                  }
+                  secondary={
+                    <Box>
+                      {sub.ratio && (
+                        <Typography variant="body2" color="text.secondary">
+                          Ratio: {sub.ratio}
+                        </Typography>
+                      )}
+                      {sub.notes && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          {sub.notes}
+                        </Typography>
+                      )}
+                      {sub.impact && (
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                          Impact: {sub.impact}
+                        </Typography>
+                      )}
+                    </Box>
+                  }
+                />
+              </ListItem>
+            ))}
+
+            {/* Option to skip substitution */}
+            <ListItem
+              button
+              onClick={() => {
+                console.log(`⏭️ Skipped substitution for ${currentSubstitutionIngredient}`)
+                setSubstitutionDialog(false)
+                setAvailableSubstitutions([])
+              }}
+              sx={{
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1,
+                borderStyle: 'dashed'
+              }}
+            >
+              <ListItemText
+                primary="Skip Substitution"
+                secondary="Continue without substituting this ingredient"
+              />
+            </ListItem>
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSubstitutionDialog(false)}>
+            Cancel
           </Button>
         </DialogActions>
       </Dialog>
