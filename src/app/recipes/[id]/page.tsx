@@ -41,6 +41,7 @@ import {
   Warning as WarningIcon,
   Close as CloseIcon,
   Delete as DeleteIcon,
+  Edit as EditIcon,
   ShoppingCart as ShoppingIcon,
   Add as AddIcon,
   Nature as NatureIcon
@@ -389,12 +390,19 @@ export default function RecipeDetailPage() {
           </Typography>
         </Box>
         <Button
+          startIcon={<EditIcon />}
+          onClick={() => router.push(`/recipes/edit/${recipeId}`)}
+          sx={{ mr: 1 }}
+        >
+          Edit
+        </Button>
+        <Button
           startIcon={<DeleteIcon />}
           onClick={() => setDeleteDialog(true)}
           color="error"
           variant="outlined"
         >
-          Delete Recipe
+          Delete
         </Button>
       </Box>
 
