@@ -312,8 +312,8 @@ export default function MealPlannerSetup() {
           mealPrepDay: '',
           shoppingDay: mealPrefs.shopping_day || 'saturday',
           budgetPerWeek: mealPrefs.budget_per_week || 150,
-          preferredStores: [],
-          kitchenEquipment: [],
+          preferredStores: mealPrefs.preferred_stores || [],
+          kitchenEquipment: mealPrefs.kitchen_equipment || [],
           preferredCuisines: mealPrefs.preferred_cuisines || []
         })
       }
@@ -499,6 +499,8 @@ export default function MealPlannerSetup() {
           shopping_day: cookingPreferences.shoppingDay,
           budget_per_week: cookingPreferences.budgetPerWeek,
           preferred_cuisines: cookingPreferences.preferredCuisines || [],
+          kitchen_equipment: cookingPreferences.kitchenEquipment || [],
+          preferred_stores: cookingPreferences.preferredStores || [],
           servings_per_meal: 4,
           include_leftovers: true
         }, {
