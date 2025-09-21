@@ -713,11 +713,12 @@ export default function RecipeDetailPage() {
             color: cookingMode ? 'warning.contrastText' : undefined,
             '&:hover': {
               backgroundColor: cookingMode ? 'warning.dark' : undefined
-            }
+            },
+            minWidth: 'auto'
           }}
-          title={cookingMode ? "Screen will stay on" : "Keep screen awake while cooking"}
+          title={cookingMode ? "Screen will stay on while cooking" : "Keep screen awake while cooking"}
         >
-          Screen On
+          Screen
         </Button>
 
         {canEditRecipe && (
@@ -925,6 +926,17 @@ export default function RecipeDetailPage() {
                           setLoadingSubstitutions(prev => ({ ...prev, [ingredient.ingredient_name]: true }))
                           try {
                             console.log('🌿 Getting AI substitutions for:', ingredient.ingredient_name)
+
+                            // Get pantry items to consider for substitutions
+                            const { data: pantryItems } = await supabase
+                              .from('inventory_items')
+                              .select('name, quantity, unit, category')
+                              .eq('household_id', user?.id)
+                              .gt('quantity', 0)
+                              .limit(50)
+
+                            console.log('🏠 Found', pantryItems?.length || 0, 'pantry items to consider')
+
                             const response = await fetch('/api/get-substitutions', {
                               method: 'POST',
                               headers: {
@@ -934,7 +946,8 @@ export default function RecipeDetailPage() {
                                 ingredient: ingredient.ingredient_name,
                                 category: (ingredient as any).category,
                                 recipe_context: recipe?.title,
-                                user_id: user?.id
+                                user_id: user?.id,
+                                pantry_items: pantryItems || []
                               })
                             })
 
@@ -946,9 +959,16 @@ export default function RecipeDetailPage() {
                               const substitutions = Array.isArray(data.substitutions) ? data.substitutions : []
 
                               if (substitutions.length > 0) {
+                                // Sort to show pantry items first
+                                const sortedSubs = substitutions.sort((a: any, b: any) => {
+                                  if (a.from_pantry && !b.from_pantry) return -1
+                                  if (!a.from_pantry && b.from_pantry) return 1
+                                  return 0
+                                })
+
                                 // Show modal with all substitution options
                                 setCurrentSubstitutionIngredient(ingredient.ingredient_name)
-                                setAvailableSubstitutions(substitutions)
+                                setAvailableSubstitutions(sortedSubs)
                                 setSubstitutionDialog(true)
                               } else {
                                 console.log('⚠️ No substitutions found for:', ingredient.ingredient_name)
@@ -1450,13 +1470,16 @@ export default function RecipeDetailPage() {
                       <Typography variant="subtitle1" fontWeight="medium">
                         {sub.substitute}
                       </Typography>
-                      {sub.quality === 'excellent' && (
+                      {sub.from_pantry && (
+                        <Chip label="In Pantry!" size="small" color="success" variant="filled" />
+                      )}
+                      {sub.quality === 'excellent' && !sub.from_pantry && (
                         <Chip label="Best Match" size="small" color="success" />
                       )}
-                      {sub.quality === 'good' && (
+                      {sub.quality === 'good' && !sub.from_pantry && (
                         <Chip label="Good" size="small" color="primary" />
                       )}
-                      {sub.quality === 'fair' && (
+                      {sub.quality === 'fair' && !sub.from_pantry && (
                         <Chip label="Fair" size="small" color="warning" />
                       )}
                     </Box>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const { ingredient, category, recipe_context, user_id } = await request.json()
+    const { ingredient, category, recipe_context, user_id, pantry_items } = await request.json()
 
     if (!ingredient) {
       return NextResponse.json(
@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('🤖 AI substitution request for:', ingredient)
+    console.log('🏠 Pantry items available:', pantry_items?.length || 0)
 
     // Try AI providers for smart substitutions
     const claudeApiKey = process.env.CLAUDE_API_KEY
@@ -21,7 +22,12 @@ export async function POST(request: NextRequest) {
       try {
         let result: any
 
+        const pantryList = pantry_items?.map((item: any) => `${item.name} (${item.quantity} ${item.unit})`).join(', ') || 'none'
+
         const prompt = `Provide smart cooking substitutions for the ingredient "${ingredient}" in the context of ${recipe_context || 'general cooking'}.
+
+        IMPORTANT: First check if any of these items from the user's pantry could work as substitutions:
+        ${pantryList}
 
         Consider:
         - Ingredient category: ${category || 'unknown'}
@@ -29,6 +35,7 @@ export async function POST(request: NextRequest) {
         - Nutritional equivalency
         - Flavor profile compatibility
         - Measurement conversions if needed
+        - PRIORITIZE items from the user's pantry when suitable
 
         Return a JSON array of substitutions:
         [
@@ -38,7 +45,8 @@ export async function POST(request: NextRequest) {
             "ratio": "1:1",
             "notes": "Will be less fatty, may need extra seasoning",
             "category": "protein",
-            "quality": "excellent"
+            "quality": "excellent",
+            "from_pantry": true  // Add this field if the item is from the user's pantry
           },
           {
             "substitute": "ground chicken",
@@ -46,7 +54,8 @@ export async function POST(request: NextRequest) {
             "ratio": "1:1",
             "notes": "Mild flavor, cooks similarly",
             "category": "protein",
-            "quality": "good"
+            "quality": "good",
+            "from_pantry": false
           }
         ]
 
