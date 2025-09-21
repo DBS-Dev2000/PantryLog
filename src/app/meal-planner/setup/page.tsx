@@ -228,12 +228,103 @@ export default function MealPlannerSetup() {
           return
         }
         setUser(session.user)
+
+        // Load existing family members and preferences
+        await loadExistingData(session.user.id)
       } else {
         router.push('/auth')
       }
     }
     getUser()
   }, [router])
+
+  const loadExistingData = async (userId: string) => {
+    try {
+      setLoading(true)
+
+      // Get household ID
+      const { data: householdData } = await supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', userId)
+        .single()
+
+      const householdId = householdData?.household_id || userId
+
+      // Load family members
+      const { data: familyMembers } = await supabase
+        .from('family_members')
+        .select('*')
+        .eq('household_id', householdId)
+        .order('created_at', { ascending: true })
+
+      if (familyMembers && familyMembers.length > 0) {
+        // Load additional data for each member
+        const membersWithDetails = await Promise.all(
+          familyMembers.map(async (member) => {
+            // Load dietary restrictions
+            const { data: restrictions } = await supabase
+              .from('member_dietary_restrictions')
+              .select('*, restriction:dietary_restrictions(name)')
+              .eq('member_id', member.id)
+
+            // Load food preferences
+            const { data: preferences } = await supabase
+              .from('food_preferences')
+              .select('*')
+              .eq('member_id', member.id)
+
+            return {
+              id: member.id,
+              name: member.name,
+              ageGroup: member.age_group || 'adult',
+              birthDate: member.birth_date,
+              isPrimaryPlanner: member.is_primary_meal_planner || false,
+              dietaryRestrictions: restrictions?.map(r => ({
+                type: 'allergy',
+                name: r.restriction?.name || '',
+                severity: r.severity
+              })) || [],
+              foodPreferences: preferences?.map(p => ({
+                type: p.preference === 'love' || p.preference === 'like' ? 'like' : 'dislike',
+                category: 'ingredient',
+                value: p.food_type
+              })) || []
+            }
+          })
+        )
+
+        setMembers(membersWithDetails)
+      }
+
+      // Load household meal preferences
+      const { data: mealPrefs } = await supabase
+        .from('household_meal_preferences')
+        .select('*')
+        .eq('household_id', householdId)
+        .single()
+
+      if (mealPrefs) {
+        setCookingPreferences({
+          skillLevel: mealPrefs.cooking_skill_level || 'intermediate',
+          weekdayPrepTime: mealPrefs.max_cooking_time_minutes || 30,
+          weekendPrepTime: 60,
+          mealPrepDay: '',
+          shoppingDay: mealPrefs.shopping_day || 'saturday',
+          budgetPerWeek: mealPrefs.budget_per_week || 150,
+          preferredStores: [],
+          kitchenEquipment: [],
+          preferredCuisines: mealPrefs.preferred_cuisines || []
+        })
+      }
+
+      setSuccess('Loaded existing meal planning profile')
+    } catch (error) {
+      console.error('Error loading existing data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1)
@@ -299,21 +390,56 @@ export default function MealPlannerSetup() {
 
       // Save all the data to the database
       for (const member of members) {
-        // Save household member
-        const { data: savedMember, error: memberError } = await supabase
-          .from('family_members')
-          .insert({
-            household_id: householdId,
-            name: member.name,
-            age_group: member.ageGroup,
-            is_primary_meal_planner: member.isPrimaryPlanner
-          })
-          .select()
-          .single()
+        let savedMember
 
-        if (memberError) {
-          console.error('Error saving member:', memberError)
-          throw new Error(`Failed to save member ${member.name}: ${memberError.message}`)
+        if (member.id) {
+          // Update existing member
+          const { data, error: memberError } = await supabase
+            .from('family_members')
+            .update({
+              name: member.name,
+              age_group: member.ageGroup,
+              is_primary_meal_planner: member.isPrimaryPlanner,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', member.id)
+            .select()
+            .single()
+
+          if (memberError) {
+            console.error('Error updating member:', memberError)
+            throw new Error(`Failed to update member ${member.name}: ${memberError.message}`)
+          }
+          savedMember = data
+
+          // Clear existing dietary restrictions and preferences
+          await supabase
+            .from('member_dietary_restrictions')
+            .delete()
+            .eq('member_id', member.id)
+
+          await supabase
+            .from('food_preferences')
+            .delete()
+            .eq('member_id', member.id)
+        } else {
+          // Insert new member
+          const { data, error: memberError } = await supabase
+            .from('family_members')
+            .insert({
+              household_id: householdId,
+              name: member.name,
+              age_group: member.ageGroup,
+              is_primary_meal_planner: member.isPrimaryPlanner
+            })
+            .select()
+            .single()
+
+          if (memberError) {
+            console.error('Error saving member:', memberError)
+            throw new Error(`Failed to save member ${member.name}: ${memberError.message}`)
+          }
+          savedMember = data
         }
 
         // Save dietary restrictions
@@ -866,7 +992,7 @@ export default function MealPlannerSetup() {
               onClick={handleSubmit}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} /> : 'Start Meal Planning!'}
+              {loading ? <CircularProgress size={24} /> : (members.some(m => m.id) ? 'Update Meal Planning Profile' : 'Start Meal Planning!')}
             </Button>
           </Box>
         )
