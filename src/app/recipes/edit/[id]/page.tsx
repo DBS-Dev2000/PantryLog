@@ -191,25 +191,53 @@ export default function RecipeEditPage() {
     if (!file) return
 
     setUploadingImage(true)
+    setError(null)
+
     try {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+      if (!validTypes.includes(file.type)) {
+        throw new Error('Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.')
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('File size must be less than 5MB')
+      }
+
       const fileExt = file.name.split('.').pop()
       const fileName = `recipe-${recipeId}-${Date.now()}.${fileExt}`
       const filePath = `recipe-images/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
-        .from('recipe-images')
-        .upload(filePath, file)
+      console.log('📤 Uploading image:', filePath)
 
-      if (uploadError) throw uploadError
+      const { error: uploadError, data } = await supabase.storage
+        .from('recipe-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError)
+        if (uploadError.message?.includes('Bucket not found')) {
+          throw new Error('Storage bucket not configured. Please contact support.')
+        }
+        throw uploadError
+      }
+
+      console.log('✅ Upload successful:', data)
 
       const { data: { publicUrl } } = supabase.storage
         .from('recipe-images')
         .getPublicUrl(filePath)
 
       setImageUrl(publicUrl)
+      console.log('🖼️ Image URL set:', publicUrl)
+      setError(null)
     } catch (err: any) {
       console.error('Error uploading image:', err)
-      setError('Failed to upload image')
+      setError(err.message || 'Failed to upload image')
     } finally {
       setUploadingImage(false)
     }
