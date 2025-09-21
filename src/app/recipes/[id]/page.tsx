@@ -49,7 +49,10 @@ import {
   Nature as NatureIcon,
   Comment as CommentIcon,
   PhotoCamera as CameraIcon,
-  Send as SendIcon
+  Send as SendIcon,
+  Restaurant as CookingIcon,
+  RestaurantMenu as CookingOffIcon,
+  PhoneAndroid as PhoneIcon
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -161,6 +164,10 @@ export default function RecipeDetailPage() {
   const [currentSubstitutionIngredient, setCurrentSubstitutionIngredient] = useState<string>('')
   const [availableSubstitutions, setAvailableSubstitutions] = useState<any[]>([])
 
+  // Cooking mode state
+  const [cookingMode, setCookingMode] = useState(false)
+  const [wakeLock, setWakeLock] = useState<any>(null)
+
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -176,6 +183,51 @@ export default function RecipeDetailPage() {
 
     getUser()
   }, [router, recipeId])
+
+  // Wake Lock effect for cooking mode
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      if (cookingMode && 'wakeLock' in navigator) {
+        try {
+          const lock = await (navigator as any).wakeLock.request('screen')
+          setWakeLock(lock)
+          console.log('🔒 Screen wake lock activated')
+
+          // Re-acquire wake lock if page becomes visible again
+          const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible' && cookingMode) {
+              try {
+                const newLock = await (navigator as any).wakeLock.request('screen')
+                setWakeLock(newLock)
+                console.log('🔒 Screen wake lock re-activated')
+              } catch (err) {
+                console.log('Failed to re-acquire wake lock:', err)
+              }
+            }
+          }
+
+          document.addEventListener('visibilitychange', handleVisibilityChange)
+
+          return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+          }
+        } catch (err) {
+          console.error('Wake Lock error:', err)
+        }
+      }
+    }
+
+    if (cookingMode) {
+      requestWakeLock()
+    }
+
+    return () => {
+      if (wakeLock) {
+        wakeLock.release()
+        console.log('🔓 Screen wake lock released')
+      }
+    }
+  }, [cookingMode])
 
   const loadRecipeData = async (userId: string) => {
     setLoading(true)
@@ -593,6 +645,33 @@ export default function RecipeDetailPage() {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
+      {/* Cooking Mode Indicator */}
+      {cookingMode && (
+        <Alert
+          severity="success"
+          icon={<PhoneIcon />}
+          sx={{
+            mb: 2,
+            animation: 'pulse 2s infinite',
+            '@keyframes pulse': {
+              '0%': {
+                opacity: 1,
+              },
+              '50%': {
+                opacity: 0.8,
+              },
+              '100%': {
+                opacity: 1,
+              },
+            },
+          }}
+        >
+          <Typography variant="body2">
+            <strong>Cooking Mode Active</strong> - Your screen will stay on while you cook!
+            {!('wakeLock' in navigator) && ' (Wake Lock not supported on this device)'}
+          </Typography>
+        </Alert>
+      )}
       <Box display="flex" alignItems="center" mb={4}>
         <Button
           startIcon={<ArrowBackIcon />}
@@ -606,6 +685,23 @@ export default function RecipeDetailPage() {
             {recipe.name || recipe.title}
           </Typography>
         </Box>
+
+        {/* Cooking Mode Toggle */}
+        <Button
+          variant={cookingMode ? "contained" : "outlined"}
+          startIcon={cookingMode ? <CookingIcon /> : <CookingOffIcon />}
+          onClick={() => setCookingMode(!cookingMode)}
+          sx={{
+            mr: 1,
+            backgroundColor: cookingMode ? 'success.main' : undefined,
+            '&:hover': {
+              backgroundColor: cookingMode ? 'success.dark' : undefined
+            }
+          }}
+        >
+          {cookingMode ? 'Cooking' : 'Cook'}
+        </Button>
+
         {canEditRecipe && (
           <Button
             startIcon={<EditIcon />}
