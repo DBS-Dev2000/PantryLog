@@ -52,7 +52,13 @@ import {
   StarBorder,
   ContentCopy,
   Print,
-  Share
+  Share,
+  AutoAwesome,
+  Inventory,
+  MenuBook,
+  TravelExplore,
+  RadioButtonUnchecked,
+  RadioButtonChecked
 } from '@mui/icons-material'
 import { supabase } from '@/lib/supabase'
 import { format, startOfWeek, endOfWeek, addDays } from 'date-fns'
@@ -96,6 +102,14 @@ export default function MealPlannerPage() {
   const [selectedWeek, setSelectedWeek] = useState(new Date())
   const [generating, setGenerating] = useState(false)
   const [hasProfile, setHasProfile] = useState(false)
+  const [generationStrategy, setGenerationStrategy] = useState<'auto' | 'pantry' | 'recipes' | 'discover'>('auto')
+  const [generationOptions, setGenerationOptions] = useState({
+    preferNewRecipes: false,
+    useSeasonalIngredients: true,
+    budgetConscious: false,
+    quickMealsOnly: false,
+    includeLefotovers: true
+  })
 
   useEffect(() => {
     checkProfileAndLoadPlans()
@@ -183,7 +197,7 @@ export default function MealPlannerPage() {
 
   const handleGeneratePlan = async () => {
     setGenerating(true)
-  
+
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -198,7 +212,9 @@ export default function MealPlannerPage() {
           householdId: user.id,
           startDate: format(weekStart, 'yyyy-MM-dd'),
           endDate: format(weekEnd, 'yyyy-MM-dd'),
-          usePastMeals: true,
+          strategy: generationStrategy,
+          options: generationOptions,
+          usePastMeals: generationStrategy !== 'discover',
           includeStaples: true
         })
       })
@@ -604,10 +620,15 @@ export default function MealPlannerPage() {
       <Dialog
         open={generateDialogOpen}
         onClose={() => setGenerateDialogOpen(false)}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Generate Meal Plan</DialogTitle>
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <AutoAwesome color="primary" />
+            Generate Meal Plan
+          </Box>
+        </DialogTitle>
         <DialogContent>
           <TextField
             type="week"
@@ -620,13 +641,171 @@ export default function MealPlannerPage() {
               date.setDate(date.getDate() + (parseInt(week) - 1) * 7)
               setSelectedWeek(date)
             }}
-            sx={{ mt: 2 }}
+            sx={{ mt: 2, mb: 3 }}
           />
 
-          <Alert severity="info" sx={{ mt: 2 }}>
-            AI will generate a meal plan based on your household preferences, dietary restrictions,
-            and past meal history. Staple meals may be repeated weekly.
-          </Alert>
+          <Typography variant="h6" gutterBottom>
+            How would you like to plan your meals?
+          </Typography>
+
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={12} sm={6}>
+              <Card
+                sx={{
+                  cursor: 'pointer',
+                  border: generationStrategy === 'auto' ? '2px solid' : '1px solid',
+                  borderColor: generationStrategy === 'auto' ? 'primary.main' : 'divider',
+                  transition: 'all 0.3s',
+                  '&:hover': { transform: 'translateY(-2px)', boxShadow: 2 }
+                }}
+                onClick={() => setGenerationStrategy('auto')}
+              >
+                <CardContent>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <AutoAwesome color={generationStrategy === 'auto' ? 'primary' : 'disabled'} />
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Smart Auto-Generate
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Let AI create a balanced plan based on your preferences, past favorites, and what's in season
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Card
+                sx={{
+                  cursor: 'pointer',
+                  border: generationStrategy === 'pantry' ? '2px solid' : '1px solid',
+                  borderColor: generationStrategy === 'pantry' ? 'primary.main' : 'divider',
+                  transition: 'all 0.3s',
+                  '&:hover': { transform: 'translateY(-2px)', boxShadow: 2 }
+                }}
+                onClick={() => setGenerationStrategy('pantry')}
+              >
+                <CardContent>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <Inventory color={generationStrategy === 'pantry' ? 'primary' : 'disabled'} />
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Use Pantry Items
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Prioritize meals using ingredients you already have to reduce waste and save money
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Card
+                sx={{
+                  cursor: 'pointer',
+                  border: generationStrategy === 'recipes' ? '2px solid' : '1px solid',
+                  borderColor: generationStrategy === 'recipes' ? 'primary.main' : 'divider',
+                  transition: 'all 0.3s',
+                  '&:hover': { transform: 'translateY(-2px)', boxShadow: 2 }
+                }}
+                onClick={() => setGenerationStrategy('recipes')}
+              >
+                <CardContent>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <MenuBook color={generationStrategy === 'recipes' ? 'primary' : 'disabled'} />
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      My Recipe Collection
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Choose from your saved recipes and family favorites
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Card
+                sx={{
+                  cursor: 'pointer',
+                  border: generationStrategy === 'discover' ? '2px solid' : '1px solid',
+                  borderColor: generationStrategy === 'discover' ? 'primary.main' : 'divider',
+                  transition: 'all 0.3s',
+                  '&:hover': { transform: 'translateY(-2px)', boxShadow: 2 }
+                }}
+                onClick={() => setGenerationStrategy('discover')}
+              >
+                <CardContent>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <TravelExplore color={generationStrategy === 'discover' ? 'primary' : 'disabled'} />
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Discover New Recipes
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    AI searches popular recipe sites for fresh meal ideas matching your preferences
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+
+          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            Additional Options
+          </Typography>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
+              onClick={() => setGenerationOptions({...generationOptions, useSeasonalIngredients: !generationOptions.useSeasonalIngredients})}
+            >
+              {generationOptions.useSeasonalIngredients ?
+                <RadioButtonChecked color="primary" fontSize="small" /> :
+                <RadioButtonUnchecked fontSize="small" />
+              }
+              <Typography variant="body2">Use seasonal ingredients</Typography>
+            </Box>
+
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
+              onClick={() => setGenerationOptions({...generationOptions, budgetConscious: !generationOptions.budgetConscious})}
+            >
+              {generationOptions.budgetConscious ?
+                <RadioButtonChecked color="primary" fontSize="small" /> :
+                <RadioButtonUnchecked fontSize="small" />
+              }
+              <Typography variant="body2">Focus on budget-friendly meals</Typography>
+            </Box>
+
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
+              onClick={() => setGenerationOptions({...generationOptions, quickMealsOnly: !generationOptions.quickMealsOnly})}
+            >
+              {generationOptions.quickMealsOnly ?
+                <RadioButtonChecked color="primary" fontSize="small" /> :
+                <RadioButtonUnchecked fontSize="small" />
+              }
+              <Typography variant="body2">Quick meals only (under 30 minutes)</Typography>
+            </Box>
+
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
+              onClick={() => setGenerationOptions({...generationOptions, includeLefotovers: !generationOptions.includeLefotovers})}
+            >
+              {generationOptions.includeLefotovers ?
+                <RadioButtonChecked color="primary" fontSize="small" /> :
+                <RadioButtonUnchecked fontSize="small" />
+              }
+              <Typography variant="body2">Plan for leftovers</Typography>
+            </Box>
+          </Box>
+
+          {generationStrategy === 'discover' && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              AI will search popular recipe sites like AllRecipes, Food Network, and BBC Good Food
+              for new meal ideas that match your family's preferences and dietary needs.
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setGenerateDialogOpen(false)}>
@@ -636,8 +815,9 @@ export default function MealPlannerPage() {
             variant="contained"
             onClick={handleGeneratePlan}
             disabled={generating}
+            startIcon={generating ? <CircularProgress size={20} /> : <AutoAwesome />}
           >
-            {generating ? <CircularProgress size={24} /> : 'Generate'}
+            {generating ? 'Generating...' : 'Generate Plan'}
           </Button>
         </DialogActions>
       </Dialog>

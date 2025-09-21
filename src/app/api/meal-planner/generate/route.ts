@@ -36,6 +36,14 @@ interface MealPlanRequest {
   householdId: string
   startDate: string
   endDate: string
+  strategy?: 'auto' | 'pantry' | 'recipes' | 'discover'
+  options?: {
+    preferNewRecipes?: boolean
+    useSeasonalIngredients?: boolean
+    budgetConscious?: boolean
+    quickMealsOnly?: boolean
+    includeLefotovers?: boolean
+  }
   usePastMeals?: boolean
   includeStaples?: boolean
 }
@@ -50,7 +58,15 @@ interface HouseholdProfile {
 
 export async function POST(req: NextRequest) {
   try {
-    const { householdId, startDate, endDate, usePastMeals = true, includeStaples = true } = await req.json() as MealPlanRequest
+    const {
+      householdId,
+      startDate,
+      endDate,
+      strategy = 'auto',
+      options = {},
+      usePastMeals = true,
+      includeStaples = true
+    } = await req.json() as MealPlanRequest
 
     // Get household profile data
     const profile = await getHouseholdProfile(householdId)
@@ -61,11 +77,24 @@ export async function POST(req: NextRequest) {
     // Get current pantry inventory
     const inventory = await getCurrentInventory(householdId)
 
-    // Get available recipes
-    const recipes = await getAvailableRecipes(householdId)
+    // Get available recipes based on strategy
+    let recipes = []
+    if (strategy === 'discover') {
+      // Search for new recipes online
+      recipes = await discoverNewRecipes(profile, options)
+    } else if (strategy === 'recipes') {
+      // Use only saved recipes
+      recipes = await getAvailableRecipes(householdId)
+    } else if (strategy === 'pantry') {
+      // Get recipes that can be made with current inventory
+      recipes = await getRecipesForInventory(householdId, inventory)
+    } else {
+      // Auto mode - mix of saved recipes and inventory-based
+      recipes = await getAvailableRecipes(householdId)
+    }
 
     // Generate meal planning rules using AI
-    const rules = await generateMealPlanRules(profile)
+    const rules = await generateMealPlanRules(profile, strategy, options)
 
     // Generate the meal plan following the rules
     const mealPlan = await generateMealPlan({
@@ -76,7 +105,9 @@ export async function POST(req: NextRequest) {
       recipes,
       startDate,
       endDate,
-      includeStaples
+      includeStaples,
+      strategy,
+      options
     })
 
     // Save the meal plan to database
@@ -169,7 +200,65 @@ async function getAvailableRecipes(householdId: string) {
   return data || []
 }
 
-async function generateMealPlanRules(profile: HouseholdProfile) {
+async function discoverNewRecipes(profile: HouseholdProfile, options: any) {
+  const searchPrompt = `
+Find 15-20 recipe ideas for a household with:
+- Members: ${profile.members.map(m => `${m.name} (${m.age_group})`).join(', ')}
+- Dietary restrictions: ${profile.dietaryRestrictions.map(d => d.restriction?.name).join(', ') || 'None'}
+- Preferences: ${profile.preferences.map(p => `${p.food_type}: ${p.preference}`).join(', ')}
+- Options: ${JSON.stringify(options)}
+
+Search popular recipe sites like:
+- AllRecipes.com
+- FoodNetwork.com
+- BBCGoodFood.com
+- SeriousEats.com
+- BonAppetit.com
+
+Return recipes that:
+${options.quickMealsOnly ? '- Can be made in under 30 minutes' : ''}
+${options.budgetConscious ? '- Are budget-friendly' : ''}
+${options.useSeasonalIngredients ? '- Use seasonal ingredients for current month' : ''}
+- Match the household's dietary needs
+- Offer variety across different cuisines
+
+Format as JSON array with: name, description, prep_time_minutes, cook_time_minutes, servings, ingredients[], source_url
+`
+
+  const recipesJson = await getAIResponse(searchPrompt)
+
+  try {
+    return JSON.parse(recipesJson)
+  } catch {
+    // Fallback to basic recipe set if AI fails
+    return []
+  }
+}
+
+async function getRecipesForInventory(householdId: string, inventory: any[]) {
+  // Get recipes that can be made with current inventory
+  const { data: recipes } = await supabase
+    .from('recipes')
+    .select('*, recipe_ingredients(*)')
+    .eq('household_id', householdId)
+
+  if (!recipes) return []
+
+  // Filter recipes where we have most ingredients
+  return recipes.filter(recipe => {
+    const ingredients = recipe.recipe_ingredients || []
+    const availableCount = ingredients.filter(ing => {
+      return inventory.some(item =>
+        item.product?.name?.toLowerCase().includes(ing.ingredient_name?.toLowerCase())
+      )
+    }).length
+
+    // Include recipes where we have at least 70% of ingredients
+    return ingredients.length === 0 || (availableCount / ingredients.length) >= 0.7
+  })
+}
+
+async function generateMealPlanRules(profile: HouseholdProfile, strategy: string = 'auto', options: any = {}) {
 
   const rulesPrompt = `
 Based on this household profile, generate specific meal planning rules:
@@ -226,6 +315,8 @@ async function generateMealPlan(params: {
   startDate: string
   endDate: string
   includeStaples: boolean
+  strategy?: string
+  options?: any
 }) {
 
   // Analyze recent meals to avoid repetition
