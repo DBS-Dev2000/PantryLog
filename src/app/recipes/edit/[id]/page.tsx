@@ -136,7 +136,6 @@ export default function RecipeEditPage() {
         .from('recipe_ingredients')
         .select('*')
         .eq('recipe_id', recipeId)
-        .order('created_at', { ascending: true })
 
       if (ingredientsError) throw ingredientsError
 

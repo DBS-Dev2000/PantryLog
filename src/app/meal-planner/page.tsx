@@ -471,11 +471,20 @@ export default function MealPlannerPage() {
     const mealsByDay: Record<string, PlannedMeal[]> = {}
 
     plannedMeals.forEach(meal => {
-      if (!mealsByDay[meal.meal_date]) {
-        mealsByDay[meal.meal_date] = []
+      // Format the meal date to ensure consistent format (yyyy-MM-dd)
+      const mealDate = meal.meal_date ? format(new Date(meal.meal_date), 'yyyy-MM-dd') : ''
+
+      if (mealDate) {
+        if (!mealsByDay[mealDate]) {
+          mealsByDay[mealDate] = []
+        }
+        mealsByDay[mealDate].push(meal)
       }
-      mealsByDay[meal.meal_date].push(meal)
     })
+
+    // Log for debugging
+    console.log('Meals by day:', mealsByDay)
+    console.log('Planned meals count:', plannedMeals.length)
 
     return mealsByDay
   }

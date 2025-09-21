@@ -293,6 +293,33 @@ export default function MealPlannerSetup() {
               }
             })
 
+            // Parse food preferences from different columns
+            const foodPrefs: FoodPreference[] = []
+
+            // Add disliked ingredients
+            if (member.disliked_ingredients && Array.isArray(member.disliked_ingredients)) {
+              member.disliked_ingredients.forEach((item: string) => {
+                foodPrefs.push({
+                  type: 'dislike',
+                  category: 'ingredient',
+                  value: item,
+                  intensity: 8
+                })
+              })
+            }
+
+            // Add preferred cuisines
+            if (member.preferred_cuisines && Array.isArray(member.preferred_cuisines)) {
+              member.preferred_cuisines.forEach((cuisine: string) => {
+                foodPrefs.push({
+                  type: 'like',
+                  category: 'cuisine',
+                  value: cuisine,
+                  intensity: 7
+                })
+              })
+            }
+
             return {
               id: member.id,
               name: member.name,
@@ -301,11 +328,7 @@ export default function MealPlannerSetup() {
               isPrimaryPlanner: member.is_primary_meal_planner || false,
               dietType: dietType ? dietType.charAt(0).toUpperCase() + dietType.slice(1) : '',
               dietaryRestrictions,
-              foodPreferences: member.disliked_ingredients?.map((item: string) => ({
-                type: 'dislike',
-                category: 'ingredient',
-                value: item
-              })) || []
+              foodPreferences: foodPrefs
             }
           }
 
@@ -437,9 +460,13 @@ export default function MealPlannerSetup() {
           }
         })
 
-        // Get disliked ingredients
+        // Get disliked ingredients and preferred cuisines from food preferences
         const dislikedIngredients = member.foodPreferences
-          ?.filter(p => p.type === 'dislike')
+          ?.filter(p => p.type === 'dislike' && p.category === 'ingredient')
+          ?.map(p => p.value) || []
+
+        const preferredCuisines = member.foodPreferences
+          ?.filter(p => p.type === 'like' && p.category === 'cuisine')
           ?.map(p => p.value) || []
 
         if (member.id) {
@@ -453,6 +480,7 @@ export default function MealPlannerSetup() {
               dietary_restrictions: dietaryRestrictionsList,
               food_allergies: allergyList,
               disliked_ingredients: dislikedIngredients,
+              preferred_cuisines: preferredCuisines,
               updated_at: new Date().toISOString()
             })
             .eq('id', member.id)
@@ -475,7 +503,8 @@ export default function MealPlannerSetup() {
               is_primary_meal_planner: member.isPrimaryPlanner,
               dietary_restrictions: dietaryRestrictionsList,
               food_allergies: allergyList,
-              disliked_ingredients: dislikedIngredients
+              disliked_ingredients: dislikedIngredients,
+              preferred_cuisines: preferredCuisines
             })
             .select()
             .single()
