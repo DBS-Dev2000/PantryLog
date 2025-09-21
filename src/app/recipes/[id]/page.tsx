@@ -133,6 +133,7 @@ export default function RecipeDetailPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [deleteDialog, setDeleteDialog] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -672,6 +673,21 @@ export default function RecipeDetailPage() {
           </Typography>
         </Alert>
       )}
+
+      {/* Success Message */}
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+          {success}
+        </Alert>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
       <Box display="flex" alignItems="center" mb={4}>
         <Button
           startIcon={<ArrowBackIcon />}
@@ -686,20 +702,22 @@ export default function RecipeDetailPage() {
           </Typography>
         </Box>
 
-        {/* Cooking Mode Toggle */}
+        {/* Cooking Mode Toggle - Keep Screen On */}
         <Button
           variant={cookingMode ? "contained" : "outlined"}
-          startIcon={cookingMode ? <CookingIcon /> : <CookingOffIcon />}
+          startIcon={cookingMode ? <PhoneIcon /> : <PhoneIcon />}
           onClick={() => setCookingMode(!cookingMode)}
           sx={{
             mr: 1,
-            backgroundColor: cookingMode ? 'success.main' : undefined,
+            backgroundColor: cookingMode ? 'warning.main' : undefined,
+            color: cookingMode ? 'warning.contrastText' : undefined,
             '&:hover': {
-              backgroundColor: cookingMode ? 'success.dark' : undefined
+              backgroundColor: cookingMode ? 'warning.dark' : undefined
             }
           }}
+          title="Keep screen awake while cooking"
         >
-          {cookingMode ? 'Cooking' : 'Cook'}
+          {cookingMode ? 'Screen On' : 'Keep Screen On'}
         </Button>
 
         {canEditRecipe && (
@@ -1043,6 +1061,10 @@ export default function RecipeDetailPage() {
                 variant="contained"
                 size="large"
                 onClick={async () => {
+                  if (!confirm('This will remove ingredients from your inventory. Continue?')) {
+                    return
+                  }
+
                   setMakingRecipe(true)
                   try {
                     // Call make recipe function that consumes ingredients
@@ -1067,11 +1089,18 @@ export default function RecipeDetailPage() {
 
                     if (updateError) console.warn('Failed to update recipe stats:', updateError)
 
-                    setError(`🎉 Recipe completed! Ingredients removed from inventory. Times made: ${(recipe!.times_made || 0) + 1}`)
+                    setSuccess(`🎉 Recipe completed! Ingredients removed from inventory. Times made: ${(recipe!.times_made || 0) + 1}`)
+                    setError(null)
+
+                    // Reload ingredients to show updated availability
                     await loadRecipeData(user!.id)
+
+                    // Clear success message after 5 seconds
+                    setTimeout(() => setSuccess(null), 5000)
 
                   } catch (err: any) {
                     setError(`Failed to complete recipe: ${err.message}`)
+                    setSuccess(null)
                   } finally {
                     setMakingRecipe(false)
                   }
@@ -1083,8 +1112,9 @@ export default function RecipeDetailPage() {
                   '&:hover': { backgroundColor: 'grey.100' }
                 }}
                 startIcon={makingRecipe ? <CircularProgress size={20} /> : <CheckIcon />}
+                title="Mark recipe as made and remove ingredients from inventory"
               >
-                {makingRecipe ? 'Cooking...' : 'Cook Once'}
+                {makingRecipe ? 'Processing...' : 'I Made This Recipe'}
               </Button>
 
               {(Object.keys(ingredientSubstitutions).length > 0 || omittedIngredients.length > 0) && (
