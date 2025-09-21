@@ -33,6 +33,9 @@ CREATE INDEX IF NOT EXISTS idx_shopping_list_members_list_id ON shopping_list_me
 CREATE INDEX IF NOT EXISTS idx_shopping_list_members_user_id ON shopping_list_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_shopping_lists_household ON shopping_lists(household_id, status);
 
+-- Drop existing function if it exists
+DROP FUNCTION IF EXISTS user_can_access_shopping_list(UUID, UUID, TEXT);
+
 -- Add a function to check if user has access to a shopping list
 CREATE OR REPLACE FUNCTION user_can_access_shopping_list(
     p_user_id UUID,
@@ -111,6 +114,9 @@ BEGIN
     RETURN COALESCE(v_has_permission, FALSE);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Drop existing function if it exists with different signature
+DROP FUNCTION IF EXISTS get_user_shopping_lists(UUID);
 
 -- Function to get all accessible shopping lists for a user
 CREATE OR REPLACE FUNCTION get_user_shopping_lists(
@@ -193,6 +199,9 @@ BEGIN
     ORDER BY la.is_primary DESC, la.created_at DESC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Drop existing function if it exists
+DROP FUNCTION IF EXISTS add_meal_plan_to_shopping_list(UUID, UUID, UUID);
 
 -- Function to add items from meal plan to shopping list
 CREATE OR REPLACE FUNCTION add_meal_plan_to_shopping_list(
