@@ -79,8 +79,13 @@ export async function POST(req: NextRequest) {
       strategy = 'auto',
       options = {},
       usePastMeals = true,
-      includeStaples = true
-    } = await req.json() as MealPlanRequest
+      includeStaples = true,
+      previewOnly = false,
+      confirmMeals = null
+    } = await req.json() as MealPlanRequest & {
+      previewOnly?: boolean
+      confirmMeals?: any[]
+    }
 
     console.log('Generating meal plan:', { householdId, startDate, endDate, strategy })
 
@@ -132,17 +137,34 @@ export async function POST(req: NextRequest) {
     })
     console.log('Generated meal plan with', mealPlan.length, 'meals')
 
+    // If this is a preview request, return the meals without saving
+    if (previewOnly) {
+      return NextResponse.json({
+        success: true,
+        preview: true,
+        meals: mealPlan,
+        summary: {
+          totalMeals: mealPlan.length,
+          daysPlanned: Math.ceil(mealPlan.length / 3),
+          recipesUsed: recipes.length
+        }
+      })
+    }
+
+    // If we have confirmed meals, save those instead of the generated ones
+    const mealsToSave = confirmMeals || mealPlan
+
     // Save the meal plan to database
-    const savedPlan = await saveMealPlan(householdId, mealPlan, supabase)
+    const savedPlan = await saveMealPlan(householdId, mealsToSave, supabase)
     console.log('Saved meal plan with ID:', savedPlan.id)
 
     return NextResponse.json({
       success: true,
       planId: savedPlan.id,
-      plan: mealPlan,
+      plan: mealsToSave,
       summary: {
-        totalMeals: mealPlan.length,
-        daysPlanned: Math.ceil(mealPlan.length / 3),
+        totalMeals: mealsToSave.length,
+        daysPlanned: Math.ceil(mealsToSave.length / 3),
         recipesUsed: recipes.length
       }
     })

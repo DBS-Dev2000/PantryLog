@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUserHouseholdFeatures } from '@/lib/features'
+import MealPlanPreview from './components/MealPlanPreview'
 import {
   Box,
   Container,
@@ -115,6 +116,8 @@ export default function MealPlannerPage() {
     quickMealsOnly: false,
     includeLefotovers: true
   })
+  const [previewMeals, setPreviewMeals] = useState<any[]>([])
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
 
   useEffect(() => {
     checkProfileAndLoadPlans()
@@ -207,14 +210,16 @@ export default function MealPlannerPage() {
     setSuccess('')
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      console.log('Got user:', user?.id)
-      if (!user) {
-        console.error('No user found')
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+      if (authError || !user) {
+        console.error('Auth error:', authError)
         setError('Please sign in to generate a meal plan')
         setGenerating(false)
         return
       }
+
+      console.log('Got user:', user.id)
 
       const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 0 }) // 0 = Sunday
       const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 0 })
@@ -227,7 +232,8 @@ export default function MealPlannerPage() {
         strategy: generationStrategy,
         options: generationOptions,
         usePastMeals: generationStrategy !== 'discover',
-        includeStaples: true
+        includeStaples: true,
+        previewOnly: true // Request preview mode
       }
       console.log('Sending request:', requestBody)
 
@@ -256,7 +262,12 @@ export default function MealPlannerPage() {
       const result = await response.json()
       console.log('Generation result:', result)
 
-      if (result.success) {
+      if (result.success && result.preview) {
+        // Show preview dialog with generated meals
+        setPreviewMeals(result.meals || [])
+        setGenerateDialogOpen(false)
+        setPreviewDialogOpen(true)
+      } else if (result.success) {
         await checkProfileAndLoadPlans()
         setGenerateDialogOpen(false)
         setSuccess('Meal plan generated successfully!')
@@ -352,6 +363,106 @@ export default function MealPlannerPage() {
 
     if (currentPlan) {
       loadPlannedMeals(currentPlan.id)
+    }
+  }
+
+  const handleConfirmMealPlan = async (confirmedMeals: any[], mealTypes: any) => {
+    setPreviewDialogOpen(false)
+    setGenerating(true)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setError('Please sign in to save meal plan')
+        return
+      }
+
+      const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 0 })
+      const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 0 })
+
+      // Send confirmed meals to save
+      const requestBody = {
+        householdId: user.id,
+        startDate: format(weekStart, 'yyyy-MM-dd'),
+        endDate: format(weekEnd, 'yyyy-MM-dd'),
+        strategy: generationStrategy,
+        options: generationOptions,
+        confirmMeals: confirmedMeals,
+        previewOnly: false
+      }
+
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+
+      const response = await fetch('/api/meal-planner/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify(requestBody)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        setError(`Failed to save meal plan: ${errorData.error || 'Unknown error'}`)
+        return
+      }
+
+      const result = await response.json()
+      if (result.success && result.planId) {
+        await checkProfileAndLoadPlans()
+        setSuccess('Meal plan saved successfully!')
+
+        // Find and load the new plan
+        setTimeout(async () => {
+          const { data: newPlans } = await supabase
+            .from('meal_plans')
+            .select('*')
+            .eq('household_id', user.id)
+            .order('created_at', { ascending: false })
+
+          if (newPlans && newPlans.length > 0) {
+            const newPlan = newPlans.find(p => p.id === result.planId)
+            if (newPlan) {
+              setCurrentPlan(newPlan)
+              await loadPlannedMeals(newPlan.id)
+            }
+          }
+        }, 500)
+      }
+    } catch (error: any) {
+      console.error('Error saving meal plan:', error)
+      setError(error.message || 'Failed to save meal plan')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const handleRegenerateMeals = async (missingDays: string[], mealTypes: any) => {
+    // Generate additional meals for missing slots
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return []
+
+      // Parse missing days to determine what needs to be generated
+      const mealsNeeded = missingDays.map(dayMeal => {
+        const [date, mealType] = dayMeal.split('-')
+        return { date, mealType }
+      })
+
+      // For now, return dummy meals - this would call the API
+      return mealsNeeded.map(({ date, mealType }) => ({
+        date,
+        mealType: mealType as any,
+        customMealName: `Additional ${mealType}`,
+        servings: 4,
+        prepTime: 30,
+        accepted: true
+      }))
+    } catch (error) {
+      console.error('Error regenerating meals:', error)
+      return []
     }
   }
 
@@ -940,6 +1051,15 @@ export default function MealPlannerPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <MealPlanPreview
+        open={previewDialogOpen}
+        onClose={() => setPreviewDialogOpen(false)}
+        plannedMeals={previewMeals}
+        weekStart={startOfWeek(selectedWeek, { weekStartsOn: 0 })}
+        onConfirm={handleConfirmMealPlan}
+        onRegenerateMeals={handleRegenerateMeals}
+      />
     </Container>
   )
 }
