@@ -468,7 +468,7 @@ export default function VisualItemScanner({
                 }}
               >
                 <CircularProgress sx={{ color: 'white', mb: 2 }} />
-                <Typography variant="h6">🤖 AI Analyzing Image...</Typography>
+                <Typography variant="h6">🔍 Analyzing Image...</Typography>
                 <Typography variant="body2" sx={{ opacity: 0.8 }}>
                   Identifying grocery items
                 </Typography>
@@ -648,7 +648,7 @@ export default function VisualItemScanner({
 
       <DialogActions>
         <Typography variant="caption" color="textSecondary" sx={{ flexGrow: 1 }}>
-          🤖 AI-powered grocery item identification using Claude Vision
+          📸 Smart visual item identification
         </Typography>
         <Button onClick={handleClose}>
           Cancel

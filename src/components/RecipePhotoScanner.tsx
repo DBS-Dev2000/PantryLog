@@ -80,7 +80,7 @@ export default function RecipePhotoScanner({
         console.log('🔐 Retrieved user ID for recipe extraction:', currentUserId)
       }
 
-      console.log('🤖 Extracting recipe from image with AI...')
+      console.log('📷 Extracting recipe from image...')
 
       const response = await fetch('/api/extract-recipe-image', {
         method: 'POST',
@@ -303,7 +303,7 @@ export default function RecipePhotoScanner({
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <CircularProgress size={60} sx={{ color: 'primary.main', mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
-                  🤖 AI Extracting Recipe
+                  📷 Extracting Recipe
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
                   Reading ingredients, instructions, and recipe details...

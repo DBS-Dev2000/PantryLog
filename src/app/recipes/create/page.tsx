@@ -713,10 +713,10 @@ function CreateRecipePageContent() {
             sx={{ color: 'primary.main', mb: 2 }}
           />
           <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
-            🤖 Importing Recipe
+            📥 Importing Recipe
           </Typography>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            AI is analyzing the webpage and extracting:
+            Analyzing the webpage and extracting:
           </Typography>
           <Box display="flex" flexDirection="column" gap={0.5}>
             <Typography variant="caption" color="primary.main">

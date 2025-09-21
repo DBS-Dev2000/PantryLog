@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('🤖 AI substitution request for:', ingredient)
+    console.log('🌿 Natural substitution request for:', ingredient)
     console.log('🏠 Pantry items available:', pantry_items?.length || 0)
 
     // Try AI providers for smart substitutions

@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         console.log('🌐 Extracting from known recipe site...')
         recipeData = await extractWebsiteRecipe(url)
       } else {
-        console.log('🤖 Using AI to extract recipe from webpage...')
+        console.log('🔍 Analyzing recipe from webpage...')
         recipeData = await extractRecipeWithAI(url, user_id)
       }
     } catch (extractionError) {
@@ -208,7 +208,7 @@ async function extractWebsiteRecipe(url: string) {
 
 async function extractRecipeWithAI(url: string, userId?: string) {
   try {
-    console.log('🤖 Using AI to extract recipe from:', url)
+    console.log('📝 Extracting recipe from:', url)
 
     // Fetch webpage content
     const response = await fetch(url)
@@ -303,7 +303,7 @@ IMPORTANT:
 
       if (aiResponse.ok) {
         const result = await aiResponse.json()
-        console.log('🤖 Claude API response received:', result)
+        console.log('✨ Recipe data extracted:', result)
 
         try {
           const recipeInfo = JSON.parse(result.content[0].text)

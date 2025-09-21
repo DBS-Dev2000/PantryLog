@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
         let modelName: string
 
         if (provider.name === 'claude') {
-          console.log('🤖 Using Claude for recipe image extraction...')
+          console.log('📷 Processing recipe image...')
           const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
           result.analysisResult = JSON.parse(result.content[0].text)
 
         } else if (provider.name === 'gemini') {
-          console.log('🤖 Using Gemini for recipe image extraction...')
+          console.log('📷 Processing recipe image...')
           const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${provider.apiKey}`, {
             method: 'POST',
             headers: {
