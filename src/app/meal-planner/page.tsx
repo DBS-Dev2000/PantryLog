@@ -102,6 +102,8 @@ export default function MealPlannerPage() {
   const [selectedWeek, setSelectedWeek] = useState(new Date())
   const [generating, setGenerating] = useState(false)
   const [hasProfile, setHasProfile] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [generationStrategy, setGenerationStrategy] = useState<'auto' | 'pantry' | 'recipes' | 'discover'>('auto')
   const [generationOptions, setGenerationOptions] = useState({
     preferNewRecipes: false,
@@ -219,21 +221,37 @@ export default function MealPlannerPage() {
         })
       })
 
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('API Error:', errorData)
+        setError(`Failed to generate meal plan: ${errorData.error || 'Unknown error'}`)
+        return
+      }
+
       const result = await response.json()
+      console.log('Generation result:', result)
 
       if (result.success) {
         await checkProfileAndLoadPlans()
         setGenerateDialogOpen(false)
+        setSuccess('Meal plan generated successfully!')
 
         // Load the newly generated plan
-        const newPlan = plans.find(p => p.id === result.planId)
-        if (newPlan) {
-          setCurrentPlan(newPlan)
-          loadPlannedMeals(newPlan.id)
+        if (result.planId) {
+          // Reload plans to get the new one
+          await checkProfileAndLoadPlans()
+          const newPlan = plans.find(p => p.id === result.planId)
+          if (newPlan) {
+            setCurrentPlan(newPlan)
+            await loadPlannedMeals(newPlan.id)
+          }
         }
+      } else {
+        setError(result.error || 'Failed to generate meal plan')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating meal plan:', error)
+      setError(error.message || 'Failed to generate meal plan')
     } finally {
       setGenerating(false)
     }
@@ -517,6 +535,18 @@ export default function MealPlannerPage() {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+          {success}
+        </Alert>
+      )}
+
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
           <CalendarMonth sx={{ mr: 1, verticalAlign: 'middle' }} />
