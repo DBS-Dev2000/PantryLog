@@ -282,7 +282,7 @@ export default function MealPlannerSetup() {
       for (const member of members) {
         // Save household member
         const { data: savedMember, error: memberError } = await supabase
-          .from('household_members')
+          .from('family_members')
           .insert({
             household_id: user.id,
             name: member.name,
@@ -296,35 +296,29 @@ export default function MealPlannerSetup() {
 
         // Save dietary restrictions
         if (member.dietaryRestrictions.length > 0) {
-          const { error: restrictionError } = await supabase
-            .from('dietary_restrictions')
-            .insert(
-              member.dietaryRestrictions.map(r => ({
-                member_id: savedMember.id,
-                restriction_type: r.type,
-                name: r.name,
-                severity: r.severity
-              }))
-            )
+          // First, find or create the dietary restriction entries
+          for (const restriction of member.dietaryRestrictions) {
+            // Get the restriction ID from the master list
+            const { data: restrictionData } = await supabase
+              .from('dietary_restrictions')
+              .select('id')
+              .eq('name', restriction.name)
+              .single()
 
-          if (restrictionError) throw restrictionError
-        }
+            if (restrictionData) {
+              // Link the member to this dietary restriction
+              const { error: linkError } = await supabase
+                .from('member_dietary_restrictions')
+                .insert({
+                  member_id: savedMember.id,
+                  restriction_id: restrictionData.id,
+                  severity: restriction.severity || 'preference',
+                  notes: restriction.notes || null
+                })
 
-        // Save diet type and nutritional goals
-        if (member.dietType) {
-          const { error: dietError } = await supabase
-            .from('member_diets')
-            .insert({
-              member_id: savedMember.id,
-              diet_type: member.dietType.toLowerCase().replace(' ', '_'),
-              calorie_target: member.nutritionalGoals?.calorieTarget,
-              protein_target: member.nutritionalGoals?.proteinTarget,
-              carb_target: member.nutritionalGoals?.carbTarget,
-              fat_target: member.nutritionalGoals?.fatTarget,
-              sodium_limit: member.nutritionalGoals?.sodiumLimit
-            })
-
-          if (dietError) throw dietError
+              if (linkError) throw linkError
+            }
+          }
         }
 
         // Save food preferences

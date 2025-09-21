@@ -99,14 +99,14 @@ export async function POST(req: NextRequest) {
 
 async function getHouseholdProfile(householdId: string): Promise<HouseholdProfile> {
   const [members, restrictions, preferences, schedule, mealPrefs] = await Promise.all([
-    supabase.from('household_members')
+    supabase.from('family_members')
       .select('*')
       .eq('household_id', householdId),
-    supabase.from('dietary_restrictions')
-      .select('*, member:household_members(*)')
+    supabase.from('member_dietary_restrictions')
+      .select('*, member:family_members(*), restriction:dietary_restrictions(*)')
       .eq('member.household_id', householdId),
     supabase.from('food_preferences')
-      .select('*, member:household_members(*)')
+      .select('*, member:family_members(*)')
       .eq('member.household_id', householdId),
     supabase.from('household_schedules')
       .select('*')

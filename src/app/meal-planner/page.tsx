@@ -132,7 +132,7 @@ export default function MealPlannerPage() {
 
       // Check if profile is complete
       const { data: members } = await supabase
-        .from('household_members')
+        .from('family_members')
         .select('id')
         .eq('household_id', household.id)
         .limit(1)
