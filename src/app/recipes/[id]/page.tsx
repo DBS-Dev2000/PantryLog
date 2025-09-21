@@ -30,7 +30,9 @@ import {
   Checkbox,
   FormControlLabel,
   Rating,
-  CircularProgress
+  CircularProgress,
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -127,6 +129,8 @@ export default function RecipeDetailPage() {
   const router = useRouter()
   const params = useParams()
   const recipeId = params.id as string
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   const [user, setUser] = useState<any>(null)
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null)
@@ -688,56 +692,65 @@ export default function RecipeDetailPage() {
         </Alert>
       )}
 
-      <Box display="flex" alignItems="center" mb={4}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => router.push('/recipes')}
-          sx={{ mr: 2 }}
-        >
-          Back to Recipes
-        </Button>
-        <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="h4" component="h1">
+      {/* Mobile-Responsive Header */}
+      <Box mb={4}>
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+          <IconButton onClick={() => router.push('/recipes')} sx={{ flexShrink: 0 }}>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography
+            variant={isMobile ? "h5" : "h4"}
+            component="h1"
+            sx={{
+              flex: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              wordBreak: 'break-word'
+            }}
+          >
             {recipe.name || recipe.title}
           </Typography>
         </Box>
 
-        {/* Cooking Mode Toggle - Keep Screen On */}
-        <Button
-          variant={cookingMode ? "contained" : "outlined"}
-          startIcon={<PhoneIcon />}
-          onClick={() => setCookingMode(!cookingMode)}
-          sx={{
-            mr: 1,
-            backgroundColor: cookingMode ? 'warning.main' : undefined,
-            color: cookingMode ? 'warning.contrastText' : undefined,
-            '&:hover': {
-              backgroundColor: cookingMode ? 'warning.dark' : undefined
-            },
-            minWidth: 'auto'
-          }}
-          title={cookingMode ? "Screen will stay on while cooking" : "Keep screen awake while cooking"}
-        >
-          Screen
-        </Button>
-
-        {canEditRecipe && (
+        {/* Action Buttons - Responsive Layout */}
+        <Box display="flex" gap={1} justifyContent={isMobile ? "center" : "flex-start"} flexWrap="wrap">
+          {/* Cooking Mode Toggle */}
           <Button
-            startIcon={<EditIcon />}
-            onClick={() => router.push(`/recipes/edit/${recipeId}`)}
-            sx={{ mr: 1 }}
+            variant={cookingMode ? "contained" : "outlined"}
+            startIcon={!isMobile && <PhoneIcon />}
+            onClick={() => setCookingMode(!cookingMode)}
+            sx={{
+              backgroundColor: cookingMode ? 'warning.main' : undefined,
+              color: cookingMode ? 'warning.contrastText' : undefined,
+              '&:hover': {
+                backgroundColor: cookingMode ? 'warning.dark' : undefined
+              },
+              minWidth: isMobile ? 'auto' : undefined
+            }}
+            title={cookingMode ? "Screen will stay on while cooking" : "Keep screen awake while cooking"}
           >
-            Edit
+            {isMobile ? <PhoneIcon /> : 'Screen On'}
           </Button>
-        )}
-        <Button
-          startIcon={<DeleteIcon />}
-          onClick={() => setDeleteDialog(true)}
-          color="error"
-          variant="outlined"
-        >
-          Delete
-        </Button>
+
+          {canEditRecipe && (
+            <Button
+              variant="outlined"
+              startIcon={!isMobile && <EditIcon />}
+              onClick={() => router.push(`/recipes/edit/${recipeId}`)}
+            >
+              {isMobile ? <EditIcon /> : 'Edit'}
+            </Button>
+          )}
+
+          <Button
+            variant="outlined"
+            startIcon={!isMobile && <DeleteIcon />}
+            onClick={() => setDeleteDialog(true)}
+            color="error"
+          >
+            {isMobile ? <DeleteIcon /> : 'Delete'}
+          </Button>
+        </Box>
       </Box>
 
       {/* Recipe Header */}
@@ -745,9 +758,11 @@ export default function RecipeDetailPage() {
         <CardContent>
           <Grid container spacing={3}>
             <Grid item xs={12} md={8}>
-              <Typography variant="h5" gutterBottom>
-                {recipe.name || recipe.title}
-              </Typography>
+              {!isMobile && (
+                <Typography variant="h5" gutterBottom>
+                  {recipe.name || recipe.title}
+                </Typography>
+              )}
 
               {recipe.description && (
                 <Typography variant="body1" color="textSecondary" paragraph>
@@ -755,7 +770,7 @@ export default function RecipeDetailPage() {
                 </Typography>
               )}
 
-              <Box display="flex" gap={2} mb={2}>
+              <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                 {recipe.prep_time_minutes && (
                   <Chip
                     icon={<TimerIcon />}

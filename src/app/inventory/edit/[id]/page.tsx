@@ -70,6 +70,46 @@ const units = [
   'pieces', 'lbs', 'oz', 'kg', 'g', 'cups', 'tbsp', 'tsp', 'cans', 'bottles', 'boxes', 'bags'
 ]
 
+// Helper function to organize locations hierarchically
+const organizeLocationsHierarchically = (locations: any[]) => {
+  const locationMap = new Map()
+  const rootLocations: any[] = []
+
+  // First pass: create a map of all locations
+  locations.forEach(loc => {
+    locationMap.set(loc.id, { ...loc, children: [] })
+  })
+
+  // Second pass: organize into hierarchy
+  locations.forEach(loc => {
+    if (loc.parent_id) {
+      const parent = locationMap.get(loc.parent_id)
+      if (parent) {
+        parent.children.push(locationMap.get(loc.id))
+      }
+    } else {
+      rootLocations.push(locationMap.get(loc.id))
+    }
+  })
+
+  // Flatten the hierarchy for display with indentation indicators
+  const flattenedLocations: any[] = []
+  const addLocationWithChildren = (location: any, level = 0) => {
+    flattenedLocations.push({ ...location, level })
+    if (location.children && location.children.length > 0) {
+      location.children.sort((a: any, b: any) => a.name.localeCompare(b.name))
+      location.children.forEach((child: any) => {
+        addLocationWithChildren(child, level + 1)
+      })
+    }
+  }
+
+  rootLocations.sort((a, b) => a.name.localeCompare(b.name))
+  rootLocations.forEach(loc => addLocationWithChildren(loc))
+
+  return flattenedLocations
+}
+
 export default function EditInventoryItemPage() {
   const router = useRouter()
   const params = useParams()
@@ -107,7 +147,7 @@ export default function EditInventoryItemPage() {
   const loadItemData = async (userId: string) => {
     setLoading(true)
     try {
-      // Load the inventory item
+      // Load the food item
       const { data: itemData, error } = await supabase
         .from('inventory_items')
         .select(`
@@ -132,12 +172,15 @@ export default function EditInventoryItemPage() {
         .select('*')
         .eq('household_id', userId)
         .eq('is_active', true)
+        .order('parent_id', { nullsFirst: true })
         .order('name')
 
       if (locError) {
         console.warn('Failed to load locations:', locError)
       } else {
-        setAvailableLocations(locations || [])
+        // Organize locations hierarchically
+        const organizedLocations = organizeLocationsHierarchically(locations || [])
+        setAvailableLocations(organizedLocations)
       }
     } catch (err: any) {
       setError(err.message)
@@ -188,7 +231,7 @@ export default function EditInventoryItemPage() {
         return
       }
 
-      // Update inventory item
+      // Update food item
       const { error: updateError } = await supabase
         .from('inventory_items')
         .update({
@@ -263,7 +306,7 @@ export default function EditInventoryItemPage() {
           quantity_delta: -item.quantity,
           unit_cost: item.cost ? item.cost / item.quantity : 0,
           total_value: item.cost || 0,
-          notes: `Item marked as used/consumed`,
+          notes: `Food marked as used/consumed`,
           source_action: 'manual_consume'
         }])
 
@@ -271,7 +314,7 @@ export default function EditInventoryItemPage() {
         console.warn('Failed to log audit trail:', auditError)
       }
 
-      // Delete the inventory item (or set quantity to 0)
+      // Delete the food item (or set quantity to 0)
       const { error: deleteError } = await supabase
         .from('inventory_items')
         .delete()
@@ -279,7 +322,7 @@ export default function EditInventoryItemPage() {
 
       if (deleteError) throw deleteError
 
-      console.log('✅ Item marked as used and logged for stats')
+      console.log('✅ Food marked as used and logged for stats')
       setSuccess(true)
       setMarkUsedDialogOpen(false)
 
@@ -313,7 +356,7 @@ export default function EditInventoryItemPage() {
           quantity_before: item.quantity,
           quantity_after: 0,
           quantity_delta: -item.quantity,
-          notes: `Item deleted (data entry error or AI mistake)`,
+          notes: `Food deleted (data entry error or AI mistake)`,
           source_action: 'manual_delete'
         }])
 
@@ -321,7 +364,7 @@ export default function EditInventoryItemPage() {
         console.warn('Failed to log audit trail:', auditError)
       }
 
-      // Delete the inventory item
+      // Delete the food item
       const { error: deleteError } = await supabase
         .from('inventory_items')
         .delete()
@@ -329,7 +372,7 @@ export default function EditInventoryItemPage() {
 
       if (deleteError) throw deleteError
 
-      console.log('🗑️ Item deleted from inventory')
+      console.log('🗑️ Food deleted from pantry')
       setDeleteDialogOpen(false)
 
       // Navigate back immediately
@@ -375,7 +418,7 @@ export default function EditInventoryItemPage() {
     return (
       <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center' }}>
         <CircularProgress />
-        <Typography sx={{ mt: 2 }}>Loading item details...</Typography>
+        <Typography sx={{ mt: 2 }}>Loading food details...</Typography>
       </Container>
     )
   }
@@ -390,7 +433,7 @@ export default function EditInventoryItemPage() {
           startIcon={<ArrowBackIcon />}
           onClick={() => router.back()}
         >
-          Back to Inventory
+          Back to Pantry
         </Button>
       </Container>
     )
@@ -399,12 +442,12 @@ export default function EditInventoryItemPage() {
   if (!item) {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Typography>Item not found</Typography>
+        <Typography>Food item not found</Typography>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => router.back()}
         >
-          Back to Inventory
+          Back to Pantry
         </Button>
       </Container>
     )
@@ -422,7 +465,7 @@ export default function EditInventoryItemPage() {
         </Button>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom>
-            Edit Inventory Item
+            Edit Food Item
           </Typography>
           <Typography variant="body1" color="textSecondary">
             Adjust purchase date, price, and other details
@@ -438,7 +481,7 @@ export default function EditInventoryItemPage() {
 
       {success && (
         <Alert severity="success" sx={{ mb: 3 }}>
-          Item updated successfully! Returning to inventory...
+          Food item updated successfully! Returning to pantry...
         </Alert>
       )}
 
@@ -516,7 +559,7 @@ export default function EditInventoryItemPage() {
               startIcon={<DeleteIcon />}
               onClick={() => setDeleteDialogOpen(true)}
             >
-              Delete Item
+              Delete Food Item
             </Button>
           </Box>
         </CardContent>
@@ -527,7 +570,7 @@ export default function EditInventoryItemPage() {
         <CardContent>
           <Typography variant="h6" gutterBottom>
             <EditIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Item Details
+            Food Details
           </Typography>
 
           <Grid container spacing={3}>
@@ -614,9 +657,30 @@ export default function EditInventoryItemPage() {
                 >
                   {availableLocations.map((location) => (
                     <MenuItem key={location.id} value={location.id}>
-                      <Box display="flex" alignItems="center" gap={1}>
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        gap={1}
+                        sx={{ pl: location.level ? location.level * 3 : 0 }}
+                      >
+                        {location.level > 0 && (
+                          <Box
+                            component="span"
+                            sx={{
+                              color: 'text.secondary',
+                              fontSize: '0.875rem',
+                              mr: 0.5
+                            }}
+                          >
+                            └─
+                          </Box>
+                        )}
                         <LocationIcon fontSize="small" />
-                        {location.name}
+                        <Typography
+                          fontWeight={location.level === 0 ? 600 : 400}
+                        >
+                          {location.name}
+                        </Typography>
                         <Typography variant="caption" color="textSecondary">
                           ({location.type})
                         </Typography>
@@ -678,7 +742,7 @@ export default function EditInventoryItemPage() {
         <CardContent>
           <Typography variant="h6" gutterBottom>
             <HistoryIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Item History
+            Food History
           </Typography>
           <Box sx={{ backgroundColor: 'grey.50', p: 2, borderRadius: 1 }}>
             <Typography variant="body2" color="textSecondary">
@@ -690,7 +754,7 @@ export default function EditInventoryItemPage() {
               </Typography>
             )}
             <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
-              Full audit trail available in inventory management system
+              Full audit trail available in pantry management system
             </Typography>
           </Box>
         </CardContent>
@@ -706,16 +770,16 @@ export default function EditInventoryItemPage() {
         <DialogTitle>
           <Box display="flex" alignItems="center" gap={1}>
             <CheckCircleIcon color="success" />
-            Mark Item as Used
+            Mark Food as Used
           </Box>
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to mark this item as used? This will:
+            Are you sure you want to mark this food as used? This will:
           </DialogContentText>
           <Box sx={{ mt: 2, pl: 2 }}>
             <Typography variant="body2" component="li">
-              Remove the item from your inventory
+              Remove the food from your pantry
             </Typography>
             <Typography variant="body2" component="li">
               Log the consumption for budget tracking
@@ -725,7 +789,7 @@ export default function EditInventoryItemPage() {
             </Typography>
           </Box>
           <Alert severity="info" sx={{ mt: 2 }}>
-            Item: <strong>{item?.products?.name}</strong> ({item?.quantity} {item?.unit})
+            Food: <strong>{item?.products?.name}</strong> ({item?.quantity} {item?.unit})
             {item?.cost && (
               <Box>Value: <strong>${item.cost.toFixed(2)}</strong></Box>
             )}
@@ -757,20 +821,20 @@ export default function EditInventoryItemPage() {
         <DialogTitle>
           <Box display="flex" alignItems="center" gap={1}>
             <DeleteIcon color="error" />
-            Delete Item
+            Delete Food Item
           </Box>
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this item? This action cannot be undone.
+            Are you sure you want to delete this food item? This action cannot be undone.
           </DialogContentText>
           <Alert severity="warning" sx={{ mt: 2 }}>
-            This should only be used if the item was added by mistake or AI incorrectly identified it.
-            If you've consumed the item, use "Mark as Used" instead.
+            This should only be used if the food was added by mistake or AI incorrectly identified it.
+            If you've consumed the food, use "Mark as Used" instead.
           </Alert>
           <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
             <Typography variant="body2">
-              Item: <strong>{item?.products?.name}</strong>
+              Food: <strong>{item?.products?.name}</strong>
             </Typography>
             <Typography variant="body2">
               Quantity: {item?.quantity} {item?.unit}
@@ -791,7 +855,7 @@ export default function EditInventoryItemPage() {
             disabled={deleting}
             startIcon={deleting ? <CircularProgress size={20} /> : <DeleteIcon />}
           >
-            {deleting ? 'Deleting...' : 'Delete Item'}
+            {deleting ? 'Deleting...' : 'Delete Food Item'}
           </Button>
         </DialogActions>
       </Dialog>

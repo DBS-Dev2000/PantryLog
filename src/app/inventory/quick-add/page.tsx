@@ -712,11 +712,11 @@ function QuickAddPageContent() {
                     <TextField
                       {...params}
                       inputRef={productInputRef}
-                      label="Product Search or Barcode"
-                      placeholder="Search products, scan barcode, or use AI"
+                      label={isMobile ? "Search/Scan Product" : "Product Search or Barcode"}
+                      placeholder={isMobile ? "Search or scan..." : "Search products, scan barcode, or use AI"}
                       InputProps={{
                         ...params.InputProps,
-                        endAdornment: (
+                        endAdornment: isMobile ? params.InputProps.endAdornment : (
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             {params.InputProps.endAdornment}
                             <IconButton onClick={() => setShowBarcodeScanner(true)} title="Scan Barcode">
@@ -750,34 +750,83 @@ function QuickAddPageContent() {
                   )}
                 />
 
-                <Box display="flex" gap={1} flexWrap="wrap">
-                  <Button
-                    variant="contained"
-                    onClick={() => lookupProduct(productBarcode)}
-                    disabled={!productBarcode || lookupLoading}
-                    startIcon={lookupLoading ? <CircularProgress size={20} /> : <ScannerIcon />}
-                  >
-                    {lookupLoading ? 'Looking up...' : 'Lookup'}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    onClick={() => router.push('/inventory/add?manual=true')}
-                    startIcon={<EditIcon />}
-                    color="info"
-                  >
-                    Manual Add
-                  </Button>
-                  {voiceAssistantEnabled && (
+                {/* Mobile-optimized button layout */}
+                {isMobile ? (
+                  <Box>
+                    <Box display="flex" gap={1} mb={1}>
+                      <IconButton
+                        onClick={() => setShowBarcodeScanner(true)}
+                        color="primary"
+                        sx={{
+                          border: '1px solid',
+                          borderColor: 'primary.main',
+                          borderRadius: 1,
+                          flex: 1
+                        }}
+                      >
+                        <CameraIcon />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => setShowVisualScanner(true)}
+                        color="secondary"
+                        sx={{
+                          border: '1px solid',
+                          borderColor: 'secondary.main',
+                          borderRadius: 1,
+                          flex: 1
+                        }}
+                      >
+                        <EyeIcon />
+                      </IconButton>
+                      <Button
+                        variant="contained"
+                        onClick={() => lookupProduct(productBarcode)}
+                        disabled={!productBarcode || lookupLoading}
+                        sx={{ flex: 2 }}
+                      >
+                        {lookupLoading ? 'Looking...' : 'Lookup'}
+                      </Button>
+                    </Box>
                     <Button
                       variant="outlined"
-                      onClick={() => setVoiceAssistantOpen(true)}
-                      startIcon={<VoiceIcon />}
-                      color="secondary"
+                      onClick={() => router.push('/inventory/add?manual=true')}
+                      startIcon={<EditIcon />}
+                      fullWidth
+                      size="small"
                     >
-                      Voice Add
+                      Manual Add
                     </Button>
-                  )}
-                </Box>
+                  </Box>
+                ) : (
+                  <Box display="flex" gap={1} flexWrap="wrap">
+                    <Button
+                      variant="contained"
+                      onClick={() => lookupProduct(productBarcode)}
+                      disabled={!productBarcode || lookupLoading}
+                      startIcon={lookupLoading ? <CircularProgress size={20} /> : <ScannerIcon />}
+                    >
+                      {lookupLoading ? 'Looking up...' : 'Lookup'}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={() => router.push('/inventory/add?manual=true')}
+                      startIcon={<EditIcon />}
+                      color="info"
+                    >
+                      Manual Add
+                    </Button>
+                    {voiceAssistantEnabled && !isMobile && (
+                      <Button
+                        variant="outlined"
+                        onClick={() => setVoiceAssistantOpen(true)}
+                        startIcon={<VoiceIcon />}
+                        color="secondary"
+                      >
+                        Voice Add
+                      </Button>
+                    )}
+                  </Box>
+                )}
 
                 {productData && (
                   <Paper sx={{ p: 2, mt: 2, backgroundColor: 'success.light', color: 'success.contrastText' }}>

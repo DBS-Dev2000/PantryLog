@@ -35,7 +35,9 @@ import {
   ListItemSecondaryAction,
   Tooltip,
   Fab,
-  Divider
+  Divider,
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
 import {
   CalendarMonth,
@@ -97,6 +99,8 @@ interface PlannedMeal {
 
 export default function MealPlannerPage() {
   const router = useRouter()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [loading, setLoading] = useState(true)
   const [plans, setPlans] = useState<MealPlan[]>([])
   const [currentPlan, setCurrentPlan] = useState<MealPlan | null>(null)

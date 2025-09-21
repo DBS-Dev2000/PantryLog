@@ -814,11 +814,11 @@ function QuickUsePageContent() {
                         <TextField
                           {...params}
                           inputRef={itemInputRef}
-                          label="Product in Your Pantry"
-                          placeholder="Search inventory, scan barcode, or use AI"
+                          label={isMobile ? "Search Pantry" : "Product in Your Pantry"}
+                          placeholder={isMobile ? "Search or scan..." : "Search inventory, scan barcode, or use AI"}
                           InputProps={{
                             ...params.InputProps,
-                            endAdornment: (
+                            endAdornment: isMobile ? params.InputProps.endAdornment : (
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 {params.InputProps.endAdornment}
                                 <IconButton onClick={() => setShowBarcodeScanner(true)} title="Scan Barcode">
@@ -852,14 +852,52 @@ function QuickUsePageContent() {
                       )}
                     />
 
-                    <Button
-                      variant="contained"
-                      onClick={() => lookupProduct(itemBarcode)}
-                      disabled={!itemBarcode || lookupLoading}
-                      startIcon={lookupLoading ? <CircularProgress size={20} /> : <ScannerIcon />}
-                    >
-                      {lookupLoading ? 'Looking up...' : 'Find Product'}
-                    </Button>
+                    {/* Mobile-optimized button layout */}
+                    {isMobile ? (
+                      <Box display="flex" gap={1}>
+                        <IconButton
+                          onClick={() => setShowBarcodeScanner(true)}
+                          color="primary"
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'primary.main',
+                            borderRadius: 1,
+                            flex: 1
+                          }}
+                        >
+                          <CameraIcon />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => setShowVisualScanner(true)}
+                          color="secondary"
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'secondary.main',
+                            borderRadius: 1,
+                            flex: 1
+                          }}
+                        >
+                          <EyeIcon />
+                        </IconButton>
+                        <Button
+                          variant="contained"
+                          onClick={() => lookupProduct(itemBarcode)}
+                          disabled={!itemBarcode || lookupLoading}
+                          sx={{ flex: 2 }}
+                        >
+                          {lookupLoading ? 'Looking...' : 'Find'}
+                        </Button>
+                      </Box>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        onClick={() => lookupProduct(itemBarcode)}
+                        disabled={!itemBarcode || lookupLoading}
+                        startIcon={lookupLoading ? <CircularProgress size={20} /> : <ScannerIcon />}
+                      >
+                        {lookupLoading ? 'Looking up...' : 'Find Product'}
+                      </Button>
+                    )}
                   </Box>
                 )}
 
