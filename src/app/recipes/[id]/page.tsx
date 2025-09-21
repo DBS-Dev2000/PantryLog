@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Container,
   Typography,
@@ -28,7 +28,9 @@ import {
   Select,
   MenuItem,
   Checkbox,
-  FormControlLabel
+  FormControlLabel,
+  Rating,
+  CircularProgress
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -44,10 +46,14 @@ import {
   Edit as EditIcon,
   ShoppingCart as ShoppingIcon,
   Add as AddIcon,
-  Nature as NatureIcon
+  Nature as NatureIcon,
+  Comment as CommentIcon,
+  PhotoCamera as CameraIcon,
+  Send as SendIcon
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { format } from 'date-fns'
 
 interface RecipeDetail {
   id: string
@@ -66,6 +72,8 @@ interface RecipeDetail {
   cuisine?: string
   tags?: string[]
   rating?: number
+  average_rating?: number
+  total_ratings?: number
   is_favorite: boolean
   times_made: number
   recipe_categories?: {
@@ -83,6 +91,35 @@ interface Ingredient {
   available_quantity?: number
 }
 
+interface RecipeRating {
+  id: string
+  rating: number
+  family_member_id: string
+  family_members: {
+    name: string
+  }
+  created_at: string
+}
+
+interface RecipeComment {
+  id: string
+  comment: string
+  image_url?: string
+  family_member_id: string
+  family_members: {
+    name: string
+  }
+  created_at: string
+}
+
+interface FamilyMember {
+  id: string
+  name: string
+  household_id: string
+  can_edit_recipes: boolean
+  role: string
+}
+
 export default function RecipeDetailPage() {
   const router = useRouter()
   const params = useParams()
@@ -98,6 +135,20 @@ export default function RecipeDetailPage() {
   const [deleting, setDeleting] = useState(false)
   const [shoppingDialog, setShoppingDialog] = useState(false)
   const [shoppingLists, setShoppingLists] = useState<any[]>([])
+
+  // Rating and comments state
+  const [currentUserRating, setCurrentUserRating] = useState<number>(0)
+  const [ratings, setRatings] = useState<RecipeRating[]>([])
+  const [comments, setComments] = useState<RecipeComment[]>([])
+  const [newComment, setNewComment] = useState('')
+  const [commentImage, setCommentImage] = useState<File | null>(null)
+  const [commentImagePreview, setCommentImagePreview] = useState<string>('')
+  const [currentFamilyMember, setCurrentFamilyMember] = useState<FamilyMember | null>(null)
+  const [showCommentDialog, setShowCommentDialog] = useState(false)
+  const [canEditRecipe, setCanEditRecipe] = useState(false)
+
+  // File upload refs
+  const commentImageUploadRef = useRef<HTMLInputElement>(null)
   const [selectedShoppingList, setSelectedShoppingList] = useState('')
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
   const [ingredientSubstitutions, setIngredientSubstitutions] = useState<{[key: string]: string}>({})
@@ -111,6 +162,8 @@ export default function RecipeDetailPage() {
       if (session?.user) {
         setUser(session.user)
         await loadRecipeData(session.user.id)
+        await loadCurrentFamilyMember(session.user.id)
+        await loadRatingsAndComments()
       } else {
         router.push('/auth')
       }
@@ -214,6 +267,165 @@ export default function RecipeDetailPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadCurrentFamilyMember = async (userId: string) => {
+    try {
+      // Get household from households table
+      const { data: householdData } = await supabase
+        .from('households')
+        .select('id')
+        .eq('id', userId)
+        .single()
+
+      const householdId = householdData?.id || userId
+
+      // Get the family member for this user
+      const { data: memberData, error } = await supabase
+        .from('family_members')
+        .select('id, name, household_id, can_edit_recipes, role')
+        .eq('household_id', householdId)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single()
+
+      if (error) {
+        console.log('Could not load family member:', error)
+        return
+      }
+
+      setCurrentFamilyMember(memberData)
+      setCanEditRecipe(memberData?.can_edit_recipes || false)
+    } catch (err) {
+      console.error('Error loading current family member:', err)
+    }
+  }
+
+  const loadRatingsAndComments = async () => {
+    try {
+      // Load ratings
+      const { data: ratingsData, error: ratingsError } = await supabase
+        .from('recipe_ratings')
+        .select(`
+          id,
+          rating,
+          family_member_id,
+          created_at,
+          family_members(name)
+        `)
+        .eq('recipe_id', recipeId)
+        .order('created_at', { ascending: false })
+
+      if (!ratingsError && ratingsData) {
+        setRatings(ratingsData)
+
+        // Find current user's rating if they have one
+        if (currentFamilyMember && ratingsData) {
+          const userRating = ratingsData.find(r => r.family_member_id === currentFamilyMember.id)
+          setCurrentUserRating(userRating?.rating || 0)
+        }
+      }
+
+      // Load comments
+      const { data: commentsData, error: commentsError } = await supabase
+        .from('recipe_comments')
+        .select(`
+          id,
+          comment,
+          image_url,
+          family_member_id,
+          created_at,
+          family_members(name)
+        `)
+        .eq('recipe_id', recipeId)
+        .order('created_at', { ascending: false })
+
+      if (!commentsError && commentsData) {
+        setComments(commentsData)
+      }
+    } catch (err) {
+      console.error('Error loading ratings and comments:', err)
+    }
+  }
+
+  const handleRatingChange = async (newRating: number) => {
+    if (!currentFamilyMember || !user) return
+
+    try {
+      const { error } = await supabase
+        .from('recipe_ratings')
+        .upsert({
+          recipe_id: recipeId,
+          family_member_id: currentFamilyMember.id,
+          household_id: currentFamilyMember.household_id || user.id,
+          rating: newRating
+        })
+
+      if (error) throw error
+
+      setCurrentUserRating(newRating)
+      loadRatingsAndComments() // Reload to update display
+    } catch (err: any) {
+      console.error('Error saving rating:', err)
+      setError('Failed to save rating')
+    }
+  }
+
+  const handleCommentSubmit = async () => {
+    if (!newComment.trim() || !currentFamilyMember || !user) return
+
+    try {
+      let commentImageUrl = ''
+
+      // Upload comment image if provided
+      if (commentImage) {
+        const fileExt = commentImage.name.split('.').pop()
+        const fileName = `comment-${Date.now()}.${fileExt}`
+        const filePath = `recipe-comments/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('recipe-images')
+          .upload(filePath, commentImage)
+
+        if (uploadError) throw uploadError
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('recipe-images')
+          .getPublicUrl(filePath)
+
+        commentImageUrl = publicUrl
+      }
+
+      const { error } = await supabase
+        .from('recipe_comments')
+        .insert({
+          recipe_id: recipeId,
+          family_member_id: currentFamilyMember.id,
+          household_id: currentFamilyMember.household_id || user.id,
+          comment: newComment,
+          image_url: commentImageUrl
+        })
+
+      if (error) throw error
+
+      setNewComment('')
+      setCommentImage(null)
+      setCommentImagePreview('')
+      setShowCommentDialog(false)
+      loadRatingsAndComments() // Reload comments
+    } catch (err: any) {
+      console.error('Error saving comment:', err)
+      setError('Failed to save comment')
+    }
+  }
+
+  const handleCommentImageSelect = (file: File) => {
+    setCommentImage(file)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setCommentImagePreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
   }
 
   const getAvailabilityColor = (status: string) => {
@@ -389,13 +601,15 @@ export default function RecipeDetailPage() {
             {recipe.name || recipe.title}
           </Typography>
         </Box>
-        <Button
-          startIcon={<EditIcon />}
-          onClick={() => router.push(`/recipes/edit/${recipeId}`)}
-          sx={{ mr: 1 }}
-        >
-          Edit
-        </Button>
+        {canEditRecipe && (
+          <Button
+            startIcon={<EditIcon />}
+            onClick={() => router.push(`/recipes/edit/${recipeId}`)}
+            sx={{ mr: 1 }}
+          >
+            Edit
+          </Button>
+        )}
         <Button
           startIcon={<DeleteIcon />}
           onClick={() => setDeleteDialog(true)}
@@ -482,8 +696,9 @@ export default function RecipeDetailPage() {
                       border: '1px solid #ddd'
                     }}
                     onError={(e) => {
-                      console.log('❌ Recipe image failed to load:', recipe.image_url)
-                      e.currentTarget.style.display = 'none'
+                      console.log('⚠️ Recipe image failed to load:', recipe.image_url)
+                      // Instead of hiding, show a placeholder
+                      e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"%3E%3Crect width="400" height="200" fill="%23f5f5f5"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="%23999"%3EImage not available%3C/text%3E%3C/svg%3E'
                     }}
                   />
                 </Box>
@@ -792,6 +1007,179 @@ export default function RecipeDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Ratings & Reviews Section */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <StarIcon /> Ratings & Reviews
+          </Typography>
+
+          {/* Average Rating Display */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+            <Rating
+              value={recipe.average_rating || 0}
+              readOnly
+              precision={0.1}
+              size="large"
+            />
+            <Typography variant="h6" sx={{ ml: 2 }}>
+              {(recipe.average_rating || 0).toFixed(1)}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+              ({recipe.total_ratings || 0} {recipe.total_ratings === 1 ? 'rating' : 'ratings'})
+            </Typography>
+          </Box>
+
+          {/* User's Rating */}
+          {currentFamilyMember && (
+            <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Your Rating
+              </Typography>
+              <Rating
+                value={currentUserRating}
+                onChange={(_, value) => handleRatingChange(value || 0)}
+                size="large"
+              />
+            </Box>
+          )}
+
+          {/* Comments Section */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">
+              Comments ({comments.length})
+            </Typography>
+            <Button
+              startIcon={<CommentIcon />}
+              onClick={() => setShowCommentDialog(true)}
+              variant="outlined"
+              disabled={!currentFamilyMember}
+            >
+              Add Comment
+            </Button>
+          </Box>
+
+          {/* Comments List */}
+          <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
+            {comments.map((comment) => (
+              <Paper key={comment.id} sx={{ mb: 2, p: 2 }} elevation={1}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Avatar sx={{ width: 32, height: 32, mr: 1, bgcolor: 'primary.main' }}>
+                    {comment.family_members.name.charAt(0)}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="subtitle2">
+                      {comment.family_members.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {format(new Date(comment.created_at), 'MMM d, yyyy h:mm a')}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Typography variant="body1" sx={{ mb: 1 }}>
+                  {comment.comment}
+                </Typography>
+                {comment.image_url && (
+                  <Box sx={{ mt: 2 }}>
+                    <img
+                      src={comment.image_url}
+                      alt="Comment"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '200px',
+                        borderRadius: '8px',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  </Box>
+                )}
+              </Paper>
+            ))}
+            {comments.length === 0 && (
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                No comments yet. Be the first to share your thoughts about this recipe!
+              </Typography>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* Comment Dialog */}
+      <Dialog open={showCommentDialog} onClose={() => setShowCommentDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Add Comment</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="Your comment"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            sx={{ mb: 2, mt: 1 }}
+          />
+
+          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<CameraIcon />}
+              onClick={() => commentImageUploadRef.current?.click()}
+              size="small"
+            >
+              Add Photo
+            </Button>
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              ref={commentImageUploadRef}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleCommentImageSelect(file)
+              }}
+            />
+          </Box>
+
+          {commentImagePreview && (
+            <Box sx={{ mb: 2, textAlign: 'center' }}>
+              <img
+                src={commentImagePreview}
+                alt="Comment preview"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '200px',
+                  borderRadius: '8px',
+                  objectFit: 'cover'
+                }}
+              />
+              <Box sx={{ mt: 1 }}>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    setCommentImage(null)
+                    setCommentImagePreview('')
+                  }}
+                >
+                  Remove Photo
+                </Button>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowCommentDialog(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCommentSubmit}
+            variant="contained"
+            startIcon={<SendIcon />}
+            disabled={!newComment.trim()}
+          >
+            Post Comment
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)} maxWidth="sm" fullWidth>

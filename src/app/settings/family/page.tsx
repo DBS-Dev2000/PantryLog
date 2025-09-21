@@ -29,7 +29,9 @@ import {
   ListItemSecondaryAction,
   FormControlLabel,
   Checkbox,
-  Autocomplete
+  Autocomplete,
+  Divider,
+  Tooltip
 } from '@mui/material'
 import {
   Add,
@@ -57,6 +59,11 @@ interface FamilyMember {
   food_allergies?: string[]
   preferred_cuisines?: string[]
   disliked_ingredients?: string[]
+  can_edit_recipes?: boolean
+  can_delete_items?: boolean
+  can_manage_shopping?: boolean
+  is_child?: boolean
+  role?: string
 }
 
 interface DietaryRestriction {
@@ -100,7 +107,12 @@ export default function FamilyMembersPage() {
     dietary_restrictions: [] as string[],
     food_allergies: [] as string[],
     preferred_cuisines: [] as string[],
-    disliked_ingredients: [] as string[]
+    disliked_ingredients: [] as string[],
+    can_edit_recipes: true,
+    can_delete_items: true,
+    can_manage_shopping: true,
+    is_child: false,
+    role: 'member'
   })
 
   useEffect(() => {
@@ -157,7 +169,12 @@ export default function FamilyMembersPage() {
         dietary_restrictions: member.dietary_restrictions || [],
         food_allergies: member.food_allergies || [],
         preferred_cuisines: member.preferred_cuisines || [],
-        disliked_ingredients: member.disliked_ingredients || []
+        disliked_ingredients: member.disliked_ingredients || [],
+        can_edit_recipes: member.can_edit_recipes !== false,
+        can_delete_items: member.can_delete_items !== false,
+        can_manage_shopping: member.can_manage_shopping !== false,
+        is_child: member.is_child || false,
+        role: member.role || 'member'
       })
     } else {
       setEditingMember(null)
@@ -169,7 +186,12 @@ export default function FamilyMembersPage() {
         dietary_restrictions: [],
         food_allergies: [],
         preferred_cuisines: [],
-        disliked_ingredients: []
+        disliked_ingredients: [],
+        can_edit_recipes: true,
+        can_delete_items: true,
+        can_manage_shopping: true,
+        is_child: false,
+        role: 'member'
       })
     }
     setDialogOpen(true)
@@ -286,17 +308,33 @@ export default function FamilyMembersPage() {
                     <Box>
                       <Typography variant="h6">{member.name}</Typography>
                       <Typography variant="body2" color="text.secondary">
+                        {member.role && member.role !== 'member' && `${member.role.charAt(0).toUpperCase() + member.role.slice(1)} • `}
                         {member.age_group && `${member.age_group.charAt(0).toUpperCase() + member.age_group.slice(1)}`}
                         {member.birth_date && ` • ${format(new Date(member.birth_date), 'MMM d, yyyy')}`}
                       </Typography>
-                      {member.is_primary_meal_planner && (
-                        <Chip
-                          size="small"
-                          label="Meal Planner"
-                          color="primary"
-                          sx={{ mt: 0.5 }}
-                        />
-                      )}
+                      <Box display="flex" gap={0.5} flexWrap="wrap" mt={0.5}>
+                        {member.is_primary_meal_planner && (
+                          <Chip
+                            size="small"
+                            label="Meal Planner"
+                            color="primary"
+                          />
+                        )}
+                        {member.is_child && (
+                          <Chip
+                            size="small"
+                            label="Child Account"
+                            color="secondary"
+                          />
+                        )}
+                        {member.role === 'admin' && (
+                          <Chip
+                            size="small"
+                            label="Admin"
+                            color="success"
+                          />
+                        )}
+                      </Box>
                     </Box>
                   </Box>
 
@@ -374,7 +412,7 @@ export default function FamilyMembersPage() {
 
                 {/* Disliked Ingredients */}
                 {member.disliked_ingredients && member.disliked_ingredients.length > 0 && (
-                  <Box>
+                  <Box mb={2}>
                     <Typography variant="subtitle2" gutterBottom>
                       Dislikes
                     </Typography>
@@ -391,6 +429,27 @@ export default function FamilyMembersPage() {
                     </Box>
                   </Box>
                 )}
+
+                {/* Permissions */}
+                <Box>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Permissions
+                  </Typography>
+                  <Box display="flex" gap={0.5} flexWrap="wrap">
+                    {member.can_edit_recipes !== false && (
+                      <Chip size="small" label="Can Edit Recipes" variant="outlined" />
+                    )}
+                    {member.can_delete_items !== false && (
+                      <Chip size="small" label="Can Delete Items" variant="outlined" />
+                    )}
+                    {member.can_manage_shopping !== false && (
+                      <Chip size="small" label="Can Manage Shopping" variant="outlined" />
+                    )}
+                    {member.can_edit_recipes === false && member.can_delete_items === false && (
+                      <Chip size="small" label="View Only" variant="outlined" color="warning" />
+                    )}
+                  </Box>
+                </Box>
               </CardContent>
             </Card>
           </Grid>
@@ -451,6 +510,100 @@ export default function FamilyMembersPage() {
                   />
                 }
                 label="Primary Meal Planner"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" gutterBottom>
+                Permissions
+              </Typography>
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.can_edit_recipes !== false}
+                    onChange={(e) => setFormData({ ...formData, can_edit_recipes: e.target.checked })}
+                  />
+                }
+                label="Can Edit Recipes"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.can_delete_items !== false}
+                    onChange={(e) => setFormData({ ...formData, can_delete_items: e.target.checked })}
+                  />
+                }
+                label="Can Delete Items"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.can_manage_shopping !== false}
+                    onChange={(e) => setFormData({ ...formData, can_manage_shopping: e.target.checked })}
+                  />
+                }
+                label="Can Manage Shopping"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Member Role</InputLabel>
+                <Select
+                  value={formData.role || 'member'}
+                  label="Member Role"
+                  onChange={(e) => {
+                    const role = e.target.value
+                    setFormData({
+                      ...formData,
+                      role,
+                      // Auto-set permissions based on role
+                      is_child: role === 'child',
+                      can_edit_recipes: role !== 'child',
+                      can_delete_items: role !== 'child' && role !== 'guest',
+                      can_manage_shopping: role !== 'child' && role !== 'guest'
+                    })
+                  }}
+                >
+                  <MenuItem value="admin">Admin</MenuItem>
+                  <MenuItem value="adult">Adult</MenuItem>
+                  <MenuItem value="teen">Teen</MenuItem>
+                  <MenuItem value="child">Child</MenuItem>
+                  <MenuItem value="guest">Guest</MenuItem>
+                  <MenuItem value="member">Member</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.is_child || false}
+                    onChange={(e) => {
+                      const isChild = e.target.checked
+                      setFormData({
+                        ...formData,
+                        is_child: isChild,
+                        // If marking as child, restrict permissions
+                        can_edit_recipes: isChild ? false : formData.can_edit_recipes,
+                        can_delete_items: isChild ? false : formData.can_delete_items,
+                        can_manage_shopping: isChild ? false : formData.can_manage_shopping,
+                        role: isChild ? 'child' : formData.role
+                      })
+                    }}
+                  />
+                }
+                label="Is Child (Restricts Permissions)"
               />
             </Grid>
 

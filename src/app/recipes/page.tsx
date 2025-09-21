@@ -34,7 +34,8 @@ import {
   CardActions,
   useTheme,
   useMediaQuery,
-  Stack
+  Stack,
+  Rating
 } from '@mui/material'
 import {
   Restaurant as RecipeIcon,
@@ -72,6 +73,8 @@ interface Recipe {
   youtube_video_id?: string
   image_url?: string
   rating?: number
+  average_rating?: number
+  total_ratings?: number
   times_made: number
   is_favorite: boolean
   tags: string[]
@@ -464,6 +467,10 @@ export default function RecipesPage() {
                     image={recipe.image_url}
                     alt={recipe.title}
                     sx={{ objectFit: 'cover' }}
+                    onError={(e: any) => {
+                      console.log('⚠️ Recipe image failed to load:', recipe.image_url)
+                      e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"%3E%3Crect width="400" height="200" fill="%23f5f5f5"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="%23999"%3ENo Image%3C/text%3E%3C/svg%3E'
+                    }}
                   />
                 )}
 
@@ -503,7 +510,7 @@ export default function RecipesPage() {
                     {recipe.description || 'No description available'}
                   </Typography>
 
-                  <Box display="flex" gap={2} mb={2}>
+                  <Box display="flex" gap={2} mb={2} flexWrap="wrap">
                     {recipe.prep_time_minutes && (
                       <Box display="flex" alignItems="center" gap={0.5}>
                         <TimerIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
@@ -525,6 +532,21 @@ export default function RecipesPage() {
                       </Typography>
                     </Box>
                   </Box>
+
+                  {/* Rating Display */}
+                  {(recipe.average_rating || recipe.total_ratings) && (
+                    <Box display="flex" alignItems="center" gap={1} mb={2}>
+                      <Rating
+                        value={recipe.average_rating || 0}
+                        readOnly
+                        size="small"
+                        precision={0.1}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {(recipe.average_rating || 0).toFixed(1)} ({recipe.total_ratings || 0})
+                      </Typography>
+                    </Box>
+                  )}
 
                   {recipe.tags && recipe.tags.length > 0 && (
                     <Box display="flex" gap={0.5} flexWrap="wrap">
