@@ -229,9 +229,16 @@ export default function MealPlannerPage() {
       }
       console.log('Sending request:', requestBody)
 
+      // Get the session token for authentication
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+
       const response = await fetch('/api/meal-planner/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
         body: JSON.stringify(requestBody)
       })
 

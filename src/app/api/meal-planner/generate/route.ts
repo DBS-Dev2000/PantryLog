@@ -1,10 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { headers } from 'next/headers'
 
 // Create untyped Supabase client for meal planning tables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Helper to create authenticated client
+function createAuthClient(req: NextRequest) {
+  // Get the authorization header from the request
+  const authorization = req.headers.get('authorization')
+
+  // Create client with auth context if available
+  if (authorization) {
+    return createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          authorization
+        }
+      }
+    })
+  }
+
+  // Otherwise create a regular client
+  return createClient(supabaseUrl, supabaseAnonKey)
+}
 
 // Simplified meal planning without AI for now
 async function generateMealSuggestions(prompt: string): Promise<string> {
@@ -40,6 +60,9 @@ interface HouseholdProfile {
 
 export async function POST(req: NextRequest) {
   try {
+    // Create authenticated client for this request
+    const supabase = createAuthClient(req)
+
     const {
       householdId,
       startDate,
@@ -53,15 +76,15 @@ export async function POST(req: NextRequest) {
     console.log('Generating meal plan:', { householdId, startDate, endDate, strategy })
 
     // Get household profile data
-    const profile = await getHouseholdProfile(householdId)
+    const profile = await getHouseholdProfile(householdId, supabase)
     console.log('Got household profile:', { membersCount: profile.members.length })
 
     // Get past meal history for variety analysis
-    const mealHistory = usePastMeals ? await getMealHistory(householdId, 30) : []
+    const mealHistory = usePastMeals ? await getMealHistory(householdId, 30, supabase) : []
     console.log('Got meal history:', mealHistory.length, 'meals')
 
     // Get current pantry inventory
-    const inventory = await getCurrentInventory(householdId)
+    const inventory = await getCurrentInventory(householdId, supabase)
     console.log('Got inventory:', inventory.length, 'items')
 
     // Get available recipes based on strategy
@@ -71,13 +94,13 @@ export async function POST(req: NextRequest) {
       recipes = await discoverNewRecipes(profile, options)
     } else if (strategy === 'recipes') {
       // Use only saved recipes
-      recipes = await getAvailableRecipes(householdId)
+      recipes = await getAvailableRecipes(householdId, supabase)
     } else if (strategy === 'pantry') {
       // Get recipes that can be made with current inventory
-      recipes = await getRecipesForInventory(householdId, inventory)
+      recipes = await getRecipesForInventory(householdId, inventory, supabase)
     } else {
       // Auto mode - mix of saved recipes and inventory-based
-      recipes = await getAvailableRecipes(householdId)
+      recipes = await getAvailableRecipes(householdId, supabase)
     }
     console.log('Got recipes:', recipes.length, 'available')
 
@@ -101,7 +124,7 @@ export async function POST(req: NextRequest) {
     console.log('Generated meal plan with', mealPlan.length, 'meals')
 
     // Save the meal plan to database
-    const savedPlan = await saveMealPlan(householdId, mealPlan)
+    const savedPlan = await saveMealPlan(householdId, mealPlan, supabase)
     console.log('Saved meal plan with ID:', savedPlan.id)
 
     return NextResponse.json({
@@ -124,7 +147,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function getHouseholdProfile(householdId: string): Promise<HouseholdProfile> {
+async function getHouseholdProfile(householdId: string, supabase: any): Promise<HouseholdProfile> {
   const [members, restrictions, preferences, schedule, mealPrefs] = await Promise.all([
     supabase.from('family_members')
       .select('*')
@@ -161,7 +184,7 @@ async function getHouseholdProfile(householdId: string): Promise<HouseholdProfil
   }
 }
 
-async function getMealHistory(householdId: string, daysBack: number) {
+async function getMealHistory(householdId: string, daysBack: number, supabase: any) {
   const startDate = new Date()
   startDate.setDate(startDate.getDate() - daysBack)
 
@@ -181,7 +204,7 @@ async function getMealHistory(householdId: string, daysBack: number) {
   return data || []
 }
 
-async function getCurrentInventory(householdId: string) {
+async function getCurrentInventory(householdId: string, supabase: any) {
   const { data } = await supabase
     .from('inventory_items')
     .select(`
@@ -195,7 +218,7 @@ async function getCurrentInventory(householdId: string) {
   return data || []
 }
 
-async function getAvailableRecipes(householdId: string) {
+async function getAvailableRecipes(householdId: string, supabase: any) {
   // First try to get household recipes
   const { data: recipes, error } = await supabase
     .from('recipes')
@@ -258,7 +281,7 @@ Format as JSON array with: name, description, prep_time_minutes, cook_time_minut
   }
 }
 
-async function getRecipesForInventory(householdId: string, inventory: any[]) {
+async function getRecipesForInventory(householdId: string, inventory: any[], supabase: any) {
   // Get recipes that can be made with current inventory
   const { data: recipes, error } = await supabase
     .from('recipes')
@@ -528,7 +551,7 @@ function generateBasicMealPlan(startDate: string, endDate: string, recipes: any[
   return plan
 }
 
-async function saveMealPlan(householdId: string, mealPlan: any[]) {
+async function saveMealPlan(householdId: string, mealPlan: any[], supabase: any) {
   if (!mealPlan || mealPlan.length === 0) {
     throw new Error('Cannot save empty meal plan')
   }
