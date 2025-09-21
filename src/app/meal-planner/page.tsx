@@ -198,28 +198,43 @@ export default function MealPlannerPage() {
   }
 
   const handleGeneratePlan = async () => {
+    console.log('Generate plan clicked')
     setGenerating(true)
+    setError('')
+    setSuccess('')
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      console.log('Got user:', user?.id)
+      if (!user) {
+        console.error('No user found')
+        setError('Please sign in to generate a meal plan')
+        setGenerating(false)
+        return
+      }
 
       const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 })
       const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 1 })
+      console.log('Generating for dates:', format(weekStart, 'yyyy-MM-dd'), 'to', format(weekEnd, 'yyyy-MM-dd'))
+
+      const requestBody = {
+        householdId: user.id,
+        startDate: format(weekStart, 'yyyy-MM-dd'),
+        endDate: format(weekEnd, 'yyyy-MM-dd'),
+        strategy: generationStrategy,
+        options: generationOptions,
+        usePastMeals: generationStrategy !== 'discover',
+        includeStaples: true
+      }
+      console.log('Sending request:', requestBody)
 
       const response = await fetch('/api/meal-planner/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          householdId: user.id,
-          startDate: format(weekStart, 'yyyy-MM-dd'),
-          endDate: format(weekEnd, 'yyyy-MM-dd'),
-          strategy: generationStrategy,
-          options: generationOptions,
-          usePastMeals: generationStrategy !== 'discover',
-          includeStaples: true
-        })
+        body: JSON.stringify(requestBody)
       })
+
+      console.log('Response status:', response.status)
 
       if (!response.ok) {
         const errorData = await response.json()
@@ -843,7 +858,10 @@ export default function MealPlannerPage() {
           </Button>
           <Button
             variant="contained"
-            onClick={handleGeneratePlan}
+            onClick={() => {
+              console.log('Generate button in dialog clicked')
+              handleGeneratePlan()
+            }}
             disabled={generating}
             startIcon={generating ? <CircularProgress size={20} /> : <AutoAwesome />}
           >

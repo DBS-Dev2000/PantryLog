@@ -541,8 +541,8 @@ async function saveMealPlan(householdId: string, mealPlan: any[]) {
       name: `Week of ${mealPlan[0].date}`,
       start_date: mealPlan[0].date,
       end_date: mealPlan[mealPlan.length - 1].date,
-      status: 'draft',
-      total_prep_time: mealPlan.reduce((sum, m) => sum + (m.prepTime || 0), 0)
+      status: 'draft'
+      // Remove total_prep_time as it doesn't exist in the table
     })
     .select()
     .single()
