@@ -33,7 +33,8 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   Tooltip,
-  Fab
+  Fab,
+  Divider
 } from '@mui/material'
 import {
   CalendarMonth,
@@ -789,6 +790,39 @@ export default function MealPlannerPage() {
                   </Box>
                   <Typography variant="body2" color="text.secondary">
                     AI searches popular recipe sites for fresh meal ideas matching your preferences
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }}>OR</Divider>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Card
+                sx={{
+                  cursor: 'pointer',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'grey.50',
+                  transition: 'all 0.3s',
+                  '&:hover': { transform: 'translateY(-2px)', boxShadow: 2, bgcolor: 'grey.100' }
+                }}
+                onClick={() => {
+                  setGenerateDialogOpen(false)
+                  router.push('/meal-planner/manual')
+                }}
+              >
+                <CardContent>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <Edit color="action" />
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Create Manual Plan
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Build your meal plan manually without AI - add your own meals exactly as you want them
                   </Typography>
                 </CardContent>
               </Card>
