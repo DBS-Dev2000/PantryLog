@@ -59,7 +59,7 @@ const baseNavigation = [
   { name: 'Stock Up', href: '/inventory/quick-add', icon: QrCodeScanner, feature: 'barcode_scanning' },
   { name: 'Grab & Go', href: '/inventory/quick-use', icon: Remove, feature: null },
   { name: 'Recipes', href: '/recipes', icon: Restaurant, feature: 'recipes_enabled' },
-  { name: 'Meal Planner', href: '/meal-planner', icon: CalendarMonth, feature: 'meal_planning' },
+  { name: 'Meal Planner', href: '/meal-planner', icon: CalendarMonth, feature: 'meal_planner_enabled' },
   { name: 'Shopping List', href: '/shopping', icon: ShoppingCart, feature: 'shopping_list_sharing' },
   { name: 'Receipt Scan', href: '/inventory/receipt', icon: Receipt, feature: 'ai_features_enabled' },
   { name: 'Help', href: '/help', icon: HelpIcon, feature: null },
