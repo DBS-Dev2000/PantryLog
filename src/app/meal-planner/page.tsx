@@ -67,7 +67,7 @@ import {
   NavigateNext
 } from '@mui/icons-material'
 import { supabase } from '@/lib/supabase'
-import { format, startOfWeek, endOfWeek, addDays } from 'date-fns'
+import { format, startOfWeek, endOfWeek, addDays, addWeeks, subWeeks } from 'date-fns'
 
 interface MealPlan {
   id: string
@@ -107,7 +107,9 @@ export default function MealPlannerPage() {
   const [plannedMeals, setPlannedMeals] = useState<PlannedMeal[]>([])
   const [tabValue, setTabValue] = useState(0)
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
-  const [selectedWeek, setSelectedWeek] = useState(new Date())
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(new Date())
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null)
+  const [dateRangeDialogOpen, setDateRangeDialogOpen] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [hasProfile, setHasProfile] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -225,14 +227,15 @@ export default function MealPlannerPage() {
 
       console.log('Got user:', user.id)
 
-      const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 0 }) // 0 = Sunday
-      const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 0 })
-      console.log('Generating for dates:', format(weekStart, 'yyyy-MM-dd'), 'to', format(weekEnd, 'yyyy-MM-dd'))
+      // Use selected date range or default to current week
+      const startDate = selectedStartDate || startOfWeek(new Date(), { weekStartsOn: 0 })
+      const endDate = selectedEndDate || endOfWeek(new Date(), { weekStartsOn: 0 })
+      console.log('Generating for dates:', format(startDate, 'yyyy-MM-dd'), 'to', format(endDate, 'yyyy-MM-dd'))
 
       const requestBody = {
         householdId: user.id,
-        startDate: format(weekStart, 'yyyy-MM-dd'),
-        endDate: format(weekEnd, 'yyyy-MM-dd'),
+        startDate: format(startDate, 'yyyy-MM-dd'),
+        endDate: format(endDate, 'yyyy-MM-dd'),
         strategy: generationStrategy,
         options: generationOptions,
         usePastMeals: generationStrategy !== 'discover',
@@ -381,14 +384,14 @@ export default function MealPlannerPage() {
         return
       }
 
-      const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 0 })
-      const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 0 })
+      const startDate = selectedStartDate || startOfWeek(new Date(), { weekStartsOn: 0 })
+      const endDate = selectedEndDate || endOfWeek(new Date(), { weekStartsOn: 0 })
 
       // Send confirmed meals to save
       const requestBody = {
         householdId: user.id,
-        startDate: format(weekStart, 'yyyy-MM-dd'),
-        endDate: format(weekEnd, 'yyyy-MM-dd'),
+        startDate: format(startDate, 'yyyy-MM-dd'),
+        endDate: format(endDate, 'yyyy-MM-dd'),
         strategy: generationStrategy,
         options: generationOptions,
         confirmMeals: confirmedMeals,
@@ -846,35 +849,31 @@ export default function MealPlannerPage() {
         <DialogContent>
           <Paper sx={{ p: 2, mt: 2, mb: 3 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Select Week for Meal Plan
+              Select Dates for Meal Plan
             </Typography>
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-              <IconButton
-                onClick={() => setSelectedWeek(prev => addDays(prev, -7))}
-              >
-                <NavigateBefore />
-              </IconButton>
-              <Box textAlign="center" sx={{ minWidth: 200 }}>
-                <Typography variant="h6">
-                  {format(startOfWeek(selectedWeek, { weekStartsOn: 0 }), 'MMM d')} -
-                  {' '}{format(endOfWeek(selectedWeek, { weekStartsOn: 0 }), 'MMM d, yyyy')}
+            <Box textAlign="center">
+              {selectedStartDate && selectedEndDate ? (
+                <Box>
+                  <Typography variant="h6">
+                    {format(selectedStartDate, 'MMM d')} - {format(selectedEndDate, 'MMM d, yyyy')}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {Math.floor((selectedEndDate.getTime() - selectedStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1} days
+                  </Typography>
+                </Box>
+              ) : (
+                <Typography variant="body1" color="text.secondary">
+                  No dates selected
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Sunday to Saturday
-                </Typography>
-              </Box>
-              <IconButton
-                onClick={() => setSelectedWeek(prev => addDays(prev, 7))}
-              >
-                <NavigateNext />
-              </IconButton>
-            </Box>
-            <Box textAlign="center" mt={1}>
+              )}
               <Button
-                size="small"
-                onClick={() => setSelectedWeek(new Date())}
+                variant="outlined"
+                startIcon={<CalendarMonth />}
+                onClick={() => setDateRangeDialogOpen(true)}
+                sx={{ mt: 2 }}
+                fullWidth
               >
-                Current Week
+                {selectedStartDate ? 'Change Dates' : 'Select Dates'}
               </Button>
             </Box>
           </Paper>
@@ -1097,9 +1096,22 @@ export default function MealPlannerPage() {
         open={previewDialogOpen}
         onClose={() => setPreviewDialogOpen(false)}
         plannedMeals={previewMeals}
-        weekStart={startOfWeek(selectedWeek, { weekStartsOn: 0 })}
+        weekStart={selectedStartDate || startOfWeek(new Date(), { weekStartsOn: 0 })}
         onConfirm={handleConfirmMealPlan}
         onRegenerateMeals={handleRegenerateMeals}
+      />
+
+      <DateRangePicker
+        open={dateRangeDialogOpen}
+        onClose={() => setDateRangeDialogOpen(false)}
+        onConfirm={(start, end) => {
+          setSelectedStartDate(start)
+          setSelectedEndDate(end)
+          setDateRangeDialogOpen(false)
+        }}
+        initialStartDate={selectedStartDate}
+        initialEndDate={selectedEndDate}
+        title="Select Meal Plan Dates"
       />
     </Container>
   )

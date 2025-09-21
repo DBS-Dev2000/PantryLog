@@ -19,7 +19,9 @@ import {
   IconButton,
   Backdrop,
   CircularProgress,
-  Paper
+  Paper,
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -49,6 +51,8 @@ interface RecipeStep {
 function CreateRecipePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [user, setUser] = useState<any>(null)
   const [categories, setCategories] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
@@ -407,22 +411,25 @@ function CreateRecipePageContent() {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Box display="flex" alignItems="center" mb={4}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => router.back()}
-          sx={{ mr: 2 }}
-        >
-          Back to Recipes
-        </Button>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
+      {/* Mobile-Responsive Header */}
+      <Box mb={4}>
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+          <IconButton onClick={() => router.back()} sx={{ flexShrink: 0 }}>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography
+            variant={isMobile ? "h5" : "h4"}
+            component="h1"
+            sx={{ flex: 1 }}
+          >
             Create Recipe
           </Typography>
-          <Typography variant="body1" color="textSecondary">
+        </Box>
+        {!isMobile && (
+          <Typography variant="body1" color="textSecondary" sx={{ ml: 6 }}>
             Add a new recipe to your PantryIQ collection
           </Typography>
-        </Box>
+        )}
       </Box>
 
       {error && (
@@ -441,13 +448,13 @@ function CreateRecipePageContent() {
             Import recipe from YouTube, AllRecipes, Food Network, or any recipe website
           </Typography>
 
-          <Box display="flex" gap={1} alignItems="flex-start">
+          <Box display="flex" gap={1} alignItems="flex-start" flexDirection={isMobile ? 'column' : 'row'}>
             <TextField
               label="Recipe URL"
               fullWidth
               value={importUrl}
               onChange={(e) => setImportUrl(e.target.value)}
-              placeholder="https://youtube.com/watch?v=... or https://allrecipes.com/..."
+              placeholder={isMobile ? "Paste recipe URL" : "https://youtube.com/watch?v=... or https://allrecipes.com/..."}
               size="small"
             />
             <Button
@@ -456,7 +463,8 @@ function CreateRecipePageContent() {
               disabled={!importUrl.trim() || importing}
               startIcon={importing ? <ImportIcon /> : <LinkIcon />}
               color="secondary"
-              sx={{ minWidth: 120 }}
+              fullWidth={isMobile}
+              sx={{ minWidth: isMobile ? 'auto' : 120 }}
             >
               {importing ? 'Importing...' : 'Import'}
             </Button>
