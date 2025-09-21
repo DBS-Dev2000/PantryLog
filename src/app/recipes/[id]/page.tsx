@@ -622,7 +622,7 @@ export default function RecipeDetailPage() {
         </Alert>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => router.back()}
+          onClick={() => router.push('/recipes')}
         >
           Back to Recipes
         </Button>
@@ -636,7 +636,7 @@ export default function RecipeDetailPage() {
         <Typography>Recipe not found</Typography>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => router.back()}
+          onClick={() => router.push('/recipes')}
         >
           Back to Recipes
         </Button>
@@ -691,7 +691,7 @@ export default function RecipeDetailPage() {
       <Box display="flex" alignItems="center" mb={4}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => router.back()}
+          onClick={() => router.push('/recipes')}
           sx={{ mr: 2 }}
         >
           Back to Recipes
