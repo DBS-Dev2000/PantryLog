@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUserHouseholdFeatures } from '@/lib/features'
 import MealPlanPreview from './components/MealPlanPreview'
+import DateRangePicker from './components/DateRangePicker'
 import {
   Box,
   Container,
