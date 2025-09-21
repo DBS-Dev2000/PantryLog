@@ -686,7 +686,7 @@ export default function RecipeDetailPage() {
               {recipe.image_url ? (
                 <Box>
                   <img
-                    src={recipe.image_url}
+                    src={recipe.image_url.replace('http://', 'https://')}
                     alt={recipe.name || recipe.title}
                     style={{
                       width: '100%',
@@ -696,11 +696,21 @@ export default function RecipeDetailPage() {
                       border: '1px solid #ddd'
                     }}
                     onError={(e) => {
-                      console.log('⚠️ Recipe image failed to load:', recipe.image_url)
-                      // Instead of hiding, show a placeholder
-                      e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"%3E%3Crect width="400" height="200" fill="%23f5f5f5"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="%23999"%3EImage not available%3C/text%3E%3C/svg%3E'
+                      const target = e.currentTarget
+                      const originalSrc = recipe.image_url
+
+                      // If already tried HTTPS, show placeholder
+                      if (target.src.startsWith('https://')) {
+                        console.log('⚠️ Recipe image failed to load:', originalSrc)
+                        target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"%3E%3Crect width="400" height="200" fill="%23f5f5f5"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="%23999"%3EImage not available%3C/text%3E%3C/svg%3E'
+                      }
                     }}
                   />
+                  {recipe.source_url && (
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                      Image from: {new URL(recipe.source_url).hostname}
+                    </Typography>
+                  )}
                 </Box>
               ) : (
                 <Box

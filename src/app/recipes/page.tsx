@@ -464,12 +464,18 @@ export default function RecipesPage() {
                   <CardMedia
                     component="img"
                     height={isMobile ? "160" : "200"}
-                    image={recipe.image_url}
+                    image={recipe.image_url.replace('http://', 'https://')}
                     alt={recipe.title}
                     sx={{ objectFit: 'cover' }}
                     onError={(e: any) => {
-                      console.log('⚠️ Recipe image failed to load:', recipe.image_url)
-                      e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"%3E%3Crect width="400" height="200" fill="%23f5f5f5"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="%23999"%3ENo Image%3C/text%3E%3C/svg%3E'
+                      const target = e.currentTarget
+                      const originalSrc = recipe.image_url
+
+                      // If already tried HTTPS, show placeholder
+                      if (target.src.startsWith('https://')) {
+                        console.log('⚠️ Recipe image failed to load:', originalSrc)
+                        target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"%3E%3Crect width="400" height="200" fill="%23f5f5f5"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="%23999"%3ENo Image%3C/text%3E%3C/svg%3E'
+                      }
                     }}
                   />
                 )}
