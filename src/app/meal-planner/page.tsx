@@ -256,7 +256,7 @@ export default function MealPlannerPage() {
         options: generationOptions,
         usePastMeals: generationStrategy !== 'discover',
         includeStaples: true,
-        previewOnly: true // Request preview mode
+        previewOnly: false // Skip preview mode for now - save directly
       }
       console.log('Sending request:', requestBody)
 
