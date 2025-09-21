@@ -69,7 +69,8 @@ import {
   RadioButtonUnchecked,
   RadioButtonChecked,
   NavigateBefore,
-  NavigateNext
+  NavigateNext,
+  OpenInNew
 } from '@mui/icons-material'
 import { supabase } from '@/lib/supabase'
 import { format, startOfWeek, endOfWeek, addDays, addWeeks, subWeeks } from 'date-fns'
@@ -138,6 +139,9 @@ export default function MealPlannerPage() {
   const [selectedMeal, setSelectedMeal] = useState<PlannedMeal | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedMealType, setSelectedMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('dinner')
+  const [previewAddMealDialogOpen, setPreviewAddMealDialogOpen] = useState(false)
+  const [previewMealDate, setPreviewMealDate] = useState<Date | null>(null)
+  const [previewMealType, setPreviewMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('dinner')
   const [familyMembers, setFamilyMembers] = useState<any[]>([])
   const [selectedAttendees, setSelectedAttendees] = useState<string[]>([])
 
@@ -287,6 +291,19 @@ export default function MealPlannerPage() {
 
       if (result.success && result.preview) {
         // Show preview dialog with generated meals
+        console.log('Preview meals received:', result.meals)
+        console.log('Number of preview meals:', (result.meals || []).length)
+        console.log('Pantry scorecard:', result.pantryScorecard)
+        console.log('Option compliance:', result.optionCompliance)
+
+        // Store scorecards in session storage for display
+        if (result.pantryScorecard) {
+          sessionStorage.setItem('pantryScorecard', JSON.stringify(result.pantryScorecard))
+        }
+        if (result.optionCompliance) {
+          sessionStorage.setItem('optionCompliance', JSON.stringify(result.optionCompliance))
+        }
+
         setPreviewMeals(result.meals || [])
         setGenerateDialogOpen(false)
         setPreviewDialogOpen(true)
@@ -664,6 +681,111 @@ export default function MealPlannerPage() {
     }
   }
 
+  const handlePreviewAddMeal = (date: string, mealType: string) => {
+    setPreviewMealDate(new Date(date))
+    setPreviewMealType(mealType as 'breakfast' | 'lunch' | 'dinner' | 'snack')
+    setPreviewAddMealDialogOpen(true)
+  }
+
+  const handlePreviewEditMeal = (meal: any) => {
+    // Set the selected meal for editing
+    setSelectedMeal(meal)
+    setPreviewMealDate(new Date(meal.date))
+    setPreviewMealType(meal.mealType)
+    // Open the add meal dialog in edit mode with the meal data
+    setPreviewAddMealDialogOpen(true)
+  }
+
+  const handlePreviewMealAdded = async (mealData: any) => {
+    try {
+      if (selectedMeal) {
+        // Editing existing meal - update it
+        setPreviewMeals(prev => prev.map(meal => {
+          if ((meal.id && meal.id === selectedMeal.id) ||
+              (meal.date === selectedMeal.date && meal.mealType === selectedMeal.mealType)) {
+            return {
+              ...meal,
+              date: format(mealData.date, 'yyyy-MM-dd'),
+              mealType: mealData.mealType,
+              recipeId: mealData.recipeId,
+              customMealName: mealData.customName,
+              recipeName: mealData.recipeId ? 'Selected Recipe' : mealData.customName,
+              servings: mealData.servings,
+              notes: mealData.notes,
+              attendees: mealData.attendees,
+              dietaryNeeds: mealData.dietaryNeeds,
+              accepted: true
+            }
+          }
+          return meal
+        }))
+        setSelectedMeal(null)
+      } else {
+        // Adding new meal
+        const newMeal = {
+          id: `preview-${Date.now()}`,
+          date: format(mealData.date, 'yyyy-MM-dd'),
+          mealType: mealData.mealType,
+          recipeId: mealData.recipeId,
+          customMealName: mealData.customName,
+          recipeName: mealData.recipeId ? 'Selected Recipe' : mealData.customName,
+          servings: mealData.servings,
+          notes: mealData.notes,
+          attendees: mealData.attendees,
+          dietaryNeeds: mealData.dietaryNeeds,
+          accepted: true
+        }
+        setPreviewMeals(prev => [...prev, newMeal])
+      }
+
+      setPreviewAddMealDialogOpen(false)
+    } catch (error) {
+      console.error('Error adding/updating meal in preview:', error)
+    }
+  }
+
+  const handleAddToRecipes = async (meal: any) => {
+    try {
+      setLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setError('Please sign in to add recipes')
+        return
+      }
+
+      // Create a new recipe from the external meal data
+      const { data: newRecipe, error: recipeError } = await supabase
+        .from('recipes')
+        .insert({
+          household_id: user.id,
+          name: meal.recipeName || meal.customMealName,
+          description: meal.recipeSummary || '',
+          source_url: meal.recipeLink,
+          prep_time: meal.prepTime,
+          servings: meal.servings || 4,
+          tags: meal.dietaryNeeds || [],
+          rating: meal.recipeRating,
+          review_count: meal.recipeReviewCount,
+          image_url: meal.recipeImage
+        })
+        .select()
+        .single()
+
+      if (recipeError) {
+        console.error('Error adding recipe:', recipeError)
+        setError('Failed to add recipe to your collection')
+        return
+      }
+
+      setSuccess(`"${meal.recipeName || meal.customMealName}" has been added to your recipes!`)
+    } catch (error) {
+      console.error('Error adding recipe:', error)
+      setError('Failed to add recipe to your collection')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const getMealsByDay = () => {
     const mealsByDay: Record<string, PlannedMeal[]> = {}
 
@@ -818,20 +940,66 @@ export default function MealPlannerPage() {
                           }
                           secondary={
                             <>
-                              {meal.recipe?.name || meal.custom_meal_name}
-                              {meal.servings && (
-                                <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                                  • {meal.servings} servings
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                <Typography component="span" variant="body2">
+                                  {meal.recipe?.name || meal.custom_meal_name}
                                 </Typography>
+                                {meal.recipe?.id && (
+                                  <Tooltip title="View Recipe">
+                                    <IconButton
+                                      size="small"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (meal.recipe?.source_url) {
+                                          window.open(meal.recipe.source_url, '_blank')
+                                        } else {
+                                          window.open(`/recipes/${meal.recipe.id}`, '_blank')
+                                        }
+                                      }}
+                                      sx={{ p: 0.25 }}
+                                    >
+                                      {meal.recipe?.source_url ? <OpenInNew fontSize="small" /> : <LocalDining fontSize="small" />}
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                              </Box>
+
+                              {/* Dietary Tags */}
+                              {meal.recipe?.tags && meal.recipe.tags.length > 0 && (
+                                <Box sx={{ display: 'flex', gap: 0.5, mb: 0.5, flexWrap: 'wrap' }}>
+                                  {meal.recipe.tags.map((tag: string) => (
+                                    <Chip
+                                      key={tag}
+                                      label={tag}
+                                      size="small"
+                                      variant="outlined"
+                                      color={
+                                        tag.includes('vegetarian') || tag.includes('vegan') ? 'success' :
+                                        tag.includes('gluten') || tag.includes('dairy') ? 'warning' :
+                                        'default'
+                                      }
+                                      sx={{ fontSize: '0.65rem', height: 18 }}
+                                    />
+                                  ))}
+                                </Box>
                               )}
-                              {meal.prep_time && (
-                                <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                                  <Schedule fontSize="small" sx={{ fontSize: 12, mr: 0.5, verticalAlign: 'middle' }} />
-                                  {meal.prep_time} min
-                                </Typography>
-                              )}
+
+                              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                                {meal.servings && (
+                                  <Typography component="span" variant="caption" color="text.secondary">
+                                    • {meal.servings} servings
+                                  </Typography>
+                                )}
+                                {meal.prep_time && (
+                                  <Typography component="span" variant="caption" color="text.secondary">
+                                    <Schedule fontSize="small" sx={{ fontSize: 12, mr: 0.5, verticalAlign: 'middle' }} />
+                                    {meal.prep_time} min
+                                  </Typography>
+                                )}
+                              </Box>
+
                               {meal.notes && (
-                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic' }}>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic', mt: 0.5 }}>
                                   {meal.notes}
                                 </Typography>
                               )}
@@ -1405,6 +1573,9 @@ export default function MealPlannerPage() {
         weekStart={selectedStartDate || startOfWeek(new Date(), { weekStartsOn: 0 })}
         onConfirm={handleConfirmMealPlan}
         onRegenerateMeals={handleRegenerateMeals}
+        onAddMeal={handlePreviewAddMeal}
+        onEditMeal={handlePreviewEditMeal}
+        onAddToRecipes={handleAddToRecipes}
       />
 
       <DateRangePicker
@@ -1521,6 +1692,24 @@ export default function MealPlannerPage() {
           start: new Date(currentPlan.start_date),
           end: new Date(currentPlan.end_date)
         } : undefined}
+      />
+
+      {/* Preview Add Meal Dialog */}
+      <AddMealDialog
+        open={previewAddMealDialogOpen}
+        onClose={() => {
+          setPreviewAddMealDialogOpen(false)
+          setSelectedMeal(null)
+        }}
+        onConfirm={handlePreviewMealAdded}
+        initialDate={previewMealDate}
+        initialMealType={previewMealType}
+        familyMembers={familyMembers}
+        existingMeal={selectedMeal}
+        currentPlanDates={{
+          start: selectedStartDate || startOfWeek(new Date(), { weekStartsOn: 0 }),
+          end: selectedEndDate || endOfWeek(new Date(), { weekStartsOn: 0 })
+        }}
       />
 
       {/* Floating Action Button for adding meals */}

@@ -61,6 +61,14 @@ export default function AddMealDialog({
   const [recipes, setRecipes] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [dietaryNeeds, setDietaryNeeds] = useState<string[]>([])
+  const [attendancePreset, setAttendancePreset] = useState<'everyone' | 'custom'>('everyone')
+  const [guests, setGuests] = useState<Array<{
+    name: string
+    dietaryRestrictions: string[]
+  }>>([])
+  const [showGuestForm, setShowGuestForm] = useState(false)
+  const [newGuestName, setNewGuestName] = useState('')
+  const [newGuestDiet, setNewGuestDiet] = useState<string[]>([])
 
   useEffect(() => {
     if (open) {
@@ -154,6 +162,33 @@ export default function AddMealDialog({
         ? prev.filter(id => id !== memberId)
         : [...prev, memberId]
     )
+    setAttendancePreset('custom')
+  }
+
+  const handleAttendancePresetChange = (preset: 'everyone' | 'custom') => {
+    setAttendancePreset(preset)
+    if (preset === 'everyone') {
+      setAttendees(familyMembers.map(m => m.id))
+    }
+  }
+
+  const handleAddGuest = () => {
+    if (newGuestName.trim()) {
+      setGuests(prev => [...prev, {
+        name: newGuestName.trim(),
+        dietaryRestrictions: newGuestDiet
+      }])
+      setNewGuestName('')
+      setNewGuestDiet([])
+      setShowGuestForm(false)
+      // Update servings to account for guest
+      setServings(prev => prev + 1)
+    }
+  }
+
+  const handleRemoveGuest = (index: number) => {
+    setGuests(prev => prev.filter((_, i) => i !== index))
+    setServings(prev => Math.max(1, prev - 1))
   }
 
   return (
@@ -201,7 +236,31 @@ export default function AddMealDialog({
               <Typography variant="subtitle2" gutterBottom>
                 Who's attending this meal?
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+
+              {/* Attendance Presets */}
+              <FormGroup row sx={{ mb: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={attendancePreset === 'everyone'}
+                      onChange={() => handleAttendancePresetChange('everyone')}
+                    />
+                  }
+                  label="Everyone home"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={attendancePreset === 'custom'}
+                      onChange={() => handleAttendancePresetChange('custom')}
+                    />
+                  }
+                  label="Custom selection"
+                />
+              </FormGroup>
+
+              {/* Family Members */}
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
                 {familyMembers.map(member => (
                   <Chip
                     key={member.id}
@@ -212,6 +271,89 @@ export default function AddMealDialog({
                     variant={attendees.includes(member.id) ? 'filled' : 'outlined'}
                   />
                 ))}
+              </Box>
+
+              {/* Guests Section */}
+              <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Guests for this meal
+                </Typography>
+
+                {guests.length > 0 && (
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                    {guests.map((guest, index) => (
+                      <Chip
+                        key={index}
+                        avatar={<Person sx={{ width: 16, height: 16 }} />}
+                        label={`${guest.name}${guest.dietaryRestrictions.length > 0 ? ` (${guest.dietaryRestrictions.join(', ')})` : ''}`}
+                        onDelete={() => handleRemoveGuest(index)}
+                        color="secondary"
+                        variant="outlined"
+                      />
+                    ))}
+                  </Box>
+                )}
+
+                {showGuestForm ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <TextField
+                      label="Guest Name"
+                      value={newGuestName}
+                      onChange={(e) => setNewGuestName(e.target.value)}
+                      size="small"
+                      placeholder="Enter guest name"
+                    />
+                    <Autocomplete
+                      multiple
+                      options={['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free', 'shellfish-free']}
+                      value={newGuestDiet}
+                      onChange={(_, newValue) => setNewGuestDiet(newValue)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Dietary Restrictions"
+                          size="small"
+                          placeholder="Select dietary restrictions"
+                        />
+                      )}
+                      renderTags={(value, getTagProps) =>
+                        value.map((option, index) => (
+                          <Chip
+                            label={option}
+                            {...getTagProps({ index })}
+                            size="small"
+                            key={option}
+                          />
+                        ))
+                      }
+                    />
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        onClick={handleAddGuest}
+                        variant="contained"
+                        size="small"
+                        disabled={!newGuestName.trim()}
+                      >
+                        Add Guest
+                      </Button>
+                      <Button
+                        onClick={() => setShowGuestForm(false)}
+                        size="small"
+                      >
+                        Cancel
+                      </Button>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Button
+                    onClick={() => setShowGuestForm(true)}
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Person />}
+                  >
+                    Add Guest
+                  </Button>
+                )}
               </Box>
 
               {dietaryNeeds.length > 0 && (

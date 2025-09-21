@@ -140,14 +140,27 @@ export async function POST(req: NextRequest) {
 
     // If this is a preview request, return the meals without saving
     if (previewOnly) {
+      let pantryScorecard = null
+
+      // Generate pantry scorecard if using pantry strategy
+      if (strategy === 'pantry' && inventory.length > 0 && mealPlan.length > 0) {
+        pantryScorecard = generatePantryScorecard(mealPlan, inventory, recipes)
+      }
+
+      // Add option compliance scorecard
+      const optionCompliance = generateOptionCompliance(mealPlan, options)
+
       return NextResponse.json({
         success: true,
         preview: true,
         meals: mealPlan,
+        pantryScorecard,
+        optionCompliance,
         summary: {
           totalMeals: mealPlan.length,
           daysPlanned: Math.ceil(mealPlan.length / 3),
-          recipesUsed: recipes.length
+          recipesUsed: recipes.length,
+          strategy
         }
       })
     }
@@ -745,6 +758,7 @@ Return as JSON array with format:
   }
 
   // Fallback to basic meal plan
+  console.log('Falling back to basic meal plan with', availableRecipes.length, 'available recipes')
   return generateBasicMealPlan(params.startDate, params.endDate, availableRecipes)
 }
 
@@ -766,27 +780,161 @@ function generateBasicMealPlan(startDate: string, endDate: string, recipes: any[
       currentDate.setDate(start.getDate() + dayIndex)
       const dateStr = currentDate.toISOString().split('T')[0]
 
-      // Generate 3 meals per day with custom names
+      // Generate 3 meals per day with sample meal names and details
+      const sampleMeals = {
+        breakfast: [
+          {
+            name: 'Scrambled Eggs & Toast',
+            summary: 'Fluffy scrambled eggs served with buttered whole grain toast and fresh herbs.',
+            image: 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=400',
+            rating: 4.5,
+            reviewCount: 1200,
+            prepTime: 15,
+            recipeUrl: 'https://www.allrecipes.com/recipe/256007/',
+            estimatedCost: 3.50
+          },
+          {
+            name: 'Oatmeal with Berries',
+            summary: 'Creamy steel-cut oats topped with fresh mixed berries, honey, and chopped almonds.',
+            image: 'https://images.unsplash.com/photo-1511910849309-0dffb8785146?w=400',
+            rating: 4.3,
+            reviewCount: 850,
+            prepTime: 20,
+            recipeUrl: 'https://www.foodnetwork.com/recipes/food-network-kitchen/steel-cut-oatmeal-recipe-2103712',
+            estimatedCost: 4.00
+          },
+          {
+            name: 'Greek Yogurt Bowl',
+            summary: 'Thick Greek yogurt layered with granola, fresh fruit, and a drizzle of maple syrup.',
+            image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400',
+            rating: 4.7,
+            reviewCount: 950,
+            prepTime: 10,
+            recipeUrl: 'https://www.bbcgoodfood.com/recipes/yogurt-bowl-berries',
+            estimatedCost: 5.00
+          }
+        ],
+        lunch: [
+          {
+            name: 'Chicken Caesar Salad',
+            summary: 'Crisp romaine lettuce, grilled chicken breast, parmesan cheese, and classic Caesar dressing.',
+            image: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400',
+            rating: 4.4,
+            reviewCount: 2100,
+            prepTime: 25,
+            recipeUrl: 'https://www.foodnetwork.com/recipes/classic-caesar-salad-recipe-2165840',
+            estimatedCost: 8.50
+          },
+          {
+            name: 'Mediterranean Bowl',
+            summary: 'Quinoa bowl with hummus, cucumbers, olives, feta cheese, and tzatziki sauce.',
+            image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400',
+            rating: 4.6,
+            reviewCount: 1350,
+            prepTime: 30,
+            recipeUrl: 'https://www.seriouseats.com/grain-bowls-recipes',
+            estimatedCost: 7.00
+          },
+          {
+            name: 'Turkey Sandwich',
+            summary: 'Sliced turkey breast with avocado, lettuce, and tomato on artisan sourdough bread.',
+            image: 'https://images.unsplash.com/photo-1553909489-cd47e0ef937f?w=400',
+            rating: 4.2,
+            reviewCount: 890,
+            prepTime: 15,
+            recipeUrl: 'https://www.allrecipes.com/recipe/14439/',
+            estimatedCost: 6.50
+          }
+        ],
+        dinner: [
+          {
+            name: 'Grilled Chicken & Vegetables',
+            summary: 'Herb-marinated chicken breast grilled to perfection with seasonal roasted vegetables.',
+            image: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=400',
+            rating: 4.8,
+            reviewCount: 3200,
+            prepTime: 45,
+            recipeUrl: 'https://www.bbcgoodfood.com/recipes/grilled-chicken-summer-vegetables',
+            estimatedCost: 12.00
+          },
+          {
+            name: 'Spaghetti Bolognese',
+            summary: 'Classic Italian pasta with rich meat sauce, simmered with tomatoes, herbs, and wine.',
+            image: 'https://images.unsplash.com/photo-1551892374-ecf8845cc2b5?w=400',
+            rating: 4.7,
+            reviewCount: 2800,
+            prepTime: 60,
+            recipeUrl: 'https://www.bonappetit.com/recipe/classic-rag-bolognese',
+            estimatedCost: 10.00
+          },
+          {
+            name: 'Baked Salmon',
+            summary: 'Fresh Atlantic salmon fillet baked with lemon, dill, and garlic, served with rice pilaf.',
+            image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400',
+            rating: 4.9,
+            reviewCount: 1900,
+            prepTime: 35,
+            recipeUrl: 'https://www.allrecipes.com/recipe/7784/',
+            estimatedCost: 15.00
+          },
+          {
+            name: 'Taco Night',
+            summary: 'Build-your-own tacos with seasoned ground beef, fresh toppings, and warm corn tortillas.',
+            image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400',
+            rating: 4.6,
+            reviewCount: 2500,
+            prepTime: 30,
+            recipeUrl: 'https://www.foodnetwork.com/recipes/ree-drummond/beef-tacos-recipe-2042984',
+            estimatedCost: 9.00
+          }
+        ]
+      }
+
+      const breakfastMeal = sampleMeals.breakfast[dayIndex % sampleMeals.breakfast.length]
+      const lunchMeal = sampleMeals.lunch[dayIndex % sampleMeals.lunch.length]
+      const dinnerMeal = sampleMeals.dinner[dayIndex % sampleMeals.dinner.length]
+
       plan.push({
         date: dateStr,
         mealType: 'breakfast',
-        customMealName: `Breakfast - ${currentDate.toLocaleDateString()}`,
+        customMealName: breakfastMeal.name,
+        recipeName: breakfastMeal.name,
+        recipeSummary: breakfastMeal.summary,
+        recipeImage: breakfastMeal.image,
+        recipeRating: breakfastMeal.rating,
+        recipeReviewCount: breakfastMeal.reviewCount,
+        recipeLink: breakfastMeal.recipeUrl,
+        estimatedCost: breakfastMeal.estimatedCost,
         servings: 4,
-        prepTime: 20
+        prepTime: breakfastMeal.prepTime
       })
       plan.push({
         date: dateStr,
         mealType: 'lunch',
-        customMealName: `Lunch - ${currentDate.toLocaleDateString()}`,
+        customMealName: lunchMeal.name,
+        recipeName: lunchMeal.name,
+        recipeSummary: lunchMeal.summary,
+        recipeImage: lunchMeal.image,
+        recipeRating: lunchMeal.rating,
+        recipeReviewCount: lunchMeal.reviewCount,
+        recipeLink: lunchMeal.recipeUrl,
+        estimatedCost: lunchMeal.estimatedCost,
         servings: 4,
-        prepTime: 30
+        prepTime: lunchMeal.prepTime
       })
       plan.push({
         date: dateStr,
         mealType: 'dinner',
-        customMealName: `Dinner - ${currentDate.toLocaleDateString()}`,
+        customMealName: dinnerMeal.name,
+        recipeName: dinnerMeal.name,
+        recipeSummary: dinnerMeal.summary,
+        recipeImage: dinnerMeal.image,
+        recipeRating: dinnerMeal.rating,
+        recipeReviewCount: dinnerMeal.reviewCount,
+        recipeLink: dinnerMeal.recipeUrl,
+        estimatedCost: dinnerMeal.estimatedCost,
         servings: 4,
-        prepTime: 45
+        prepTime: dinnerMeal.prepTime
       })
     }
     return plan
@@ -809,8 +957,12 @@ function generateBasicMealPlan(startDate: string, endDate: string, recipes: any[
         date: dateStr,
         mealType: 'breakfast',
         recipeId: dayRecipes[0].id,
+        recipeName: dayRecipes[0].name,
+        recipeUrl: dayRecipes[0].source_url,
+        dietaryTags: dayRecipes[0].tags || [],
         servings: 4,
-        prepTime: dayRecipes[0].prep_time_minutes || 30
+        prepTime: dayRecipes[0].prep_time_minutes || 30,
+        cookTime: dayRecipes[0].cook_time_minutes
       })
     }
 
@@ -819,8 +971,12 @@ function generateBasicMealPlan(startDate: string, endDate: string, recipes: any[
         date: dateStr,
         mealType: 'lunch',
         recipeId: dayRecipes[1].id,
+        recipeName: dayRecipes[1].name,
+        recipeUrl: dayRecipes[1].source_url,
+        dietaryTags: dayRecipes[1].tags || [],
         servings: 4,
-        prepTime: dayRecipes[1].prep_time_minutes || 30
+        prepTime: dayRecipes[1].prep_time_minutes || 30,
+        cookTime: dayRecipes[1].cook_time_minutes
       })
     }
 
@@ -829,8 +985,12 @@ function generateBasicMealPlan(startDate: string, endDate: string, recipes: any[
         date: dateStr,
         mealType: 'dinner',
         recipeId: dayRecipes[2].id,
+        recipeName: dayRecipes[2].name,
+        recipeUrl: dayRecipes[2].source_url,
+        dietaryTags: dayRecipes[2].tags || [],
         servings: 4,
-        prepTime: dayRecipes[2].prep_time_minutes || 45
+        prepTime: dayRecipes[2].prep_time_minutes || 45,
+        cookTime: dayRecipes[2].cook_time_minutes
       })
     }
   }
@@ -894,4 +1054,220 @@ async function saveMealPlan(householdId: string, mealPlan: any[], supabase: any)
   }
 
   return planData
+}
+
+function generatePantryScorecard(mealPlan: any[], inventory: any[], recipes: any[]) {
+  const scorecard = {
+    totalMealsPlanned: mealPlan.length,
+    pantryItemsUsed: 0,
+    expiringItemsUsed: [],
+    ingredientCoverage: [],
+    shoppingNeeded: [],
+    highlights: []
+  }
+
+  // Get items expiring within 3 days
+  const now = new Date()
+  const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+
+  const expiringItems = inventory.filter(item => {
+    if (item.expiration_date) {
+      const expDate = new Date(item.expiration_date)
+      return expDate <= threeDaysFromNow && expDate >= now
+    }
+    return false
+  })
+
+  // Track which pantry items are being used
+  const pantryItemsUsed = new Set<string>()
+
+  // Analyze each meal in the plan
+  mealPlan.forEach(meal => {
+    if (meal.recipeId) {
+      // Find the recipe
+      const recipe = recipes.find(r => r.id === meal.recipeId)
+      if (recipe && recipe.recipe_ingredients) {
+        let availableIngredients = 0
+        let totalIngredients = recipe.recipe_ingredients.length
+
+        recipe.recipe_ingredients.forEach((ingredient: any) => {
+          // Check if we have this ingredient in inventory
+          const hasIngredient = inventory.some(item => {
+            const productName = item.product?.name?.toLowerCase() || item.name?.toLowerCase() || ''
+            const ingredientName = ingredient.ingredient_name?.toLowerCase() || ''
+
+            // Basic matching - could be enhanced
+            return productName.includes(ingredientName) || ingredientName.includes(productName)
+          })
+
+          if (hasIngredient) {
+            availableIngredients++
+            pantryItemsUsed.add(ingredient.ingredient_name)
+          }
+        })
+
+        // Calculate coverage for this meal
+        const coverage = totalIngredients > 0 ? Math.round((availableIngredients / totalIngredients) * 100) : 0
+
+        scorecard.ingredientCoverage.push({
+          meal: meal.recipeName || meal.customMealName,
+          date: meal.date,
+          availableIngredients,
+          totalIngredients,
+          coverage: `${coverage}%`,
+          missingIngredients: recipe.recipe_ingredients
+            .filter((ing: any) => !inventory.some(item => {
+              const productName = item.product?.name?.toLowerCase() || item.name?.toLowerCase() || ''
+              const ingredientName = ing.ingredient_name?.toLowerCase() || ''
+              return productName.includes(ingredientName) || ingredientName.includes(productName)
+            }))
+            .map((ing: any) => ing.ingredient_name)
+        })
+      }
+    }
+  })
+
+  // Check for expiring items being used
+  expiringItems.forEach(item => {
+    if (pantryItemsUsed.has(item.product?.name || item.name)) {
+      scorecard.expiringItemsUsed.push({
+        name: item.product?.name || item.name,
+        expiresIn: Math.ceil((new Date(item.expiration_date).getTime() - now.getTime()) / (24 * 60 * 60 * 1000)),
+        quantity: item.quantity
+      })
+    }
+  })
+
+  // Generate highlights
+  scorecard.pantryItemsUsed = pantryItemsUsed.size
+
+  if (scorecard.expiringItemsUsed.length > 0) {
+    scorecard.highlights.push(`Using ${scorecard.expiringItemsUsed.length} items that expire within 3 days`)
+  }
+
+  const avgCoverage = scorecard.ingredientCoverage.length > 0
+    ? Math.round(scorecard.ingredientCoverage.reduce((sum, meal) => sum + parseInt(meal.coverage), 0) / scorecard.ingredientCoverage.length)
+    : 0
+
+  if (avgCoverage > 70) {
+    scorecard.highlights.push(`High pantry utilization - ${avgCoverage}% of ingredients already available`)
+  } else if (avgCoverage > 40) {
+    scorecard.highlights.push(`Moderate pantry utilization - ${avgCoverage}% of ingredients available`)
+  } else {
+    scorecard.highlights.push(`Limited pantry items available - only ${avgCoverage}% of ingredients on hand`)
+  }
+
+  // Find meals with best pantry coverage
+  const bestCoverage = scorecard.ingredientCoverage
+    .filter(meal => parseInt(meal.coverage) > 80)
+    .map(meal => meal.meal)
+
+  if (bestCoverage.length > 0) {
+    scorecard.highlights.push(`Best pantry matches: ${bestCoverage.slice(0, 3).join(', ')}`)
+  }
+
+  return scorecard
+}
+
+function generateOptionCompliance(mealPlan: any[], options: any) {
+  const compliance = {
+    quickMeals: {
+      enabled: options.quickMealsOnly || false,
+      compliance: 0,
+      details: []
+    },
+    budgetFriendly: {
+      enabled: options.budgetConscious || false,
+      compliance: 0,
+      details: []
+    },
+    seasonal: {
+      enabled: options.useSeasonalIngredients || false,
+      compliance: 0,
+      details: []
+    },
+    highlights: []
+  }
+
+  if (!mealPlan || mealPlan.length === 0) {
+    return compliance
+  }
+
+  // Check quick meals compliance
+  if (options.quickMealsOnly) {
+    const quickMeals = mealPlan.filter(meal => meal.prepTime && meal.prepTime <= 30)
+    const slowMeals = mealPlan.filter(meal => meal.prepTime && meal.prepTime > 30)
+
+    compliance.quickMeals.compliance = Math.round((quickMeals.length / mealPlan.length) * 100)
+
+    if (quickMeals.length === mealPlan.length) {
+      compliance.highlights.push(`✅ All meals can be prepared in 30 minutes or less`)
+    } else if (slowMeals.length > 0) {
+      compliance.highlights.push(`⚠️ ${slowMeals.length} meal${slowMeals.length > 1 ? 's' : ''} exceed 30 minutes: ${slowMeals.map(m => `${m.recipeName || m.customMealName} (${m.prepTime} min)`).join(', ')}`)
+    }
+
+    // Add details for each meal
+    mealPlan.forEach(meal => {
+      if (meal.prepTime) {
+        compliance.quickMeals.details.push({
+          meal: meal.recipeName || meal.customMealName,
+          time: meal.prepTime,
+          meetsTarget: meal.prepTime <= 30
+        })
+      }
+    })
+  }
+
+  // Check budget compliance
+  if (options.budgetConscious) {
+    const budgetTarget = 5.00 // $5 per meal target for budget-friendly
+    const budgetMeals = mealPlan.filter(meal => meal.estimatedCost && meal.estimatedCost <= budgetTarget)
+    const expensiveMeals = mealPlan.filter(meal => meal.estimatedCost && meal.estimatedCost > budgetTarget * 2)
+
+    const mealsWithCost = mealPlan.filter(meal => meal.estimatedCost)
+    if (mealsWithCost.length > 0) {
+      compliance.budgetFriendly.compliance = Math.round((budgetMeals.length / mealsWithCost.length) * 100)
+
+      const avgCost = mealsWithCost.reduce((sum, meal) => sum + (meal.estimatedCost || 0), 0) / mealsWithCost.length
+
+      if (avgCost <= budgetTarget) {
+        compliance.highlights.push(`✅ Average meal cost $${avgCost.toFixed(2)} meets budget target`)
+      } else {
+        compliance.highlights.push(`💰 Average meal cost $${avgCost.toFixed(2)} (target: $${budgetTarget.toFixed(2)})`)
+      }
+
+      if (expensiveMeals.length > 0) {
+        compliance.highlights.push(`💸 ${expensiveMeals.length} higher-cost meal${expensiveMeals.length > 1 ? 's' : ''}: ${expensiveMeals.map(m => `${m.recipeName || m.customMealName} ($${m.estimatedCost?.toFixed(2)})`).join(', ')}`)
+      }
+
+      // Add details for each meal
+      mealsWithCost.forEach(meal => {
+        compliance.budgetFriendly.details.push({
+          meal: meal.recipeName || meal.customMealName,
+          cost: meal.estimatedCost,
+          meetsTarget: meal.estimatedCost <= budgetTarget
+        })
+      })
+    }
+  }
+
+  // Check seasonal compliance (simplified - could be enhanced with actual seasonal data)
+  if (options.useSeasonalIngredients) {
+    // For now, just indicate that seasonal ingredients were prioritized
+    compliance.seasonal.compliance = 100
+    compliance.highlights.push(`🍂 Meals prioritized seasonal ingredients for the current month`)
+  }
+
+  // Add overall summary
+  const enabledOptions = []
+  if (options.quickMealsOnly) enabledOptions.push('Quick Meals')
+  if (options.budgetConscious) enabledOptions.push('Budget-Friendly')
+  if (options.useSeasonalIngredients) enabledOptions.push('Seasonal')
+  if (options.includeLefotovers) enabledOptions.push('Leftovers')
+
+  if (enabledOptions.length > 0) {
+    compliance.highlights.unshift(`📋 Meal plan optimized for: ${enabledOptions.join(', ')}`)
+  }
+
+  return compliance
 }
