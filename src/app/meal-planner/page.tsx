@@ -175,11 +175,11 @@ export default function MealPlannerPage() {
 
       setPlans(plansData || [])
 
-      // Load current active plan if exists
-      const activePlan = plansData?.find(p => p.status === 'active')
-      if (activePlan) {
-        setCurrentPlan(activePlan)
-        loadPlannedMeals(activePlan.id)
+      // Load most recent plan (active or draft)
+      const recentPlan = plansData?.find(p => p.status === 'active') || plansData?.[0]
+      if (recentPlan) {
+        setCurrentPlan(recentPlan)
+        loadPlannedMeals(recentPlan.id)
       }
 
       setLoading(false)
@@ -411,25 +411,26 @@ export default function MealPlannerPage() {
 
       const result = await response.json()
       if (result.success && result.planId) {
-        await checkProfileAndLoadPlans()
         setSuccess('Meal plan saved successfully!')
 
-        // Find and load the new plan
-        setTimeout(async () => {
+        // Reload all plans
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        if (currentUser) {
           const { data: newPlans } = await supabase
             .from('meal_plans')
             .select('*')
-            .eq('household_id', user.id)
-            .order('created_at', { ascending: false })
+            .eq('household_id', currentUser.id)
+            .order('start_date', { ascending: false })
 
           if (newPlans && newPlans.length > 0) {
+            setPlans(newPlans)
             const newPlan = newPlans.find(p => p.id === result.planId)
             if (newPlan) {
               setCurrentPlan(newPlan)
               await loadPlannedMeals(newPlan.id)
             }
           }
-        }, 500)
+        }
       }
     } catch (error: any) {
       console.error('Error saving meal plan:', error)
@@ -728,41 +729,66 @@ export default function MealPlannerPage() {
         </Alert>
       )}
 
-      {currentPlan && (
+      {plans.length > 0 && (
         <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <Typography variant="h6">
-                {currentPlan.name}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {format(new Date(currentPlan.start_date), 'MMM d')} - {format(new Date(currentPlan.end_date), 'MMM d, yyyy')}
-              </Typography>
+            <Box sx={{ flexGrow: 1 }}>
+              <FormControl sx={{ minWidth: 300 }}>
+                <InputLabel id="plan-select-label">Select Meal Plan</InputLabel>
+                <Select
+                  labelId="plan-select-label"
+                  value={currentPlan?.id || ''}
+                  onChange={async (e) => {
+                    const plan = plans.find(p => p.id === e.target.value)
+                    if (plan) {
+                      setCurrentPlan(plan)
+                      await loadPlannedMeals(plan.id)
+                    }
+                  }}
+                  label="Select Meal Plan"
+                  size="small"
+                >
+                  {plans.map(plan => (
+                    <MenuItem key={plan.id} value={plan.id}>
+                      {plan.name} ({format(new Date(plan.start_date), 'MMM d')} - {format(new Date(plan.end_date), 'MMM d')})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {currentPlan && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  {format(new Date(currentPlan.start_date), 'MMMM d')} - {format(new Date(currentPlan.end_date), 'MMMM d, yyyy')}
+                </Typography>
+              )}
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-              <Chip
-                label={currentPlan.status}
-                color={currentPlan.status === 'active' ? 'success' : 'default'}
-              />
+              {currentPlan && (
+                <>
+                  <Chip
+                    label={currentPlan.status}
+                    color={currentPlan.status === 'active' ? 'success' : 'default'}
+                  />
 
-              {currentPlan.total_prep_time && (
-                <Typography variant="body2">
-                  Total prep: {Math.round(currentPlan.total_prep_time / 60)} hrs
-                </Typography>
+                  {currentPlan.total_prep_time && (
+                    <Typography variant="body2">
+                      Total prep: {Math.round(currentPlan.total_prep_time / 60)} hrs
+                    </Typography>
+                  )}
+
+                  <IconButton>
+                    <ShoppingCart />
+                  </IconButton>
+
+                  <IconButton>
+                    <Print />
+                  </IconButton>
+
+                  <IconButton>
+                    <Share />
+                  </IconButton>
+                </>
               )}
-
-              <IconButton>
-                <ShoppingCart />
-              </IconButton>
-
-              <IconButton>
-                <Print />
-              </IconButton>
-
-              <IconButton>
-                <Share />
-              </IconButton>
             </Box>
           </Box>
         </Paper>

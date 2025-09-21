@@ -95,6 +95,10 @@ export default function ManualMealPlannerPage() {
     initializeWeek()
   }, [])
 
+  useEffect(() => {
+    loadExistingPlanForWeek()
+  }, [selectedWeek])
+
   const initializeWeek = () => {
     const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 0 }) // 0 = Sunday
     const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 0 })
@@ -112,6 +116,52 @@ export default function ManualMealPlannerPage() {
       .order('name')
 
     setAvailableRecipes(recipes || [])
+  }
+
+  const loadExistingPlanForWeek = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 0 })
+    const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 0 })
+
+    // Check for existing plan for this week
+    const { data: existingPlan } = await supabase
+      .from('meal_plans')
+      .select('*')
+      .eq('household_id', user.id)
+      .gte('start_date', format(weekStart, 'yyyy-MM-dd'))
+      .lte('start_date', format(weekEnd, 'yyyy-MM-dd'))
+      .single()
+
+    if (existingPlan) {
+      // Load meals for this plan
+      const { data: plannedMeals } = await supabase
+        .from('planned_meals')
+        .select(`
+          *,
+          recipe:recipes(*)
+        `)
+        .eq('meal_plan_id', existingPlan.id)
+
+      if (plannedMeals && plannedMeals.length > 0) {
+        const loadedMeals: MealSlot[] = plannedMeals.map(meal => ({
+          date: meal.meal_date,
+          mealType: meal.meal_type,
+          customMealName: meal.custom_meal_name || meal.recipe?.name || '',
+          recipeId: meal.recipe_id,
+          servings: meal.servings || 4,
+          prepTime: meal.prep_time || meal.recipe?.prep_time_minutes || 30,
+          notes: meal.notes || ''
+        }))
+
+        setMeals(loadedMeals)
+        setPlanName(existingPlan.name)
+      }
+    } else {
+      // Clear meals if no plan exists
+      setMeals([])
+    }
   }
 
   const handleAddMeal = () => {
@@ -185,27 +235,60 @@ export default function ManualMealPlannerPage() {
         return
       }
 
-      // Create the meal plan
       const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 0 }) // 0 = Sunday
       const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 0 })
 
-      const { data: planData, error: planError } = await supabase
+      // Check if a plan already exists for this week
+      const { data: existingPlan } = await supabase
         .from('meal_plans')
-        .insert({
-          household_id: user.id,
-          name: planName,
-          start_date: format(weekStart, 'yyyy-MM-dd'),
-          end_date: format(weekEnd, 'yyyy-MM-dd'),
-          status: 'draft'
-        })
-        .select()
+        .select('*')
+        .eq('household_id', user.id)
+        .gte('start_date', format(weekStart, 'yyyy-MM-dd'))
+        .lte('start_date', format(weekEnd, 'yyyy-MM-dd'))
         .single()
 
-      if (planError) throw planError
+      let planId: string
+
+      if (existingPlan) {
+        // Update existing plan
+        const { data: updatedPlan, error: updateError } = await supabase
+          .from('meal_plans')
+          .update({
+            name: planName
+          })
+          .eq('id', existingPlan.id)
+          .select()
+          .single()
+
+        if (updateError) throw updateError
+        planId = existingPlan.id
+
+        // Delete existing meals for this plan
+        await supabase
+          .from('planned_meals')
+          .delete()
+          .eq('meal_plan_id', planId)
+      } else {
+        // Create new plan
+        const { data: planData, error: planError } = await supabase
+          .from('meal_plans')
+          .insert({
+            household_id: user.id,
+            name: planName,
+            start_date: format(weekStart, 'yyyy-MM-dd'),
+            end_date: format(weekEnd, 'yyyy-MM-dd'),
+            status: 'draft'
+          })
+          .select()
+          .single()
+
+        if (planError) throw planError
+        planId = planData.id
+      }
 
       // Create the planned meals
       const plannedMeals = meals.map(meal => ({
-        meal_plan_id: planData.id,
+        meal_plan_id: planId,
         recipe_id: meal.recipeId || null,
         custom_meal_name: meal.customMealName || null,
         meal_date: meal.date,
