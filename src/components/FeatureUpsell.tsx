@@ -118,6 +118,22 @@ const featureDetails = {
     ],
     suggestedPlan: 'Pro',
     planPrice: '$9.99/month'
+  },
+  meal_planner_enabled: {
+    title: 'AI-Powered Meal Planning',
+    icon: '📅',
+    description: 'Let AI create personalized weekly meal plans based on your family\'s preferences, dietary needs, and what\'s in your pantry.',
+    benefits: [
+      'Personalized meal plans for your entire household',
+      'Accommodates dietary restrictions and allergies',
+      'Syncs with your current inventory to reduce waste',
+      'Generates shopping lists for missing ingredients',
+      'Tracks nutritional goals and preferences',
+      'Creates diverse meals based on cuisine preferences',
+      'Adapts to your schedule and cooking skill level'
+    ],
+    suggestedPlan: 'Premium',
+    planPrice: '$4.99/month'
   }
 }
 
