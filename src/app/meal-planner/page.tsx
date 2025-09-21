@@ -112,8 +112,8 @@ export default function MealPlannerPage() {
   const [plannedMeals, setPlannedMeals] = useState<PlannedMeal[]>([])
   const [tabValue, setTabValue] = useState(0)
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
-  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(new Date())
-  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null)
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(startOfWeek(new Date(), { weekStartsOn: 0 }))
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(endOfWeek(new Date(), { weekStartsOn: 0 }))
   const [dateRangeDialogOpen, setDateRangeDialogOpen] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [hasProfile, setHasProfile] = useState(false)
@@ -256,7 +256,7 @@ export default function MealPlannerPage() {
         options: generationOptions,
         usePastMeals: generationStrategy !== 'discover',
         includeStaples: true,
-        previewOnly: false // Skip preview mode for now - save directly
+        previewOnly: true // Request preview mode
       }
       console.log('Sending request:', requestBody)
 
@@ -447,26 +447,56 @@ export default function MealPlannerPage() {
   }
 
   const handleAddMeal = async (mealData: any) => {
-    if (!currentPlan) return
-
     setLoading(true)
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setError('Please sign in to add meals')
+        return
+      }
+
+      let planToUse = currentPlan
+
+      // If no current plan exists, create one
+      if (!planToUse) {
+        const mealDate = new Date(mealData.date)
+        const startDate = startOfWeek(mealDate, { weekStartsOn: 0 })
+        const endDate = endOfWeek(mealDate, { weekStartsOn: 0 })
+
+        const { data: newPlan, error: planError } = await supabase
+          .from('meal_plans')
+          .insert({
+            household_id: user.id,
+            name: `Week of ${format(startDate, 'MMM d, yyyy')}`,
+            start_date: format(startDate, 'yyyy-MM-dd'),
+            end_date: format(endDate, 'yyyy-MM-dd'),
+            status: 'active'
+          })
+          .select()
+          .single()
+
+        if (planError) throw planError
+
+        planToUse = newPlan
+        setCurrentPlan(newPlan)
+      }
+
       const { error } = await supabase
         .from('planned_meals')
         .insert({
-          meal_plan_id: currentPlan.id,
+          meal_plan_id: planToUse.id,
           meal_date: format(mealData.date, 'yyyy-MM-dd'),
           meal_type: mealData.mealType,
           recipe_id: mealData.recipeId,
           custom_meal_name: mealData.customName,
           servings: mealData.servings || 4,
           notes: mealData.notes,
-          attendees: mealData.attendees // Store who will attend this meal
+          attendees: mealData.attendees
         })
 
       if (error) throw error
 
-      await loadPlannedMeals(currentPlan.id)
+      await loadPlannedMeals(planToUse.id)
       setAddMealDialogOpen(false)
       setSuccess('Meal added successfully!')
     } catch (error) {

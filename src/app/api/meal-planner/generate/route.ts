@@ -755,29 +755,36 @@ function generateBasicMealPlan(startDate: string, endDate: string, recipes: any[
   const end = new Date(endDate)
   let recipeIndex = 0
 
+  // Calculate number of days
+  const daysDifference = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+
   // If no recipes available, create sample meals
   if (!recipes || recipes.length === 0) {
     console.log('No recipes available, generating sample meals')
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    for (let dayIndex = 0; dayIndex < daysDifference; dayIndex++) {
+      const currentDate = new Date(start)
+      currentDate.setDate(start.getDate() + dayIndex)
+      const dateStr = currentDate.toISOString().split('T')[0]
+
       // Generate 3 meals per day with custom names
       plan.push({
-        date: d.toISOString().split('T')[0],
+        date: dateStr,
         mealType: 'breakfast',
-        customMealName: 'Breakfast - Day ' + (plan.length / 3 + 1),
+        customMealName: `Breakfast - ${currentDate.toLocaleDateString()}`,
         servings: 4,
         prepTime: 20
       })
       plan.push({
-        date: d.toISOString().split('T')[0],
+        date: dateStr,
         mealType: 'lunch',
-        customMealName: 'Lunch - Day ' + (Math.floor(plan.length / 3) + 1),
+        customMealName: `Lunch - ${currentDate.toLocaleDateString()}`,
         servings: 4,
         prepTime: 30
       })
       plan.push({
-        date: d.toISOString().split('T')[0],
+        date: dateStr,
         mealType: 'dinner',
-        customMealName: 'Dinner - Day ' + (Math.floor(plan.length / 3) + 1),
+        customMealName: `Dinner - ${currentDate.toLocaleDateString()}`,
         servings: 4,
         prepTime: 45
       })
@@ -785,7 +792,10 @@ function generateBasicMealPlan(startDate: string, endDate: string, recipes: any[
     return plan
   }
 
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+  for (let dayIndex = 0; dayIndex < daysDifference; dayIndex++) {
+    const currentDate = new Date(start)
+    currentDate.setDate(start.getDate() + dayIndex)
+    const dateStr = currentDate.toISOString().split('T')[0]
     // Reuse recipes if we run out
     const dayRecipes = [
       recipes[recipeIndex % recipes.length],
@@ -796,7 +806,7 @@ function generateBasicMealPlan(startDate: string, endDate: string, recipes: any[
 
     if (dayRecipes[0]) {
       plan.push({
-        date: d.toISOString().split('T')[0],
+        date: dateStr,
         mealType: 'breakfast',
         recipeId: dayRecipes[0].id,
         servings: 4,
@@ -806,7 +816,7 @@ function generateBasicMealPlan(startDate: string, endDate: string, recipes: any[
 
     if (dayRecipes[1]) {
       plan.push({
-        date: d.toISOString().split('T')[0],
+        date: dateStr,
         mealType: 'lunch',
         recipeId: dayRecipes[1].id,
         servings: 4,
@@ -816,7 +826,7 @@ function generateBasicMealPlan(startDate: string, endDate: string, recipes: any[
 
     if (dayRecipes[2]) {
       plan.push({
-        date: d.toISOString().split('T')[0],
+        date: dateStr,
         mealType: 'dinner',
         recipeId: dayRecipes[2].id,
         servings: 4,
