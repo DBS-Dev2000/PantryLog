@@ -189,6 +189,8 @@ export default function MealPlannerSetup() {
   const [activeStep, setActiveStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   // Form data
   const [members, setMembers] = useState<HouseholdMember[]>([
@@ -211,7 +213,8 @@ export default function MealPlannerSetup() {
     shoppingDay: 'saturday',
     budgetPerWeek: 150,
     preferredStores: [],
-    kitchenEquipment: []
+    kitchenEquipment: [],
+    preferredCuisines: []
   })
 
   useEffect(() => {
@@ -277,14 +280,30 @@ export default function MealPlannerSetup() {
 
   const handleSubmit = async () => {
     setLoading(true)
+    setError(null)
+
     try {
+      // Get the user's household ID
+      const { data: householdData, error: householdError } = await supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (householdError) {
+        // Try using user.id as household_id (legacy single-user mode)
+        console.log('Using user.id as household_id')
+      }
+
+      const householdId = householdData?.household_id || user.id
+
       // Save all the data to the database
       for (const member of members) {
         // Save household member
         const { data: savedMember, error: memberError } = await supabase
           .from('family_members')
           .insert({
-            household_id: user.id,
+            household_id: householdId,
             name: member.name,
             age_group: member.ageGroup,
             is_primary_meal_planner: member.isPrimaryPlanner
@@ -292,7 +311,10 @@ export default function MealPlannerSetup() {
           .select()
           .single()
 
-        if (memberError) throw memberError
+        if (memberError) {
+          console.error('Error saving member:', memberError)
+          throw new Error(`Failed to save member ${member.name}: ${memberError.message}`)
+        }
 
         // Save dietary restrictions
         if (member.dietaryRestrictions.length > 0) {
@@ -322,44 +344,54 @@ export default function MealPlannerSetup() {
         }
 
         // Save food preferences
-        if (member.foodPreferences.length > 0) {
+        if (member.foodPreferences && member.foodPreferences.length > 0) {
           const { error: prefError } = await supabase
             .from('food_preferences')
             .insert(
               member.foodPreferences.map(p => ({
                 member_id: savedMember.id,
-                preference_type: p.type,
-                category: p.category,
-                value: p.value,
-                intensity: p.intensity
+                food_type: p.value, // Changed from value to food_type to match schema
+                preference: p.type === 'favorite' ? 'love' : p.type === 'like' ? 'like' : 'dislike', // Map to correct preference values
+                notes: p.category || null
               }))
             )
 
-          if (prefError) throw prefError
+          if (prefError) {
+            console.error('Error saving food preferences:', prefError)
+            throw new Error(`Failed to save food preferences: ${prefError.message}`)
+          }
         }
       }
 
       // Save household meal preferences
       const { error: householdPrefError } = await supabase
         .from('household_meal_preferences')
-        .insert({
-          household_id: user.id,
+        .upsert({
+          household_id: householdId,
           cooking_skill_level: cookingPreferences.skillLevel,
-          preferred_prep_time_weekday: cookingPreferences.weekdayPrepTime,
-          preferred_prep_time_weekend: cookingPreferences.weekendPrepTime,
-          meal_prep_day: cookingPreferences.mealPrepDay || null,
+          max_cooking_time_minutes: cookingPreferences.weekdayPrepTime, // Using weekday prep time as max cooking time
           shopping_day: cookingPreferences.shoppingDay,
           budget_per_week: cookingPreferences.budgetPerWeek,
-          kitchen_equipment: cookingPreferences.kitchenEquipment,
-          preferred_stores: cookingPreferences.preferredStores
+          preferred_cuisines: cookingPreferences.preferredCuisines || [],
+          servings_per_meal: 4,
+          include_leftovers: true
+        }, {
+          onConflict: 'household_id' // Upsert if preferences already exist
         })
 
-      if (householdPrefError) throw householdPrefError
+      if (householdPrefError) {
+        console.error('Error saving household preferences:', householdPrefError)
+        throw new Error(`Failed to save household preferences: ${householdPrefError.message}`)
+      }
 
-      // Navigate to meal planner
-      router.push('/meal-planner')
-    } catch (error) {
+      // Success! Navigate to meal planner
+      setSuccess('Meal planning profile saved successfully!')
+      setTimeout(() => {
+        router.push('/meal-planner')
+      }, 1500)
+    } catch (error: any) {
       console.error('Error saving meal planning preferences:', error)
+      setError(error.message || 'Failed to save meal planning preferences. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -859,6 +891,18 @@ export default function MealPlannerSetup() {
             </Step>
           ))}
         </Stepper>
+
+        {error && (
+          <Alert severity="error" sx={{ mt: 2, mb: 2 }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+
+        {success && (
+          <Alert severity="success" sx={{ mt: 2, mb: 2 }}>
+            {success}
+          </Alert>
+        )}
 
         <Box sx={{ mt: 3, mb: 2 }}>
           {renderStepContent()}

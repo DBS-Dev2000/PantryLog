@@ -37,6 +37,7 @@ import {
   Receipt,
   ShoppingCart,
   Restaurant,
+  CalendarMonth,
   Help as HelpIcon,
   KeyboardArrowDown as ArrowDownIcon,
   Check as CheckIcon,
@@ -58,9 +59,9 @@ const baseNavigation = [
   { name: 'Stock Up', href: '/inventory/quick-add', icon: QrCodeScanner, feature: 'barcode_scanning' },
   { name: 'Grab & Go', href: '/inventory/quick-use', icon: Remove, feature: null },
   { name: 'Recipes', href: '/recipes', icon: Restaurant, feature: 'recipes_enabled' },
+  { name: 'Meal Planner', href: '/meal-planner', icon: CalendarMonth, feature: 'meal_planning' },
   { name: 'Shopping List', href: '/shopping', icon: ShoppingCart, feature: 'shopping_list_sharing' },
   { name: 'Receipt Scan', href: '/inventory/receipt', icon: Receipt, feature: 'ai_features_enabled' },
-  { name: 'Storage Setup', href: '/settings/storage', icon: StorageIcon, feature: 'storage_editing' },
   { name: 'Help', href: '/help', icon: HelpIcon, feature: null },
   { name: 'Settings', href: '/settings', icon: SettingsIcon, feature: null },
 ]
