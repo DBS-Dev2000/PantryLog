@@ -259,20 +259,39 @@ export default function MealPlannerSetup() {
         .order('created_at', { ascending: true })
 
       if (familyMembers && familyMembers.length > 0) {
-        // Load additional data for each member
-        const membersWithDetails = await Promise.all(
-          familyMembers.map(async (member) => {
-            // Load dietary restrictions
-            const { data: restrictions } = await supabase
-              .from('member_dietary_restrictions')
-              .select('*, restriction:dietary_restrictions(name)')
-              .eq('member_id', member.id)
+        // Convert family members data to the format used by the form
+        const membersWithDetails = familyMembers.map(member => {
+          // Parse dietary restrictions and allergies
+          const dietaryRestrictions: DietaryRestriction[] = []
 
-            // Load food preferences
-            const { data: preferences } = await supabase
-              .from('food_preferences')
-              .select('*')
-              .eq('member_id', member.id)
+          // Add diet type as a restriction if it exists
+          if (member.dietary_restrictions && Array.isArray(member.dietary_restrictions)) {
+            // Find if any of the dietary restrictions is a known diet type
+            const dietType = member.dietary_restrictions.find((r: string) =>
+              dietTypes.includes(r.charAt(0).toUpperCase() + r.slice(1))
+            )
+
+            // Add allergies from food_allergies array
+            if (member.food_allergies && Array.isArray(member.food_allergies)) {
+              member.food_allergies.forEach((allergy: string) => {
+                dietaryRestrictions.push({
+                  type: 'allergy',
+                  name: allergy,
+                  severity: 'severe'
+                })
+              })
+            }
+
+            // Add other dietary restrictions
+            member.dietary_restrictions.forEach((restriction: string) => {
+              if (!dietTypes.some(dt => dt.toLowerCase() === restriction.toLowerCase())) {
+                dietaryRestrictions.push({
+                  type: 'restriction',
+                  name: restriction,
+                  severity: 'preference'
+                })
+              }
+            })
 
             return {
               id: member.id,
@@ -280,19 +299,27 @@ export default function MealPlannerSetup() {
               ageGroup: member.age_group || 'adult',
               birthDate: member.birth_date,
               isPrimaryPlanner: member.is_primary_meal_planner || false,
-              dietaryRestrictions: restrictions?.map(r => ({
-                type: 'allergy',
-                name: r.restriction?.name || '',
-                severity: r.severity
-              })) || [],
-              foodPreferences: preferences?.map(p => ({
-                type: p.preference === 'love' || p.preference === 'like' ? 'like' : 'dislike',
+              dietType: dietType ? dietType.charAt(0).toUpperCase() + dietType.slice(1) : '',
+              dietaryRestrictions,
+              foodPreferences: member.disliked_ingredients?.map((item: string) => ({
+                type: 'dislike',
                 category: 'ingredient',
-                value: p.food_type
+                value: item
               })) || []
             }
-          })
-        )
+          }
+
+          return {
+            id: member.id,
+            name: member.name,
+            ageGroup: member.age_group || 'adult',
+            birthDate: member.birth_date,
+            isPrimaryPlanner: member.is_primary_meal_planner || false,
+            dietType: '',
+            dietaryRestrictions,
+            foodPreferences: []
+          }
+        })
 
         setMembers(membersWithDetails)
       }
@@ -392,14 +419,40 @@ export default function MealPlannerSetup() {
       for (const member of members) {
         let savedMember
 
+        // Prepare dietary data for saving
+        const dietaryRestrictionsList: string[] = []
+        const allergyList: string[] = []
+
+        // Add diet type to dietary restrictions if set
+        if (member.dietType && member.dietType !== '') {
+          dietaryRestrictionsList.push(member.dietType.toLowerCase())
+        }
+
+        // Separate allergies and other restrictions
+        member.dietaryRestrictions.forEach(restriction => {
+          if (restriction.type === 'allergy') {
+            allergyList.push(restriction.name)
+          } else if (restriction.name && !dietTypes.some(dt => dt.toLowerCase() === restriction.name.toLowerCase())) {
+            dietaryRestrictionsList.push(restriction.name.toLowerCase())
+          }
+        })
+
+        // Get disliked ingredients
+        const dislikedIngredients = member.foodPreferences
+          ?.filter(p => p.type === 'dislike')
+          ?.map(p => p.value) || []
+
         if (member.id) {
-          // Update existing member
+          // Update existing member with dietary preferences
           const { data, error: memberError } = await supabase
             .from('family_members')
             .update({
               name: member.name,
               age_group: member.ageGroup,
               is_primary_meal_planner: member.isPrimaryPlanner,
+              dietary_restrictions: dietaryRestrictionsList,
+              food_allergies: allergyList,
+              disliked_ingredients: dislikedIngredients,
               updated_at: new Date().toISOString()
             })
             .eq('id', member.id)
@@ -411,26 +464,18 @@ export default function MealPlannerSetup() {
             throw new Error(`Failed to update member ${member.name}: ${memberError.message}`)
           }
           savedMember = data
-
-          // Clear existing dietary restrictions and preferences
-          await supabase
-            .from('member_dietary_restrictions')
-            .delete()
-            .eq('member_id', member.id)
-
-          await supabase
-            .from('food_preferences')
-            .delete()
-            .eq('member_id', member.id)
         } else {
-          // Insert new member
+          // Insert new member with dietary preferences
           const { data, error: memberError } = await supabase
             .from('family_members')
             .insert({
               household_id: householdId,
               name: member.name,
               age_group: member.ageGroup,
-              is_primary_meal_planner: member.isPrimaryPlanner
+              is_primary_meal_planner: member.isPrimaryPlanner,
+              dietary_restrictions: dietaryRestrictionsList,
+              food_allergies: allergyList,
+              disliked_ingredients: dislikedIngredients
             })
             .select()
             .single()
@@ -442,51 +487,8 @@ export default function MealPlannerSetup() {
           savedMember = data
         }
 
-        // Save dietary restrictions
-        if (member.dietaryRestrictions.length > 0) {
-          // First, find or create the dietary restriction entries
-          for (const restriction of member.dietaryRestrictions) {
-            // Get the restriction ID from the master list
-            const { data: restrictionData } = await supabase
-              .from('dietary_restrictions')
-              .select('id')
-              .eq('name', restriction.name)
-              .single()
-
-            if (restrictionData) {
-              // Link the member to this dietary restriction
-              const { error: linkError } = await supabase
-                .from('member_dietary_restrictions')
-                .insert({
-                  member_id: savedMember.id,
-                  restriction_id: restrictionData.id,
-                  severity: restriction.severity || 'preference',
-                  notes: restriction.notes || null
-                })
-
-              if (linkError) throw linkError
-            }
-          }
-        }
-
-        // Save food preferences
-        if (member.foodPreferences && member.foodPreferences.length > 0) {
-          const { error: prefError } = await supabase
-            .from('food_preferences')
-            .insert(
-              member.foodPreferences.map(p => ({
-                member_id: savedMember.id,
-                food_type: p.value, // Changed from value to food_type to match schema
-                preference: p.type === 'favorite' ? 'love' : p.type === 'like' ? 'like' : 'dislike', // Map to correct preference values
-                notes: p.category || null
-              }))
-            )
-
-          if (prefError) {
-            console.error('Error saving food preferences:', prefError)
-            throw new Error(`Failed to save food preferences: ${prefError.message}`)
-          }
-        }
+        // All dietary data is now saved directly in the family_members table columns
+        // No need for separate member_dietary_restrictions or food_preferences tables
       }
 
       // Save household meal preferences

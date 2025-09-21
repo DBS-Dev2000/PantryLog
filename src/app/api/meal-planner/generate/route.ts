@@ -298,31 +298,73 @@ async function getAvailableRecipes(householdId: string, supabase: any, dietaryRe
 
   // Filter recipes based on dietary restrictions
   if (dietaryRestrictions && dietaryRestrictions.length > 0 && recipes) {
-    // Get restriction details for filtering
-    const { data: restrictionDetails } = await supabase
-      .from('dietary_restrictions')
-      .select('*')
-      .in('name', dietaryRestrictions)
+    // Separate allergies from other dietary restrictions
+    const allergies = dietaryRestrictions.filter(r => r.startsWith('allergy_'))
+      .map(a => a.replace('allergy_', ''))
+    const otherRestrictions = dietaryRestrictions.filter(r => !r.startsWith('allergy_'))
 
-    if (restrictionDetails && restrictionDetails.length > 0) {
-      return recipes.filter((recipe: any) => {
-        // Check if recipe violates any dietary restriction
+    // Get restriction details for non-allergy restrictions
+    let restrictionDetails: any[] = []
+    if (otherRestrictions.length > 0) {
+      const { data } = await supabase
+        .from('dietary_restrictions')
+        .select('*')
+        .in('name', otherRestrictions)
+      restrictionDetails = data || []
+    }
+
+    return recipes.filter((recipe: any) => {
+      // FIRST PRIORITY: Check allergies - these are absolute exclusions
+      if (allergies.length > 0 && recipe.recipe_ingredients) {
+        for (const allergy of allergies) {
+          const allergyLower = allergy.toLowerCase()
+
+          // Check recipe name and category for allergen
+          if (recipe.name && recipe.name.toLowerCase().includes(allergyLower)) {
+            console.log(`Recipe ${recipe.name} excluded due to allergy ${allergy} in recipe name`)
+            return false
+          }
+          if (recipe.category && recipe.category.toLowerCase().includes(allergyLower)) {
+            console.log(`Recipe ${recipe.name} excluded due to allergy ${allergy} in category`)
+            return false
+          }
+
+          // Check all ingredients for allergen
+          for (const ingredient of recipe.recipe_ingredients) {
+            const ingredientName = (ingredient.ingredient_name || '').toLowerCase()
+            // Check for exact match or common variations
+            if (ingredientName.includes(allergyLower) ||
+                (allergyLower === 'milk' && (ingredientName.includes('dairy') || ingredientName.includes('cream') || ingredientName.includes('cheese') || ingredientName.includes('butter'))) ||
+                (allergyLower === 'eggs' && ingredientName.includes('egg')) ||
+                (allergyLower === 'peanuts' && ingredientName.includes('peanut')) ||
+                (allergyLower === 'tree nuts' && (ingredientName.includes('almond') || ingredientName.includes('walnut') || ingredientName.includes('cashew') || ingredientName.includes('pecan'))) ||
+                (allergyLower === 'wheat' && (ingredientName.includes('flour') || ingredientName.includes('bread'))) ||
+                (allergyLower === 'soy' && (ingredientName.includes('soy') || ingredientName.includes('tofu') || ingredientName.includes('tempeh'))) ||
+                (allergyLower === 'shellfish' && (ingredientName.includes('shrimp') || ingredientName.includes('lobster') || ingredientName.includes('crab') || ingredientName.includes('shellfish'))) ||
+                (allergyLower === 'fish' && (ingredientName.includes('fish') || ingredientName.includes('salmon') || ingredientName.includes('tuna') || ingredientName.includes('cod')))) {
+              console.log(`Recipe ${recipe.name} excluded due to allergy ${allergy} in ingredient ${ingredientName}`)
+              return false
+            }
+          }
+        }
+      }
+
+      // SECOND: Check other dietary restrictions
+      if (restrictionDetails && restrictionDetails.length > 0) {
         for (const restriction of restrictionDetails) {
           // Check excluded categories
           if (restriction.excluded_categories && Array.isArray(restriction.excluded_categories)) {
-            // Check if recipe has a category that's excluded
             if (recipe.category && restriction.excluded_categories.some((cat: string) =>
               recipe.category.toLowerCase().includes(cat.toLowerCase()) ||
               cat.toLowerCase().includes(recipe.category.toLowerCase())
             )) {
               console.log(`Recipe ${recipe.name} excluded due to category ${recipe.category} in restriction ${restriction.name}`)
-              return false // Exclude this recipe
+              return false
             }
           }
 
           // For highly restrictive diets like carnivore, only allow specific categories
           if (restriction.name === 'carnivore' && restriction.allowed_categories) {
-            // For carnivore, recipe must be in allowed categories
             if (!recipe.category || !restriction.allowed_categories.some((cat: string) =>
               recipe.category.toLowerCase().includes(cat.toLowerCase()) ||
               cat.toLowerCase().includes(recipe.category.toLowerCase())
@@ -340,14 +382,15 @@ async function getAvailableRecipes(householdId: string, supabase: any, dietaryRe
                 ingredientName.includes(excluded.toLowerCase())
               )) {
                 console.log(`Recipe ${recipe.name} excluded due to ingredient ${ingredientName} in restriction ${restriction.name}`)
-                return false // Exclude this recipe
+                return false
               }
             }
           }
         }
-        return true // Recipe passes all dietary restrictions
-      })
-    }
+      }
+
+      return true // Recipe passes all dietary restrictions and allergies
+    })
   }
 
   return recipes || []
@@ -412,51 +455,91 @@ async function getRecipesForInventory(householdId: string, inventory: any[], sup
 
   let filteredRecipes = recipes
 
-  // Filter by dietary restrictions first
+  // Filter by dietary restrictions first (allergies take priority)
   if (dietaryRestrictions && dietaryRestrictions.length > 0) {
-    const { data: restrictionDetails } = await supabase
-      .from('dietary_restrictions')
-      .select('*')
-      .in('name', dietaryRestrictions)
+    // Separate allergies from other dietary restrictions
+    const allergies = dietaryRestrictions.filter(r => r.startsWith('allergy_'))
+      .map(a => a.replace('allergy_', ''))
+    const otherRestrictions = dietaryRestrictions.filter(r => !r.startsWith('allergy_'))
 
-    if (restrictionDetails && restrictionDetails.length > 0) {
-      filteredRecipes = recipes.filter((recipe: any) => {
-        for (const restriction of restrictionDetails) {
-          // Check excluded categories
-          if (restriction.excluded_categories && Array.isArray(restriction.excluded_categories)) {
-            if (recipe.category && restriction.excluded_categories.some((cat: string) =>
-              recipe.category.toLowerCase().includes(cat.toLowerCase()) ||
-              cat.toLowerCase().includes(recipe.category.toLowerCase())
-            )) {
-              return false
-            }
+    // Get restriction details for non-allergy restrictions
+    let restrictionDetails: any[] = []
+    if (otherRestrictions.length > 0) {
+      const { data } = await supabase
+        .from('dietary_restrictions')
+        .select('*')
+        .in('name', otherRestrictions)
+      restrictionDetails = data || []
+    }
+
+    filteredRecipes = recipes.filter((recipe: any) => {
+      // FIRST PRIORITY: Check allergies
+      if (allergies.length > 0 && recipe.recipe_ingredients) {
+        for (const allergy of allergies) {
+          const allergyLower = allergy.toLowerCase()
+
+          // Check recipe name and category for allergen
+          if (recipe.name && recipe.name.toLowerCase().includes(allergyLower)) {
+            return false
+          }
+          if (recipe.category && recipe.category.toLowerCase().includes(allergyLower)) {
+            return false
           }
 
-          // For carnivore, only allow specific categories
-          if (restriction.name === 'carnivore' && restriction.allowed_categories) {
-            if (!recipe.category || !restriction.allowed_categories.some((cat: string) =>
-              recipe.category.toLowerCase().includes(cat.toLowerCase()) ||
-              cat.toLowerCase().includes(recipe.category.toLowerCase())
-            )) {
+          // Check all ingredients for allergen with common variations
+          for (const ingredient of recipe.recipe_ingredients) {
+            const ingredientName = (ingredient.ingredient_name || '').toLowerCase()
+            if (ingredientName.includes(allergyLower) ||
+                (allergyLower === 'milk' && (ingredientName.includes('dairy') || ingredientName.includes('cream') || ingredientName.includes('cheese') || ingredientName.includes('butter'))) ||
+                (allergyLower === 'eggs' && ingredientName.includes('egg')) ||
+                (allergyLower === 'peanuts' && ingredientName.includes('peanut')) ||
+                (allergyLower === 'tree nuts' && (ingredientName.includes('almond') || ingredientName.includes('walnut') || ingredientName.includes('cashew') || ingredientName.includes('pecan'))) ||
+                (allergyLower === 'wheat' && (ingredientName.includes('flour') || ingredientName.includes('bread'))) ||
+                (allergyLower === 'soy' && (ingredientName.includes('soy') || ingredientName.includes('tofu') || ingredientName.includes('tempeh'))) ||
+                (allergyLower === 'shellfish' && (ingredientName.includes('shrimp') || ingredientName.includes('lobster') || ingredientName.includes('crab') || ingredientName.includes('shellfish'))) ||
+                (allergyLower === 'fish' && (ingredientName.includes('fish') || ingredientName.includes('salmon') || ingredientName.includes('tuna') || ingredientName.includes('cod')))) {
               return false
-            }
-          }
-
-          // Check excluded ingredients
-          if (restriction.excluded_ingredients && Array.isArray(restriction.excluded_ingredients) && recipe.recipe_ingredients) {
-            for (const ingredient of recipe.recipe_ingredients) {
-              const ingredientName = (ingredient.ingredient_name || '').toLowerCase()
-              if (restriction.excluded_ingredients.some((excluded: string) =>
-                ingredientName.includes(excluded.toLowerCase())
-              )) {
-                return false
-              }
             }
           }
         }
-        return true
-      })
-    }
+      }
+
+      // SECOND: Check other dietary restrictions
+      for (const restriction of restrictionDetails) {
+        // Check excluded categories
+        if (restriction.excluded_categories && Array.isArray(restriction.excluded_categories)) {
+          if (recipe.category && restriction.excluded_categories.some((cat: string) =>
+            recipe.category.toLowerCase().includes(cat.toLowerCase()) ||
+            cat.toLowerCase().includes(recipe.category.toLowerCase())
+          )) {
+            return false
+          }
+        }
+
+        // For carnivore, only allow specific categories
+        if (restriction.name === 'carnivore' && restriction.allowed_categories) {
+          if (!recipe.category || !restriction.allowed_categories.some((cat: string) =>
+            recipe.category.toLowerCase().includes(cat.toLowerCase()) ||
+            cat.toLowerCase().includes(recipe.category.toLowerCase())
+          )) {
+            return false
+          }
+        }
+
+        // Check excluded ingredients
+        if (restriction.excluded_ingredients && Array.isArray(restriction.excluded_ingredients) && recipe.recipe_ingredients) {
+          for (const ingredient of recipe.recipe_ingredients) {
+            const ingredientName = (ingredient.ingredient_name || '').toLowerCase()
+            if (restriction.excluded_ingredients.some((excluded: string) =>
+              ingredientName.includes(excluded.toLowerCase())
+            )) {
+              return false
+            }
+          }
+        }
+      }
+      return true
+    })
   }
 
   // Then filter recipes where we have most ingredients
