@@ -705,7 +705,7 @@ export default function RecipeDetailPage() {
         {/* Cooking Mode Toggle - Keep Screen On */}
         <Button
           variant={cookingMode ? "contained" : "outlined"}
-          startIcon={cookingMode ? <PhoneIcon /> : <PhoneIcon />}
+          startIcon={<PhoneIcon />}
           onClick={() => setCookingMode(!cookingMode)}
           sx={{
             mr: 1,
@@ -715,9 +715,9 @@ export default function RecipeDetailPage() {
               backgroundColor: cookingMode ? 'warning.dark' : undefined
             }
           }}
-          title="Keep screen awake while cooking"
+          title={cookingMode ? "Screen will stay on" : "Keep screen awake while cooking"}
         >
-          {cookingMode ? 'Screen On' : 'Keep Screen On'}
+          Screen On
         </Button>
 
         {canEditRecipe && (
