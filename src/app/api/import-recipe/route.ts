@@ -166,13 +166,34 @@ async function extractWebsiteRecipe(url: string) {
 
         // Handle arrays of structured data
         const recipes = Array.isArray(structuredData) ? structuredData : [structuredData]
-        const recipeData = recipes.find(item => item['@type'] === 'Recipe')
+        const recipeData = recipes.find(item =>
+          item['@type'] === 'Recipe' ||
+          (Array.isArray(item['@type']) && item['@type'].includes('Recipe'))
+        )
 
         if (recipeData) {
+          console.log('📊 Found structured recipe data for:', url)
+
+          // Special handling for King Arthur Baking
+          if (url.includes('kingarthurbaking.com')) {
+            console.log('👑 Processing King Arthur Baking recipe format')
+            // Their site might have nested structure
+            if (recipeData['@graph']) {
+              const graphRecipe = recipeData['@graph'].find((item: any) =>
+                item['@type'] === 'Recipe' ||
+                (Array.isArray(item['@type']) && item['@type'].includes('Recipe'))
+              )
+              if (graphRecipe) {
+                return formatStructuredRecipe(graphRecipe, url)
+              }
+            }
+          }
+
           return formatStructuredRecipe(recipeData, url)
         }
       } catch (jsonError) {
         console.warn('Failed to parse JSON-LD:', jsonError)
+        console.warn('JSON-LD content:', jsonLdMatch[1]?.substring(0, 500))
       }
     }
 
@@ -340,33 +361,55 @@ IMPORTANT:
 }
 
 function formatStructuredRecipe(structuredData: any, sourceUrl: string) {
-  const getTime = (timeStr: string): number => {
-    if (!timeStr) return 0
-    const match = timeStr.match(/PT(\d+)M/) || timeStr.match(/(\d+)\s*min/)
-    return match ? parseInt(match[1]) : 0
-  }
+  try {
+    console.log('🔧 Formatting structured recipe data')
 
-  const formatIngredients = (ingredients: any[]) => {
-    return ingredients.map((ing, index) => {
-      if (typeof ing === 'string') {
-        // Parse ingredient string like "2 cups flour"
-        const parts = ing.match(/^(\d+(?:\.\d+)?|\d+\/\d+)?\s*(\w+)?\s*(.+)$/)
-        return {
-          ingredient_name: ing,
-          quantity: parts?.[1] ? parseFloat(parts[1]) : 1,
-          unit: parts?.[2] || 'pieces',
-          preparation: ''
-        }
-      } else {
-        return {
-          ingredient_name: ing.name || ing.text || 'Unknown ingredient',
-          quantity: parseFloat(ing.amount || ing.quantity || '1'),
-          unit: ing.unit || 'pieces',
-          preparation: ing.preparation || ''
-        }
+    const getTime = (timeStr: string): number => {
+      if (!timeStr) return 0
+      // Handle ISO 8601 duration format (PT30M) and other formats
+      const isoMatch = timeStr.match(/PT(?:(\d+)H)?(?:(\d+)M)?/)
+      if (isoMatch) {
+        const hours = parseInt(isoMatch[1] || '0')
+        const minutes = parseInt(isoMatch[2] || '0')
+        return hours * 60 + minutes
       }
-    })
-  }
+      const minMatch = timeStr.match(/(\d+)\s*min/)
+      return minMatch ? parseInt(minMatch[1]) : 0
+    }
+
+    const formatIngredients = (ingredients: any[]) => {
+      if (!ingredients || !Array.isArray(ingredients)) {
+        console.warn('⚠️ No ingredients array found')
+        return []
+      }
+
+      return ingredients.map((ing, index) => {
+        if (typeof ing === 'string') {
+          // Parse ingredient string like "2 cups flour"
+          const parts = ing.match(/^(\d+(?:\.\d+)?|\d+\/\d+)?\s*(\w+)?\s*(.+)$/)
+          return {
+            ingredient_name: ing,
+            quantity: parts?.[1] ? parseFloat(parts[1]) : 1,
+            unit: parts?.[2] || 'pieces',
+            preparation: ''
+          }
+        } else if (ing && typeof ing === 'object') {
+          return {
+            ingredient_name: ing.name || ing.text || ing.ingredient || 'Unknown ingredient',
+            quantity: parseFloat(ing.amount || ing.quantity || '1'),
+            unit: ing.unit || ing.unitText || 'pieces',
+            preparation: ing.preparation || ''
+          }
+        } else {
+          return {
+            ingredient_name: String(ing),
+            quantity: 1,
+            unit: 'pieces',
+            preparation: ''
+          }
+        }
+      })
+    }
 
   const extractInstructionsText = (instructions: any): string => {
     if (Array.isArray(instructions)) {
@@ -428,25 +471,42 @@ function formatStructuredRecipe(structuredData: any, sourceUrl: string) {
     return []
   }
 
-  return {
-    source_type: 'website',
-    source_url: sourceUrl,
-    website_domain: new URL(sourceUrl).hostname,
-    title: structuredData.name || 'Imported Recipe',
-    description: structuredData.description || '',
-    prep_time_minutes: getTime(structuredData.prepTime),
-    cook_time_minutes: getTime(structuredData.cookTime),
-    total_time_minutes: getTime(structuredData.totalTime),
-    servings: parseInt(structuredData.recipeYield) || 4,
-    image_url: structuredData.image?.[0] || structuredData.image,
-    cuisine: structuredData.recipeCuisine || 'unknown',
-    ingredients: formatIngredients(structuredData.recipeIngredient || []),
-    instructions: extractInstructionsText(structuredData.recipeInstructions || []),
-    steps: formatInstructions(structuredData.recipeInstructions || []),
-    calories_per_serving: structuredData.nutrition?.calories ? parseInt(structuredData.nutrition.calories) : undefined,
-    protein_grams: structuredData.nutrition?.proteinContent ? parseFloat(structuredData.nutrition.proteinContent) : undefined,
-    carbs_grams: structuredData.nutrition?.carbohydrateContent ? parseFloat(structuredData.nutrition.carbohydrateContent) : undefined,
-    fat_grams: structuredData.nutrition?.fatContent ? parseFloat(structuredData.nutrition.fatContent) : undefined,
-    tags: structuredData.keywords ? structuredData.keywords.split(',').map((k: string) => k.trim()) : []
+    // Handle different image formats
+    let imageUrl = null
+    if (structuredData.image) {
+      if (typeof structuredData.image === 'string') {
+        imageUrl = structuredData.image
+      } else if (Array.isArray(structuredData.image)) {
+        imageUrl = structuredData.image[0]?.url || structuredData.image[0]
+      } else if (structuredData.image.url) {
+        imageUrl = structuredData.image.url
+      }
+    }
+
+    return {
+      source_type: 'website',
+      source_url: sourceUrl,
+      website_domain: new URL(sourceUrl).hostname,
+      title: structuredData.name || 'Imported Recipe',
+      description: structuredData.description || '',
+      prep_time_minutes: getTime(structuredData.prepTime),
+      cook_time_minutes: getTime(structuredData.cookTime),
+      total_time_minutes: getTime(structuredData.totalTime),
+      servings: parseInt(structuredData.recipeYield) || parseInt(structuredData.yield) || 4,
+      image_url: imageUrl,
+      cuisine: structuredData.recipeCuisine || 'unknown',
+      ingredients: formatIngredients(structuredData.recipeIngredient || structuredData.ingredients || []),
+      instructions: extractInstructionsText(structuredData.recipeInstructions || []),
+      steps: formatInstructions(structuredData.recipeInstructions || []),
+      calories_per_serving: structuredData.nutrition?.calories ? parseInt(structuredData.nutrition.calories) : undefined,
+      protein_grams: structuredData.nutrition?.proteinContent ? parseFloat(structuredData.nutrition.proteinContent) : undefined,
+      carbs_grams: structuredData.nutrition?.carbohydrateContent ? parseFloat(structuredData.nutrition.carbohydrateContent) : undefined,
+      fat_grams: structuredData.nutrition?.fatContent ? parseFloat(structuredData.nutrition.fatContent) : undefined,
+      tags: structuredData.keywords ? structuredData.keywords.split(',').map((k: string) => k.trim()) : []
+    }
+  } catch (error) {
+    console.error('🚨 Error formatting structured recipe:', error)
+    console.error('Structured data keys:', Object.keys(structuredData || {}))
+    throw new Error(`Failed to format recipe: ${error.message}`)
   }
 }
