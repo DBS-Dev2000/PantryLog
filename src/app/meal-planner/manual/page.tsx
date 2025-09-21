@@ -42,7 +42,9 @@ import {
   Cookie,
   Edit,
   Schedule,
-  CalendarMonth
+  CalendarMonth,
+  NavigateBefore,
+  NavigateNext
 } from '@mui/icons-material'
 import { supabase } from '@/lib/supabase'
 import { format, addDays, startOfWeek, endOfWeek } from 'date-fns'
@@ -94,8 +96,8 @@ export default function ManualMealPlannerPage() {
   }, [])
 
   const initializeWeek = () => {
-    const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 })
-    const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 1 })
+    const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 0 }) // 0 = Sunday
+    const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 0 })
     setPlanName(`Week of ${format(weekStart, 'MMM d, yyyy')}`)
   }
 
@@ -184,8 +186,8 @@ export default function ManualMealPlannerPage() {
       }
 
       // Create the meal plan
-      const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 })
-      const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 1 })
+      const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 0 }) // 0 = Sunday
+      const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 0 })
 
       const { data: planData, error: planError } = await supabase
         .from('meal_plans')
@@ -246,7 +248,7 @@ export default function ManualMealPlannerPage() {
   }
 
   const getDaysInWeek = () => {
-    const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 })
+    const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 0 }) // 0 = Sunday
     const days = []
     for (let i = 0; i < 7; i++) {
       days.push(addDays(weekStart, i))
@@ -290,20 +292,49 @@ export default function ManualMealPlannerPage() {
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <TextField
-              type="week"
-              label="Select Week"
-              fullWidth
-              value={format(selectedWeek, "yyyy-'W'ww")}
-              onChange={(e) => {
-                const [year, week] = e.target.value.split('-W')
-                const date = new Date(parseInt(year), 0, 1)
-                date.setDate(date.getDate() + (parseInt(week) - 1) * 7)
-                setSelectedWeek(date)
-                initializeWeek()
-              }}
-              InputLabelProps={{ shrink: true }}
-            />
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Select Week
+              </Typography>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <IconButton
+                  onClick={() => {
+                    setSelectedWeek(prev => addDays(prev, -7))
+                    setTimeout(initializeWeek, 0)
+                  }}
+                >
+                  <NavigateBefore />
+                </IconButton>
+                <Box textAlign="center" sx={{ minWidth: 200 }}>
+                  <Typography variant="h6">
+                    {format(startOfWeek(selectedWeek, { weekStartsOn: 0 }), 'MMM d')} -
+                    {' '}{format(endOfWeek(selectedWeek, { weekStartsOn: 0 }), 'MMM d, yyyy')}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Sunday to Saturday
+                  </Typography>
+                </Box>
+                <IconButton
+                  onClick={() => {
+                    setSelectedWeek(prev => addDays(prev, 7))
+                    setTimeout(initializeWeek, 0)
+                  }}
+                >
+                  <NavigateNext />
+                </IconButton>
+              </Box>
+              <Box textAlign="center" mt={1}>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    setSelectedWeek(new Date())
+                    setTimeout(initializeWeek, 0)
+                  }}
+                >
+                  Current Week
+                </Button>
+              </Box>
+            </Paper>
           </Grid>
         </Grid>
       </Paper>

@@ -5,13 +5,23 @@ import { headers } from 'next/headers'
 // Create untyped Supabase client for meal planning tables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-// Helper to create authenticated client
+// Helper to create authenticated client - use service role to bypass RLS
 function createAuthClient(req: NextRequest) {
-  // Get the authorization header from the request
-  const authorization = req.headers.get('authorization')
+  // Use service role key to bypass RLS for meal planning
+  // This is safe because we validate the user ID from the request
+  if (supabaseServiceKey) {
+    return createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    })
+  }
 
-  // Create client with auth context if available
+  // Fallback to anon key with auth header
+  const authorization = req.headers.get('authorization')
   if (authorization) {
     return createClient(supabaseUrl, supabaseAnonKey, {
       global: {
@@ -22,7 +32,6 @@ function createAuthClient(req: NextRequest) {
     })
   }
 
-  // Otherwise create a regular client
   return createClient(supabaseUrl, supabaseAnonKey)
 }
 

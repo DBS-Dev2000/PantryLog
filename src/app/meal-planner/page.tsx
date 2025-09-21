@@ -59,7 +59,9 @@ import {
   MenuBook,
   TravelExplore,
   RadioButtonUnchecked,
-  RadioButtonChecked
+  RadioButtonChecked,
+  NavigateBefore,
+  NavigateNext
 } from '@mui/icons-material'
 import { supabase } from '@/lib/supabase'
 import { format, startOfWeek, endOfWeek, addDays } from 'date-fns'
@@ -214,8 +216,8 @@ export default function MealPlannerPage() {
         return
       }
 
-      const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 })
-      const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 1 })
+      const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 0 }) // 0 = Sunday
+      const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 0 })
       console.log('Generating for dates:', format(weekStart, 'yyyy-MM-dd'), 'to', format(weekEnd, 'yyyy-MM-dd'))
 
       const requestBody = {
@@ -586,6 +588,13 @@ export default function MealPlannerPage() {
           </Button>
 
           <Button
+            variant="outlined"
+            onClick={() => router.push('/meal-planner/manual')}
+          >
+            Manual Plan
+          </Button>
+
+          <Button
             variant="contained"
             startIcon={<Add />}
             onClick={() => setGenerateDialogOpen(true)}
@@ -683,19 +692,40 @@ export default function MealPlannerPage() {
           </Box>
         </DialogTitle>
         <DialogContent>
-          <TextField
-            type="week"
-            label="Select Week"
-            fullWidth
-            value={format(selectedWeek, "yyyy-'W'ww")}
-            onChange={(e) => {
-              const [year, week] = e.target.value.split('-W')
-              const date = new Date(parseInt(year), 0, 1)
-              date.setDate(date.getDate() + (parseInt(week) - 1) * 7)
-              setSelectedWeek(date)
-            }}
-            sx={{ mt: 2, mb: 3 }}
-          />
+          <Paper sx={{ p: 2, mt: 2, mb: 3 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Select Week for Meal Plan
+            </Typography>
+            <Box display="flex" alignItems="center" justifyContent="space-between">
+              <IconButton
+                onClick={() => setSelectedWeek(prev => addDays(prev, -7))}
+              >
+                <NavigateBefore />
+              </IconButton>
+              <Box textAlign="center" sx={{ minWidth: 200 }}>
+                <Typography variant="h6">
+                  {format(startOfWeek(selectedWeek, { weekStartsOn: 0 }), 'MMM d')} -
+                  {' '}{format(endOfWeek(selectedWeek, { weekStartsOn: 0 }), 'MMM d, yyyy')}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Sunday to Saturday
+                </Typography>
+              </Box>
+              <IconButton
+                onClick={() => setSelectedWeek(prev => addDays(prev, 7))}
+              >
+                <NavigateNext />
+              </IconButton>
+            </Box>
+            <Box textAlign="center" mt={1}>
+              <Button
+                size="small"
+                onClick={() => setSelectedWeek(new Date())}
+              >
+                Current Week
+              </Button>
+            </Box>
+          </Paper>
 
           <Typography variant="h6" gutterBottom>
             How would you like to plan your meals?
