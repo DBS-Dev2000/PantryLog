@@ -7,6 +7,7 @@ import {
   Stepper,
   Step,
   StepLabel,
+  StepButton,
   Button,
   Typography,
   Paper,
@@ -38,7 +39,9 @@ import {
   ToggleButtonGroup,
   Divider,
   CircularProgress,
-  Fab
+  Fab,
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
 import {
   Person as PersonIcon,
@@ -186,6 +189,8 @@ const cookingMethods = [
 
 export default function MealPlannerSetup() {
   const router = useRouter()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [activeStep, setActiveStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -1036,17 +1041,24 @@ export default function MealPlannerSetup() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom align="center">
-          <RestaurantIcon sx={{ verticalAlign: 'middle', mr: 2 }} />
-          Meal Planning Setup
+    <Container maxWidth="md" sx={{ py: isMobile ? 2 : 4 }}>
+      <Paper sx={{ p: isMobile ? 2 : 3 }}>
+        <Typography variant={isMobile ? "h5" : "h4"} gutterBottom align="center">
+          <RestaurantIcon sx={{ verticalAlign: 'middle', mr: isMobile ? 1 : 2, fontSize: isMobile ? 24 : 32 }} />
+          {isMobile ? "Meal Setup" : "Meal Planning Setup"}
         </Typography>
 
-        <Stepper activeStep={activeStep} sx={{ my: 4 }}>
-          {steps.map((label) => (
+        <Stepper
+          activeStep={activeStep}
+          sx={{ my: isMobile ? 2 : 4 }}
+          orientation={isMobile ? 'vertical' : 'horizontal'}
+          alternativeLabel={!isMobile}
+        >
+          {steps.map((label, index) => (
             <Step key={label}>
-              <StepLabel>{label}</StepLabel>
+              <StepButton onClick={() => setActiveStep(index)}>
+                {isMobile ? label.split(' ').slice(0, 2).join(' ') : label}
+              </StepButton>
             </Step>
           ))}
         </Stepper>
@@ -1067,12 +1079,21 @@ export default function MealPlannerSetup() {
           {renderStepContent()}
         </Box>
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          mt: 3,
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 2 : 0
+        }}>
           <Button
             disabled={activeStep === 0}
             onClick={handleBack}
-            startIcon={<BackIcon />}
+            startIcon={!isMobile && <BackIcon />}
+            fullWidth={isMobile}
+            variant={isMobile ? "outlined" : "text"}
           >
+            {isMobile && <BackIcon sx={{ mr: 1 }} />}
             Back
           </Button>
 
@@ -1080,12 +1101,14 @@ export default function MealPlannerSetup() {
             <Button
               variant="contained"
               onClick={handleNext}
-              endIcon={<NextIcon />}
+              endIcon={!isMobile && <NextIcon />}
               disabled={
                 activeStep === 0 && members.some(m => !m.name) // Require names
               }
+              fullWidth={isMobile}
             >
               Next
+              {isMobile && <NextIcon sx={{ ml: 1 }} />}
             </Button>
           ) : null}
         </Box>

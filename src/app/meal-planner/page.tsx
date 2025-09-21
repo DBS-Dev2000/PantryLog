@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getUserHouseholdFeatures } from '@/lib/features'
 import MealPlanPreview from './components/MealPlanPreview'
 import DateRangePicker from './components/DateRangePicker'
+import AddMealDialog from './components/AddMealDialog'
 import {
   Box,
   Container,
@@ -37,6 +38,7 @@ import {
   Tooltip,
   Fab,
   Divider,
+  Menu,
   useTheme,
   useMediaQuery
 } from '@mui/material'
@@ -47,6 +49,8 @@ import {
   Add,
   Edit,
   Delete,
+  Archive,
+  MoreVert,
   CheckCircle,
   Schedule,
   Person,
@@ -125,6 +129,17 @@ export default function MealPlannerPage() {
   })
   const [previewMeals, setPreviewMeals] = useState<any[]>([])
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false)
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
+  const [addMealDialogOpen, setAddMealDialogOpen] = useState(false)
+  const [editMealDialogOpen, setEditMealDialogOpen] = useState(false)
+  const [selectedMeal, setSelectedMeal] = useState<PlannedMeal | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedMealType, setSelectedMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('dinner')
+  const [familyMembers, setFamilyMembers] = useState<any[]>([])
+  const [selectedAttendees, setSelectedAttendees] = useState<string[]>([])
 
   useEffect(() => {
     checkProfileAndLoadPlans()
@@ -159,18 +174,18 @@ export default function MealPlannerPage() {
         return
       }
 
-      // Check if profile is complete
+      // Check if profile is complete and load family members
       const { data: members } = await supabase
         .from('family_members')
-        .select('id')
+        .select('*')
         .eq('household_id', household.id)
-        .limit(1)
 
       if (!members || members.length === 0) {
         router.push('/meal-planner/setup')
         return
       }
 
+      setFamilyMembers(members)
       setHasProfile(true)
 
       // Load existing meal plans
@@ -374,6 +389,150 @@ export default function MealPlannerPage() {
     }
   }
 
+  const handleDeletePlan = async () => {
+    if (!selectedPlanId) return
+
+    setDeleteDialogOpen(false)
+    setLoading(true)
+
+    try {
+      // Delete all meals associated with this plan first
+      await supabase
+        .from('meal_planner_meals')
+        .delete()
+        .eq('plan_id', selectedPlanId)
+
+      // Then delete the plan itself
+      const { error } = await supabase
+        .from('meal_plans')
+        .delete()
+        .eq('id', selectedPlanId)
+
+      if (error) throw error
+
+      // Reload the plans list
+      await checkProfileAndLoadPlans()
+      setSelectedPlanId(null)
+    } catch (error) {
+      console.error('Error deleting meal plan:', error)
+      setError('Failed to delete meal plan')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleArchivePlan = async () => {
+    if (!selectedPlanId) return
+
+    setArchiveDialogOpen(false)
+    setLoading(true)
+
+    try {
+      const { error } = await supabase
+        .from('meal_plans')
+        .update({ status: 'archived' })
+        .eq('id', selectedPlanId)
+
+      if (error) throw error
+
+      // Reload the plans list
+      await checkProfileAndLoadPlans()
+      setSelectedPlanId(null)
+    } catch (error) {
+      console.error('Error archiving meal plan:', error)
+      setError('Failed to archive meal plan')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAddMeal = async (mealData: any) => {
+    if (!currentPlan) return
+
+    setLoading(true)
+    try {
+      const { error } = await supabase
+        .from('planned_meals')
+        .insert({
+          meal_plan_id: currentPlan.id,
+          meal_date: format(mealData.date, 'yyyy-MM-dd'),
+          meal_type: mealData.mealType,
+          recipe_id: mealData.recipeId,
+          custom_meal_name: mealData.customName,
+          servings: mealData.servings || 4,
+          notes: mealData.notes,
+          attendees: mealData.attendees // Store who will attend this meal
+        })
+
+      if (error) throw error
+
+      await loadPlannedMeals(currentPlan.id)
+      setAddMealDialogOpen(false)
+      setSuccess('Meal added successfully!')
+    } catch (error) {
+      console.error('Error adding meal:', error)
+      setError('Failed to add meal')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleEditMeal = async (mealData: any) => {
+    if (!selectedMeal) return
+
+    setLoading(true)
+    try {
+      const { error } = await supabase
+        .from('planned_meals')
+        .update({
+          meal_date: format(mealData.date, 'yyyy-MM-dd'),
+          meal_type: mealData.mealType,
+          recipe_id: mealData.recipeId,
+          custom_meal_name: mealData.customName,
+          servings: mealData.servings,
+          notes: mealData.notes,
+          attendees: mealData.attendees
+        })
+        .eq('id', selectedMeal.id)
+
+      if (error) throw error
+
+      if (currentPlan) {
+        await loadPlannedMeals(currentPlan.id)
+      }
+      setEditMealDialogOpen(false)
+      setSelectedMeal(null)
+      setSuccess('Meal updated successfully!')
+    } catch (error) {
+      console.error('Error updating meal:', error)
+      setError('Failed to update meal')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeleteMeal = async (mealId: string) => {
+    setLoading(true)
+    try {
+      const { error } = await supabase
+        .from('planned_meals')
+        .delete()
+        .eq('id', mealId)
+
+      if (error) throw error
+
+      if (currentPlan) {
+        await loadPlannedMeals(currentPlan.id)
+      }
+      setSuccess('Meal removed successfully!')
+    } catch (error) {
+      console.error('Error deleting meal:', error)
+      setError('Failed to delete meal')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleConfirmMealPlan = async (confirmedMeals: any[], mealTypes: any) => {
     setPreviewDialogOpen(false)
     setGenerating(true)
@@ -543,11 +702,68 @@ export default function MealPlannerPage() {
                 <List dense sx={{ mt: 1 }}>
                   {['breakfast', 'lunch', 'dinner', 'snack'].map(mealType => {
                     const meal = meals.find(m => m.meal_type === mealType)
-                    if (!meal) return null
+
+                    if (!meal) {
+                      // Show empty slot with + button
+                      return (
+                        <ListItem
+                          key={`empty-${mealType}`}
+                          sx={{
+                            pl: 0,
+                            cursor: 'pointer',
+                            '&:hover': { backgroundColor: 'action.hover' },
+                            borderRadius: 1,
+                            border: '1px dashed',
+                            borderColor: 'divider',
+                            mb: 0.5
+                          }}
+                          onClick={() => {
+                            setSelectedDate(date)
+                            setSelectedMealType(mealType as any)
+                            setAddMealDialogOpen(true)
+                          }}
+                        >
+                          <ListItemText
+                            primary={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, opacity: 0.6 }}>
+                                <Chip
+                                  size="small"
+                                  label={mealType}
+                                  variant="outlined"
+                                  color={
+                                    mealType === 'breakfast' ? 'warning' :
+                                    mealType === 'lunch' ? 'info' :
+                                    mealType === 'dinner' ? 'success' : 'default'
+                                  }
+                                />
+                                <Add fontSize="small" />
+                                <Typography variant="body2" color="text.secondary">
+                                  Add {mealType}
+                                </Typography>
+                              </Box>
+                            }
+                          />
+                        </ListItem>
+                      )
+                    }
 
                     return (
-                      <ListItem key={meal.id} sx={{ pl: 0 }}>
+                      <ListItem
+                        key={meal.id}
+                        sx={{
+                          pl: 0,
+                          cursor: 'pointer',
+                          '&:hover': { backgroundColor: 'action.hover' },
+                          borderRadius: 1
+                        }}
+                        onClick={() => {
+                          setSelectedMeal(meal)
+                          setEditMealDialogOpen(true)
+                        }}
+                      >
                         <ListItemText
+                          primaryTypographyProps={{ component: 'div' }}
+                          secondaryTypographyProps={{ component: 'div' }}
                           primary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Chip
@@ -560,29 +776,60 @@ export default function MealPlannerPage() {
                                 }
                               />
                               {meal.completed && <CheckCircle color="success" fontSize="small" />}
+                              {meal.attendees && meal.attendees.length > 0 && (
+                                <Chip
+                                  size="small"
+                                  label={`${meal.attendees.length} attending`}
+                                  variant="outlined"
+                                  icon={<Person fontSize="small" />}
+                                />
+                              )}
                             </Box>
                           }
                           secondary={
-                            <Box>
-                              <Typography variant="body2">
-                                {meal.recipe?.name || meal.custom_meal_name}
-                              </Typography>
+                            <>
+                              {meal.recipe?.name || meal.custom_meal_name}
+                              {meal.servings && (
+                                <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                                  • {meal.servings} servings
+                                </Typography>
+                              )}
                               {meal.prep_time && (
-                                <Typography variant="caption" color="text.secondary">
-                                  <Schedule fontSize="small" sx={{ fontSize: 12, mr: 0.5 }} />
+                                <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                                  <Schedule fontSize="small" sx={{ fontSize: 12, mr: 0.5, verticalAlign: 'middle' }} />
                                   {meal.prep_time} min
                                 </Typography>
                               )}
-                            </Box>
+                              {meal.notes && (
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic' }}>
+                                  {meal.notes}
+                                </Typography>
+                              )}
+                            </>
                           }
                         />
                         <ListItemSecondaryAction>
                           <Tooltip title={meal.recipe?.tags?.includes('staple') ? 'Remove from staples' : 'Mark as staple'}>
                             <IconButton
                               size="small"
-                              onClick={() => handleToggleStaple(meal.id)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleToggleStaple(meal.id)
+                              }}
                             >
                               {meal.recipe?.tags?.includes('staple') ? <Star /> : <StarBorder />}
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete meal">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteMeal(meal.id)
+                              }}
+                              sx={{ color: 'error.main' }}
+                            >
+                              <Delete fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         </ListItemSecondaryAction>
@@ -690,7 +937,7 @@ export default function MealPlannerPage() {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: isMobile ? 2 : 4 }}>
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
           {error}
@@ -703,34 +950,53 @@ export default function MealPlannerPage() {
         </Alert>
       )}
 
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          <CalendarMonth sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Meal Planner
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: isMobile ? 'stretch' : 'center',
+        mb: 3,
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? 2 : 0
+      }}>
+        <Typography variant={isMobile ? "h5" : "h4"} component="h1">
+          <CalendarMonth sx={{ mr: 1, verticalAlign: 'middle', fontSize: isMobile ? 24 : 32 }} />
+          {isMobile ? "Meal Plans" : "Meal Planner"}
         </Typography>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<Settings />}
-            onClick={() => router.push('/meal-planner/setup')}
-          >
-            Setup
-          </Button>
+        <Box sx={{
+          display: 'flex',
+          gap: isMobile ? 1 : 2,
+          width: isMobile ? '100%' : 'auto',
+          flexDirection: isMobile ? 'column' : 'row'
+        }}>
+          {!isMobile && (
+            <Button
+              variant="outlined"
+              startIcon={<Settings />}
+              onClick={() => router.push('/meal-planner/setup')}
+            >
+              Setup
+            </Button>
+          )}
 
-          <Button
-            variant="outlined"
-            onClick={() => router.push('/meal-planner/manual')}
-          >
-            Manual Plan
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="outlined"
+              onClick={() => router.push('/meal-planner/manual')}
+            >
+              Manual Plan
+            </Button>
+          )}
 
           <Button
             variant="contained"
-            startIcon={<Add />}
+            startIcon={!isMobile && <Add />}
             onClick={() => setGenerateDialogOpen(true)}
+            fullWidth={isMobile}
+            size={isMobile ? "large" : "medium"}
           >
-            Generate Plan
+            {isMobile && <Add sx={{ mr: 1 }} />}
+            Generate {isMobile ? "New " : ""}Plan
           </Button>
         </Box>
       </Box>
@@ -806,6 +1072,15 @@ export default function MealPlannerPage() {
                   <IconButton>
                     <Share />
                   </IconButton>
+
+                  <IconButton
+                    onClick={(e) => {
+                      setMenuAnchorEl(e.currentTarget)
+                      setSelectedPlanId(currentPlan.id)
+                    }}
+                  >
+                    <MoreVert />
+                  </IconButton>
                 </>
               )}
             </Box>
@@ -838,7 +1113,7 @@ export default function MealPlannerPage() {
       <Dialog
         open={generateDialogOpen}
         onClose={() => setGenerateDialogOpen(false)}
-        maxWidth="md"
+        maxWidth={isMobile ? "sm" : "md"}
         fullWidth
       >
         <DialogTitle>
@@ -1114,6 +1389,129 @@ export default function MealPlannerPage() {
         initialEndDate={selectedEndDate}
         title="Select Meal Plan Dates"
       />
+
+      {/* Menu for meal plan actions */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={() => setMenuAnchorEl(null)}
+      >
+        <MenuItem
+          onClick={() => {
+            setMenuAnchorEl(null)
+            setArchiveDialogOpen(true)
+          }}
+        >
+          <Archive fontSize="small" sx={{ mr: 1 }} />
+          Archive Plan
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setMenuAnchorEl(null)
+            setDeleteDialogOpen(true)
+          }}
+          sx={{ color: 'error.main' }}
+        >
+          <Delete fontSize="small" sx={{ mr: 1 }} />
+          Delete Plan
+        </MenuItem>
+      </Menu>
+
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Delete Meal Plan?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this meal plan? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleDeletePlan}
+            color="error"
+            variant="contained"
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Archive confirmation dialog */}
+      <Dialog
+        open={archiveDialogOpen}
+        onClose={() => setArchiveDialogOpen(false)}
+      >
+        <DialogTitle>Archive Meal Plan?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to archive this meal plan? You can unarchive it later from the history.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setArchiveDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleArchivePlan}
+            color="primary"
+            variant="contained"
+          >
+            Archive
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Meal Dialog */}
+      <AddMealDialog
+        open={addMealDialogOpen}
+        onClose={() => setAddMealDialogOpen(false)}
+        onConfirm={handleAddMeal}
+        initialDate={selectedDate}
+        initialMealType={selectedMealType}
+        familyMembers={familyMembers}
+        currentPlanDates={currentPlan ? {
+          start: new Date(currentPlan.start_date),
+          end: new Date(currentPlan.end_date)
+        } : undefined}
+      />
+
+      {/* Edit Meal Dialog */}
+      <AddMealDialog
+        open={editMealDialogOpen}
+        onClose={() => {
+          setEditMealDialogOpen(false)
+          setSelectedMeal(null)
+        }}
+        onConfirm={handleEditMeal}
+        familyMembers={familyMembers}
+        existingMeal={selectedMeal}
+        currentPlanDates={currentPlan ? {
+          start: new Date(currentPlan.start_date),
+          end: new Date(currentPlan.end_date)
+        } : undefined}
+      />
+
+      {/* Floating Action Button for adding meals */}
+      {currentPlan && (
+        <Fab
+          color="primary"
+          sx={{
+            position: 'fixed',
+            bottom: isMobile ? 80 : 32,
+            right: isMobile ? 16 : 32,
+            zIndex: 1000
+          }}
+          onClick={() => {
+            setSelectedDate(new Date())
+            setSelectedMealType('dinner')
+            setAddMealDialogOpen(true)
+          }}
+        >
+          <Add />
+        </Fab>
+      )}
     </Container>
   )
 }

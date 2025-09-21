@@ -22,7 +22,7 @@ import {
   Event as EventIcon,
   DateRange as DateRangeIcon
 } from '@mui/icons-material'
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar'
 import { format, addDays, startOfWeek, endOfWeek, differenceInDays } from 'date-fns'

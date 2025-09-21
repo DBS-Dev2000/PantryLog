@@ -26,6 +26,8 @@ import {
   Autocomplete,
   IconButton
 } from '@mui/material'
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import {
   ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
@@ -603,25 +605,43 @@ export default function EditInventoryItemPage() {
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Purchase Date"
-                type="date"
-                fullWidth
-                value={item.purchase_date}
-                onChange={(e) => setItem({ ...item, purchase_date: e.target.value })}
-                InputLabelProps={{ shrink: true }}
-              />
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Purchase Date"
+                  value={item.purchase_date ? new Date(item.purchase_date) : null}
+                  onChange={(newValue) => {
+                    setItem({
+                      ...item,
+                      purchase_date: newValue ? newValue.toISOString().split('T')[0] : ''
+                    })
+                  }}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true
+                    }
+                  }}
+                />
+              </LocalizationProvider>
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Expiration Date"
-                type="date"
-                fullWidth
-                value={item.expiration_date || ''}
-                onChange={(e) => setItem({ ...item, expiration_date: e.target.value || undefined })}
-                InputLabelProps={{ shrink: true }}
-              />
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Expiration Date"
+                  value={item.expiration_date ? new Date(item.expiration_date) : null}
+                  onChange={(newValue) => {
+                    setItem({
+                      ...item,
+                      expiration_date: newValue ? newValue.toISOString().split('T')[0] : undefined
+                    })
+                  }}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true
+                    }
+                  }}
+                />
+              </LocalizationProvider>
             </Grid>
 
             <Grid item xs={12} sm={6}>
