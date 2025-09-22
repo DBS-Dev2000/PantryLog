@@ -1,6 +1,7 @@
 -- Migration: Create ML feedback and rules system for intelligent ingredient matching
 -- Date: January 22, 2025
 -- Description: Foundation tables for machine learning feedback, global rules, and household customizations
+-- Version 2: Fixed users table references and view syntax
 
 -- ============================================
 -- 1. INGREDIENT MATCH FEEDBACK TABLE
@@ -36,9 +37,9 @@ CREATE TABLE IF NOT EXISTS ingredient_match_feedback (
   CONSTRAINT unique_feedback_per_user UNIQUE (recipe_id, recipe_ingredient, user_id)
 );
 
-CREATE INDEX idx_feedback_household ON ingredient_match_feedback(household_id);
-CREATE INDEX idx_feedback_created ON ingredient_match_feedback(created_at DESC);
-CREATE INDEX idx_feedback_incorrect ON ingredient_match_feedback(is_correct) WHERE is_correct = false;
+CREATE INDEX IF NOT EXISTS idx_feedback_household ON ingredient_match_feedback(household_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_created ON ingredient_match_feedback(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feedback_incorrect ON ingredient_match_feedback(is_correct) WHERE is_correct = false;
 
 -- ============================================
 -- 2. GLOBAL INGREDIENT RULES TABLE
@@ -81,9 +82,9 @@ CREATE TABLE IF NOT EXISTS ingredient_rules (
   CONSTRAINT unique_ingredient_rule UNIQUE (ingredient_name, rule_type)
 );
 
-CREATE INDEX idx_rules_ingredient ON ingredient_rules(ingredient_name);
-CREATE INDEX idx_rules_active ON ingredient_rules(is_active) WHERE is_active = true;
-CREATE INDEX idx_rules_approved ON ingredient_rules(approved) WHERE approved = true;
+CREATE INDEX IF NOT EXISTS idx_rules_ingredient ON ingredient_rules(ingredient_name);
+CREATE INDEX IF NOT EXISTS idx_rules_active ON ingredient_rules(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_rules_approved ON ingredient_rules(approved) WHERE approved = true;
 
 -- ============================================
 -- 3. HOUSEHOLD INGREDIENT PREFERENCES TABLE
@@ -125,8 +126,8 @@ CREATE TABLE IF NOT EXISTS household_ingredient_rules (
   CONSTRAINT unique_household_rule UNIQUE (household_id, rule_type, from_ingredient, to_ingredient)
 );
 
-CREATE INDEX idx_household_rules_household ON household_ingredient_rules(household_id);
-CREATE INDEX idx_household_rules_active ON household_ingredient_rules(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_household_rules_household ON household_ingredient_rules(household_id);
+CREATE INDEX IF NOT EXISTS idx_household_rules_active ON household_ingredient_rules(is_active) WHERE is_active = true;
 
 -- ============================================
 -- 4. INGREDIENT RULE SUGGESTIONS TABLE
@@ -160,8 +161,8 @@ CREATE TABLE IF NOT EXISTS ingredient_rule_suggestions (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_suggestions_status ON ingredient_rule_suggestions(status);
-CREATE INDEX idx_suggestions_confidence ON ingredient_rule_suggestions(confidence_score DESC);
+CREATE INDEX IF NOT EXISTS idx_suggestions_status ON ingredient_rule_suggestions(status);
+CREATE INDEX IF NOT EXISTS idx_suggestions_confidence ON ingredient_rule_suggestions(confidence_score DESC);
 
 -- ============================================
 -- 5. INGREDIENT LEARNING METRICS TABLE
@@ -198,10 +199,21 @@ CREATE TABLE IF NOT EXISTS ingredient_learning_metrics (
   CONSTRAINT unique_metric_per_day UNIQUE (metric_date, metric_type)
 );
 
-CREATE INDEX idx_metrics_date ON ingredient_learning_metrics(metric_date DESC);
+CREATE INDEX IF NOT EXISTS idx_metrics_date ON ingredient_learning_metrics(metric_date DESC);
 
 -- ============================================
--- 6. VIEWS FOR EASIER QUERYING
+-- 6. ADMIN USERS TABLE (if not exists)
+-- ============================================
+-- Create a simple admin tracking table if it doesn't exist
+CREATE TABLE IF NOT EXISTS admin_users (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  email TEXT NOT NULL,
+  is_super_admin BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
+-- 7. VIEWS FOR EASIER QUERYING
 -- ============================================
 
 -- View for active global rules with equivalencies
@@ -217,16 +229,32 @@ WHERE is_active = true
   AND rule_type = 'equivalency';
 
 -- View for household preferences with dietary tags
+-- Using CTEs to properly handle array aggregation
 CREATE OR REPLACE VIEW household_dietary_preferences AS
+WITH household_tags AS (
+  SELECT
+    household_id,
+    unnest(dietary_tags) as tag
+  FROM household_ingredient_rules
+  WHERE is_active = true AND dietary_tags IS NOT NULL
+),
+household_allergens AS (
+  SELECT
+    household_id,
+    unnest(allergen_exclusions) as allergen
+  FROM household_ingredient_rules
+  WHERE is_active = true AND allergen_exclusions IS NOT NULL
+)
 SELECT
   h.id as household_id,
   h.name as household_name,
-  array_agg(DISTINCT unnest(hir.dietary_tags)) as dietary_tags,
-  array_agg(DISTINCT unnest(hir.allergen_exclusions)) as allergens,
-  count(DISTINCT hir.id) as total_rules
+  COALESCE(array_agg(DISTINCT ht.tag) FILTER (WHERE ht.tag IS NOT NULL), ARRAY[]::text[]) as dietary_tags,
+  COALESCE(array_agg(DISTINCT ha.allergen) FILTER (WHERE ha.allergen IS NOT NULL), ARRAY[]::text[]) as allergens,
+  COUNT(DISTINCT hir.id) as total_rules
 FROM households h
-LEFT JOIN household_ingredient_rules hir ON h.id = hir.household_id
-WHERE hir.is_active = true
+LEFT JOIN household_ingredient_rules hir ON h.id = hir.household_id AND hir.is_active = true
+LEFT JOIN household_tags ht ON h.id = ht.household_id
+LEFT JOIN household_allergens ha ON h.id = ha.household_id
 GROUP BY h.id, h.name;
 
 -- View for pending admin reviews
@@ -257,7 +285,7 @@ WHERE approved = false AND is_active = true
 ORDER BY created_at DESC;
 
 -- ============================================
--- 7. HELPER FUNCTIONS
+-- 8. HELPER FUNCTIONS
 -- ============================================
 
 -- Function to record feedback and trigger learning
@@ -368,7 +396,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================
--- 8. ROW LEVEL SECURITY
+-- 9. ROW LEVEL SECURITY
 -- ============================================
 
 -- Enable RLS on all tables
@@ -377,6 +405,7 @@ ALTER TABLE ingredient_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE household_ingredient_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ingredient_rule_suggestions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ingredient_learning_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
 -- Feedback policies - users can see and create their own
 CREATE POLICY "Users can view own feedback" ON ingredient_match_feedback
@@ -386,6 +415,9 @@ CREATE POLICY "Users can view own feedback" ON ingredient_match_feedback
 
 CREATE POLICY "Users can create feedback" ON ingredient_match_feedback
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own feedback" ON ingredient_match_feedback
+  FOR UPDATE USING (auth.uid() = user_id);
 
 -- Household rules - household members can manage
 CREATE POLICY "Household members can view rules" ON household_ingredient_rules
@@ -399,41 +431,67 @@ CREATE POLICY "Household admins can manage rules" ON household_ingredient_rules
     WHERE user_id = auth.uid() AND role IN ('admin', 'owner')
   ));
 
--- Global rules - everyone can read, admins can write
+-- Global rules - everyone can read approved, admins can write
 CREATE POLICY "Everyone can view approved rules" ON ingredient_rules
   FOR SELECT USING (approved = true AND is_active = true);
 
 CREATE POLICY "Admins can manage all rules" ON ingredient_rules
   FOR ALL USING (EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
+    SELECT 1 FROM admin_users WHERE id = auth.uid()
   ));
 
 -- Suggestions - users can see their own, admins see all
 CREATE POLICY "Users can view own suggestions" ON ingredient_rule_suggestions
   FOR SELECT USING (
     suggested_by = auth.uid() OR
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    EXISTS (SELECT 1 FROM admin_users WHERE id = auth.uid())
   );
+
+CREATE POLICY "Users can create suggestions" ON ingredient_rule_suggestions
+  FOR INSERT WITH CHECK (auth.uid() = suggested_by);
 
 -- Metrics - admins only
 CREATE POLICY "Admins can view metrics" ON ingredient_learning_metrics
   FOR SELECT USING (EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
+    SELECT 1 FROM admin_users WHERE id = auth.uid()
+  ));
+
+-- Admin users - admins only
+CREATE POLICY "Admins can view admin users" ON admin_users
+  FOR SELECT USING (EXISTS (
+    SELECT 1 FROM admin_users WHERE id = auth.uid()
+  ));
+
+CREATE POLICY "Super admins can manage admin users" ON admin_users
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM admin_users WHERE id = auth.uid() AND is_super_admin = true
   ));
 
 -- ============================================
--- 9. INITIAL SYSTEM RULES
+-- 10. INITIAL SYSTEM RULES
 -- ============================================
 
 -- Insert some default system rules based on our existing equivalencies
 INSERT INTO ingredient_rules (ingredient_name, rule_type, equivalents, is_system_default, approved, source)
 VALUES
-  ('salt', 'equivalency', '["sea salt", "kosher salt", "table salt", "himalayan salt", "pink salt", "rock salt", "fine salt", "coarse salt"]'::jsonb, true, true, 'system'),
-  ('eggs', 'equivalency', '["egg", "large eggs", "medium eggs", "extra large eggs", "farm eggs", "free range eggs", "organic eggs"]'::jsonb, true, true, 'system'),
+  ('salt', 'equivalency', '["sea salt", "kosher salt", "table salt", "himalayan salt", "pink salt", "rock salt", "fine salt", "coarse salt", "mediterranean sea salt", "celtic salt", "fleur de sel"]'::jsonb, true, true, 'system'),
+  ('eggs', 'equivalency', '["egg", "large eggs", "medium eggs", "extra large eggs", "farm eggs", "free range eggs", "organic eggs", "brown eggs", "white eggs"]'::jsonb, true, true, 'system'),
+  ('egg whites', 'equivalency', '["eggs", "egg white", "liquid egg whites", "egg albumen"]'::jsonb, true, true, 'system'),
+  ('egg yolks', 'equivalency', '["eggs", "egg yolk", "egg yellow"]'::jsonb, true, true, 'system'),
   ('chicken broth', 'equivalency', '["chicken stock", "chicken bouillon", "chicken base", "chicken bone broth"]'::jsonb, true, true, 'system'),
-  ('chicken broth', 'exclusion', '["chicken soup", "chicken noodle soup", "cream of chicken soup"]'::jsonb, true, true, 'system'),
+  ('chicken broth', 'exclusion', '["chicken soup", "chicken noodle soup", "cream of chicken soup", "chicken and rice soup"]'::jsonb, true, true, 'system'),
   ('garlic', 'equivalency', '["fresh garlic", "garlic cloves", "garlic bulb", "minced garlic", "chopped garlic"]'::jsonb, true, true, 'system'),
-  ('garlic', 'exclusion', '["garlic mustard", "garlic salt", "garlic powder"]'::jsonb, true, true, 'system')
+  ('garlic cloves', 'equivalency', '["garlic", "clove of garlic", "fresh garlic"]'::jsonb, true, true, 'system'),
+  ('garlic', 'exclusion', '["garlic mustard", "garlic salt", "garlic powder", "garlic bread", "garlic sauce"]'::jsonb, true, true, 'system'),
+  ('butter', 'equivalency', '["unsalted butter", "salted butter", "sweet cream butter", "european butter", "irish butter", "cultured butter"]'::jsonb, true, true, 'system'),
+  ('milk', 'equivalency', '["whole milk", "2% milk", "1% milk", "skim milk", "fat free milk", "reduced fat milk", "fresh milk"]'::jsonb, true, true, 'system'),
+  ('flour', 'equivalency', '["all-purpose flour", "all purpose flour", "plain flour", "white flour", "wheat flour"]'::jsonb, true, true, 'system'),
+  ('sugar', 'equivalency', '["granulated sugar", "white sugar", "cane sugar", "beet sugar", "superfine sugar", "caster sugar"]'::jsonb, true, true, 'system'),
+  ('brown sugar', 'equivalency', '["light brown sugar", "dark brown sugar", "muscovado sugar", "turbinado sugar", "demerara sugar"]'::jsonb, true, true, 'system'),
+  ('chicken', 'equivalency', '["chicken breast", "chicken thighs", "chicken legs", "chicken wings", "whole chicken"]'::jsonb, true, true, 'system'),
+  ('chicken breast', 'equivalency', '["chicken", "boneless chicken breast", "skinless chicken breast", "chicken breasts"]'::jsonb, true, true, 'system'),
+  ('beef', 'equivalency', '["ground beef", "beef steak", "beef roast", "stew meat"]'::jsonb, true, true, 'system'),
+  ('ground beef', 'equivalency', '["beef", "hamburger", "minced beef", "beef mince", "ground chuck", "ground sirloin"]'::jsonb, true, true, 'system')
 ON CONFLICT (ingredient_name, rule_type) DO NOTHING;
 
 -- Grant necessary permissions
@@ -441,3 +499,6 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT INSERT, UPDATE ON ingredient_match_feedback TO authenticated;
 GRANT INSERT, UPDATE, DELETE ON household_ingredient_rules TO authenticated;
 GRANT INSERT ON ingredient_rule_suggestions TO authenticated;
+GRANT SELECT ON active_ingredient_equivalencies TO authenticated;
+GRANT SELECT ON household_dietary_preferences TO authenticated;
+GRANT SELECT ON pending_rule_reviews TO authenticated;
