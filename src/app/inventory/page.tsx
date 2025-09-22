@@ -327,7 +327,7 @@ function InventoryPageContent() {
             quantity: 0,
             is_consumed: true,
             consumed_date: new Date().toISOString(),
-            modified_at: new Date().toISOString()
+            updated_at: new Date().toISOString()
           })
           .eq('id', useItem.id)
 
@@ -338,7 +338,7 @@ function InventoryPageContent() {
           .from('inventory_items')
           .update({
             quantity: newQuantity,
-            modified_at: new Date().toISOString()
+            updated_at: new Date().toISOString()
           })
           .eq('id', useItem.id)
 
