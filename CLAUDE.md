@@ -872,6 +872,13 @@ public class RecipeAvailabilityDto
 - Added pantry scorecards with ingredient availability tracking
 - Implemented mobile-friendly accordion displays
 - Fixed "September 14th" date generation bug
+- **NEW: Intelligent Ingredient Matching System**
+  - Created 100+ ingredient equivalency database
+  - Implemented multi-tier confidence scoring (exact > partial > category > substitute)
+  - Added ML feedback system with thumbs up/down
+  - Fixed false matches (garlic/mustard, soup/broth)
+  - Refined recipe UI with color-coded shopping buttons
+  - Added feedback dialog for incorrect match reporting
 - **Intelligent Food Management System**: Automatic shelf life calculation with 500+ food database
 - **Smart Categorization**: Hierarchical food taxonomy with confidence scoring
 - **Stock Up Enhancement**: Auto-calculates expiration dates based on storage location
@@ -902,6 +909,41 @@ public class RecipeAvailabilityDto
 
 ---
 
+## 🧪 Intelligent Ingredient Matching System
+
+### Architecture Overview
+The ingredient matching system uses a multi-tier approach to find inventory items that match recipe ingredients:
+
+```typescript
+// Matching Tiers (in order of preference)
+1. Exact Match (100% confidence) - Direct name match
+2. Equivalency Match (100%) - Using 100+ ingredient database
+3. Partial Match (50%) - Meaningful word overlap
+4. Category Match (30-80%) - Same food taxonomy
+5. Substitute Match (40%) - Can replace in recipes
+```
+
+### Key Components
+- **ingredientMatcher.ts**: Core matching logic with equivalency database
+- **foodTaxonomyMatcher.ts**: Hierarchical food classification system
+- **Recipe UI**: Color-coded buttons (green=stock, yellow=low, blue=need)
+- **Feedback System**: ML training through user corrections
+
+### Equivalency Database Examples
+```typescript
+const ingredientEquivalencies = {
+  'salt': ['sea salt', 'kosher salt', 'table salt', ...],
+  'eggs': ['egg whites', 'egg yolks', 'large eggs', ...],
+  'chicken broth': ['stock', 'bouillon', 'bone broth'], // NOT soup
+  // 100+ more entries
+}
+```
+
+### Smart Exclusions
+- Prevents soup from matching broth
+- Requires 4+ character words for partial matches
+- Context-aware matching based on recipe type
+
 ## Technical Notes from Session
 
 ### Database Migration Strategy
@@ -925,9 +967,9 @@ After extensive testing with MUI Grid components:
 
 ---
 
-**Document Version**: 2.1
-**Last Updated**: January 22, 2025 (Meal Planner Implementation & Database Fixes)
+**Document Version**: 2.2
+**Last Updated**: January 22, 2025 (Intelligent Ingredient Matching & UI Refinements)
 **Author**: Product Owner / Senior Developer
-**Status**: Production Ready with Meal Planning System
-**Next Review**: After security issues are addressed
+**Status**: Production Ready with Ingredient Intelligence
+**Next Review**: After ML feedback implementation
 **URL**: https://PantryIQ.prolongedpantry.com

@@ -104,24 +104,36 @@ PantryIQ is your complete kitchen intelligence system featuring AI-powered recog
 3. **✍️ Create Manually**: Full recipe editor with ingredients and steps
 
 ### **Smart Features:**
-- **Real-time availability**: Green ✓, yellow ⚠️, red ✗ for ingredients
-- **Intelligent Ingredient Matching**: "steak" in recipe finds your T-bone, ribeye, or NY strip
-- **Food Taxonomy Integration**: Knows that "beef" can use any cut from proteins/beef category
-- **Natural substitutions**: AI suggests alternatives with cooking tips
+- **Real-time availability**: Color-coded dots show ingredient status at a glance
+- **Intelligent Ingredient Matching**: Advanced matching system with 100+ ingredient equivalencies
+  - "Salt" matches sea salt, kosher salt, Himalayan salt, etc.
+  - "Eggs" matches egg whites, egg yolks, large eggs, etc.
+  - "Chicken broth" matches stock and bouillon but NOT chicken soup
+- **Confidence Scoring**: Shows match quality (exact, partial, category, substitute)
+- **ML Feedback System**: Thumbs up/down to improve matching accuracy
+- **Food Taxonomy Integration**: Hierarchical matching (proteins → beef → steaks)
 - **Recipe versioning**: Save personal versions with your preferences
-- **Leftover Planning**: Track portions for next-day meal planning (steak tacos → taco salad)
+- **Leftover Planning**: Track portions for next-day meal planning
 
 ### **Cooking Integration:**
 - **"Make This Recipe"**: Actually consumes ingredients from pantry
-- **Skip ingredients**: For optional items you don't have
-- **Smart substitutions**: 🌿 Natural Sub button with AI recommendations
+- **Smart Shopping Buttons**:
+  - Green (outlined) = In stock, but can still add to list
+  - Yellow = Low stock, might need more
+  - Blue = Need to buy
+- **Skip Ingredients**: Enhanced visibility with contained/outlined styling
+- **Ingredient Feedback**: Report incorrect matches with detailed explanations
 - **Usage tracking**: Records cooking frequency and last made dates
 
-### **AI Substitution System:**
-- **Context-aware**: Meat for meat, spice for spice suggestions
-- **Quality ratings**: Excellent, good, fair alternatives
-- **Cooking tips**: Ratio adjustments and preparation notes
-- **Personal versions**: Save "My Version" with preferred substitutions
+### **Ingredient Matching Intelligence:**
+- **100+ Ingredient Equivalencies**: Comprehensive database of variations
+  - Dairy: milk → whole milk, 2%, skim, etc.
+  - Herbs: basil → fresh basil, sweet basil, dried basil
+  - Proteins: chicken → breast, thighs, whole chicken
+- **Smart Exclusions**: Prevents false matches (soup ≠ broth)
+- **Partial Match Logic**: Requires meaningful word overlap (4+ characters)
+- **Feedback Integration**: User corrections improve future matches
+- **Context-Aware Matching**: Understands recipe context for better suggestions
 
 ---
 
@@ -263,6 +275,37 @@ PantryIQ is your complete kitchen intelligence system featuring AI-powered recog
 4. **Auto Calculation**: Sets expiration to 180 days (beef freezer default)
 5. **Recipe Matching**: "Steak tacos" recipe now shows ✓ available
 6. **Leftover Planning**: After cooking, suggests "steak quesadilla" for tomorrow
+
+## 🎯 **Intelligent Ingredient Matching System**
+
+### **How Matching Works:**
+PantryIQ uses a sophisticated multi-tier matching system to understand your inventory:
+
+1. **Exact Match (100% confidence)**: Direct name matches after normalization
+2. **Equivalency Match (100% confidence)**: Uses 100+ ingredient database
+3. **Partial Match (50% confidence)**: Meaningful word overlap (4+ characters)
+4. **Category Match (30-80% confidence)**: Same food taxonomy category
+5. **Substitute Match (40% confidence)**: Can replace in recipes
+
+### **Equivalency Examples:**
+- **Salt**: Matches sea salt, kosher salt, table salt, Himalayan salt, pink salt, rock salt
+- **Eggs**: Matches egg whites, egg yolks, large eggs, medium eggs, farm eggs
+- **Garlic**: Matches fresh garlic, garlic cloves, minced garlic, garlic bulb
+- **Chicken broth**: Matches stock, bouillon, bone broth (but NOT chicken soup)
+- **Butter**: Matches unsalted, salted, European, Irish, cultured butter
+
+### **Smart Exclusions:**
+System prevents common false matches:
+- Chicken soup ≠ chicken broth
+- Garlic ≠ garlic mustard
+- Egg whites ≠ meringue powder
+- Brown sugar ≠ white sugar
+
+### **User Feedback Integration:**
+- **👍 Thumbs Up**: Confirms good match for future reference
+- **👎 Thumbs Down**: Opens dialog to explain what's wrong
+- **Feedback Used For**: Improving matching algorithms and training ML models
+- **Correction Options**: Manually select correct item or report issue
 
 ## 🔧 **Advanced Features**
 
