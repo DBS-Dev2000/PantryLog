@@ -5,6 +5,15 @@ const taxonomyCache = new Map<string, any>()
 // Clear cache every 5 minutes to prevent memory leak
 setInterval(() => taxonomyCache.clear(), 5 * 60 * 1000)
 
+// Cache for ML feedback-based corrections
+const mlCorrectionsCache = new Map<string, string | null>()
+const mlBlockedMatches = new Set<string>()
+// Clear ML cache every 10 minutes
+setInterval(() => {
+  mlCorrectionsCache.clear()
+  mlBlockedMatches.clear()
+}, 10 * 60 * 1000)
+
 export interface IngredientMatch {
   inventoryItem: any
   matchType: 'exact' | 'partial' | 'category' | 'substitute'
@@ -217,6 +226,12 @@ export function findIngredientMatches(
     const productName = item.products?.name || item.name
     const productCategory = item.products?.category
     const productBrand = item.products?.brand
+
+    // Check if ML feedback has blocked this match
+    const blockKey = `${normIngredient}:${normalizeIngredient(productName)}`
+    if (mlBlockedMatches.has(blockKey)) {
+      continue // Skip this item as it's been marked as incorrect
+    }
 
     // Check for exact or equivalent match
     if (areIngredientsEquivalent(recipeIngredient, productName)) {
