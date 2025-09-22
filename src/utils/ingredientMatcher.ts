@@ -226,6 +226,13 @@ export function findIngredientMatches(
     if ((normIngredient.includes('broth') && normProduct.includes('soup')) ||
         (normIngredient.includes('soup') && normProduct.includes('broth'))) {
       // Skip this match - soup is not broth
+    }
+    // Prevent butter from matching butter-flavored chips or similar compounds
+    else if ((normIngredient === 'butter' && normProduct.includes('chips')) ||
+             (normIngredient === 'butter' && normProduct.includes('crackers')) ||
+             (normIngredient === 'butter' && normProduct.includes('cookies')) ||
+             (normIngredient === 'butter' && normProduct.includes('popcorn'))) {
+      // Skip this match - butter chips/crackers/cookies are not butter
     } else {
       // Only do partial matching if there's meaningful overlap
       // Avoid matching unrelated items like "garlic" with "mustard"
@@ -234,7 +241,18 @@ export function findIngredientMatches(
 
       // Check for meaningful word overlap (not just single letters)
       // Also require at least one full word match for better accuracy
-      const hasSignificantOverlap = ingredientWords.some(word =>
+
+      // Don't match if the product is clearly a flavored/compound product
+      // e.g., "butter" shouldn't match "butter toffee", "peanut butter cups", etc.
+      const isCompoundProduct = (
+        productWords.length > ingredientWords.length &&
+        (normProduct.includes('flavored') || normProduct.includes('flavor') ||
+         normProduct.includes('chips') || normProduct.includes('crackers') ||
+         normProduct.includes('cookies') || normProduct.includes('candy') ||
+         normProduct.includes('toffee') || normProduct.includes('popcorn'))
+      )
+
+      const hasSignificantOverlap = !isCompoundProduct && ingredientWords.some(word =>
         productWords.some(pWord =>
           (word === pWord) || // Exact word match
           (word.length > 4 && pWord === word) || // Longer words must match exactly
