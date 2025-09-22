@@ -71,11 +71,23 @@ export async function getUserHouseholdFeatures(userId?: string): Promise<Feature
 
     console.log('🔍 Fetching fresh feature permissions for user:', userId)
 
-    // Get user's household (assuming user ID = household ID for now, based on your schema)
+    // First, get the user's household ID
+    const { data: userData, error: userError } = await supabase
+      .from('user_profiles')
+      .select('household_id')
+      .eq('id', userId)
+      .single()
+
+    if (userError || !userData?.household_id) {
+      console.warn('⚠️ Could not fetch user household:', userError)
+      return getDefaultFeatures()
+    }
+
+    // Now get the household features using the correct household ID
     const { data: household, error: householdError } = await supabase
       .from('households')
       .select('id, name, features')
-      .eq('id', userId)
+      .eq('id', userData.household_id)
       .single()
 
     if (householdError) {

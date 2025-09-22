@@ -16,19 +16,50 @@ interface ShelfLifeItem {
 function flattenShelfLifeData(data: any): ShelfLifeItem[] {
   const items: ShelfLifeItem[] = []
 
+  function hasShelfLifeData(obj: any): boolean {
+    // Check if object has at least one storage duration value
+    return typeof obj === 'object' && obj !== null &&
+      (typeof obj.pantry === 'number' ||
+       typeof obj.refrigerator === 'number' ||
+       typeof obj.freezer === 'number')
+  }
+
   function traverse(obj: any, categoryPath: string[] = []) {
+    if (!obj || typeof obj !== 'object') return
+
     for (const [key, value] of Object.entries(obj)) {
+      // Skip metadata fields
+      if (['version', 'category', 'description', 'lastUpdated', 'storageConditions'].includes(key)) {
+        continue
+      }
+
       if (value && typeof value === 'object') {
-        if ('pantry' in value && 'refrigerator' in value && 'freezer' in value) {
+        if (hasShelfLifeData(value)) {
           // This is a shelf life entry
           items.push({
-            category: categoryPath.join(' → '),
+            category: categoryPath.join(' → ') || 'General',
             item: key,
-            pantry: value.pantry,
-            refrigerator: value.refrigerator,
-            freezer: value.freezer,
+            pantry: value.pantry || 0,
+            refrigerator: value.refrigerator || 0,
+            freezer: value.freezer || 0,
             notes: value.notes
           })
+
+          // Still check for nested items (like "whole" and "cut" under melons)
+          for (const [subKey, subValue] of Object.entries(value)) {
+            if (subKey !== 'pantry' && subKey !== 'refrigerator' &&
+                subKey !== 'freezer' && subKey !== 'notes' &&
+                subValue && typeof subValue === 'object' && hasShelfLifeData(subValue)) {
+              items.push({
+                category: [...categoryPath, key].join(' → ') || 'General',
+                item: subKey,
+                pantry: (subValue as any).pantry || 0,
+                refrigerator: (subValue as any).refrigerator || 0,
+                freezer: (subValue as any).freezer || 0,
+                notes: (subValue as any).notes
+              })
+            }
+          }
         } else {
           // This is a category, continue traversing
           traverse(value, [...categoryPath, key])
@@ -37,8 +68,12 @@ function flattenShelfLifeData(data: any): ShelfLifeItem[] {
     }
   }
 
+  // Start traversal from the root
   if (data.categories) {
     traverse(data.categories)
+  } else {
+    // In case the data doesn't have a categories field, traverse from root
+    traverse(data)
   }
 
   return items

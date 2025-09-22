@@ -92,18 +92,27 @@ export default function AppLayout({ children }: AppLayoutProps) {
       }
 
       try {
-        // Try to get household name from user's household
-        const { data: householdData, error } = await supabase
-          .from('households')
-          .select('id, name')
+        // First get the user's household ID from user_profiles
+        const { data: userProfile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('household_id')
           .eq('id', user.id)
           .single()
 
-        if (!error && householdData) {
-          setCurrentHousehold({
-            id: householdData.id,
-            name: householdData.name
-          })
+        if (!profileError && userProfile?.household_id) {
+          // Now get the household name using the correct household ID
+          const { data: householdData, error } = await supabase
+            .from('households')
+            .select('id, name')
+            .eq('id', userProfile.household_id)
+            .single()
+
+          if (!error && householdData) {
+            setCurrentHousehold({
+              id: householdData.id,
+              name: householdData.name
+            })
+          }
         }
       } catch (err) {
         console.log('No household found for user')
