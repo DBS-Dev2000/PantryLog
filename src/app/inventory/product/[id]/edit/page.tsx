@@ -492,8 +492,9 @@ export default function EditProductPage() {
             Product Details
           </Typography>
 
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
+          <Box>
+            {/* Product Name - full width */}
+            <Box mb={2}>
               <TextField
                 label="Product Name"
                 fullWidth
@@ -501,19 +502,18 @@ export default function EditProductPage() {
                 onChange={(e) => setProduct({ ...product, name: e.target.value })}
                 required
               />
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={4}>
+            {/* Brand and Category - side by side */}
+            <Box display="flex" gap={2} mb={2}>
               <TextField
                 label="Brand"
                 fullWidth
                 value={product.brand || ''}
                 onChange={(e) => setProduct({ ...product, brand: e.target.value })}
+                sx={{ flex: 0.33 }}
               />
-            </Grid>
-
-            <Grid item xs={12} sm={8}>
-              <FormControl fullWidth>
+              <FormControl fullWidth sx={{ flex: 0.67 }}>
                 <InputLabel>Category</InputLabel>
                 <Select
                   value={product.category || ''}
@@ -528,19 +528,18 @@ export default function EditProductPage() {
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6}>
+            {/* UPC and Shelf Life - side by side */}
+            <Box display="flex" gap={2} mb={2}>
               <TextField
                 label="UPC/Barcode"
                 fullWidth
                 value={product.upc || ''}
                 onChange={(e) => setProduct({ ...product, upc: e.target.value })}
                 helperText="Leave empty for custom items"
+                sx={{ flex: 1 }}
               />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
               <TextField
                 label="Default Shelf Life (days)"
                 type="number"
@@ -551,11 +550,12 @@ export default function EditProductPage() {
                   default_shelf_life_days: e.target.value ? parseInt(e.target.value) : undefined
                 })}
                 helperText="Default expiration days for new inventory"
+                sx={{ flex: 1 }}
               />
-            </Grid>
+            </Box>
 
-            {/* Nutritional Info fields from API */}
-            <Grid item xs={12} sm={6}>
+            {/* Weight and Size - side by side */}
+            <Box display="flex" gap={2} mb={2}>
               <TextField
                 label="Weight"
                 fullWidth
@@ -568,10 +568,8 @@ export default function EditProductPage() {
                   }
                 })}
                 placeholder="e.g., 1.00lb, 500g"
+                sx={{ flex: 1 }}
               />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
               <TextField
                 label="Size"
                 fullWidth
@@ -584,10 +582,12 @@ export default function EditProductPage() {
                   }
                 })}
                 placeholder="e.g., 1 Liter, 12 oz"
+                sx={{ flex: 1 }}
               />
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6}>
+            {/* Color field - can be on its own or paired with something */}
+            <Box mb={2}>
               <TextField
                 label="Color"
                 fullWidth
@@ -601,10 +601,10 @@ export default function EditProductPage() {
                 })}
                 placeholder="e.g., Clear, Brown"
               />
-            </Grid>
+            </Box>
 
             {/* Description on its own line */}
-            <Grid item xs={12}>
+            <Box mb={2}>
               <TextField
                 label="Description"
                 multiline
@@ -620,10 +620,10 @@ export default function EditProductPage() {
                 })}
                 placeholder="Product description, nutritional info, notes about the product..."
               />
-            </Grid>
+            </Box>
 
             {/* Additional nutritional fields */}
-            <Grid item xs={12}>
+            <Box mb={2}>
               <TextField
                 label="Ingredients"
                 multiline
@@ -639,28 +639,27 @@ export default function EditProductPage() {
                 })}
                 placeholder="List of ingredients..."
               />
-            </Grid>
+            </Box>
 
-            <Grid item xs={12}>
-              <Box display="flex" gap={2} justifyContent="flex-end">
-                <Button
-                  variant="outlined"
-                  onClick={() => router.push(`/inventory/product/${productId}`)}
-                  disabled={saving}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={handleSave}
-                  disabled={saving}
-                  startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
-                >
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
+            {/* Action buttons */}
+            <Box display="flex" gap={2} justifyContent="flex-end">
+              <Button
+                variant="outlined"
+                onClick={() => router.push(`/inventory/product/${productId}`)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSave}
+                disabled={saving}
+                startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 

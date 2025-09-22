@@ -819,9 +819,9 @@ export default function EditInventoryItemPage() {
             Food Details
           </Typography>
 
-          <Grid container spacing={2}>
+          <Box>
             {/* First row: Quantity and Unit */}
-            <Grid item xs={6}>
+            <Box display="flex" gap={2} mb={2}>
               <TextField
                 label="Quantity"
                 type="number"
@@ -829,11 +829,9 @@ export default function EditInventoryItemPage() {
                 value={item.quantity}
                 onChange={(e) => setItem({ ...item, quantity: parseFloat(e.target.value) || 0 })}
                 inputProps={{ step: 0.01, min: 0 }}
+                sx={{ flex: 1 }}
               />
-            </Grid>
-
-            <Grid item xs={6}>
-              <FormControl fullWidth>
+              <FormControl fullWidth sx={{ flex: 1 }}>
                 <InputLabel>Unit</InputLabel>
                 <Select
                   value={item.unit}
@@ -847,10 +845,10 @@ export default function EditInventoryItemPage() {
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
+            </Box>
 
             {/* Row 2: Dates side by side */}
-            <Grid item xs={6}>
+            <Box display="flex" gap={2} mb={2}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Purchase Date"
@@ -863,14 +861,12 @@ export default function EditInventoryItemPage() {
                   }}
                   slotProps={{
                     textField: {
-                      fullWidth: true
+                      fullWidth: true,
+                      sx: { flex: 1 }
                     }
                   }}
                 />
               </LocalizationProvider>
-            </Grid>
-
-            <Grid item xs={6}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Expiration Date"
@@ -883,15 +879,16 @@ export default function EditInventoryItemPage() {
                   }}
                   slotProps={{
                     textField: {
-                      fullWidth: true
+                      fullWidth: true,
+                      sx: { flex: 1 }
                     }
                   }}
                 />
               </LocalizationProvider>
-            </Grid>
+            </Box>
 
             {/* Third row: Storage Location (full width) */}
-            <Grid item xs={12}>
+            <Box mb={2}>
               <FormControl fullWidth>
                 <InputLabel>Storage Location</InputLabel>
                 <Select
@@ -944,10 +941,10 @@ export default function EditInventoryItemPage() {
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
+            </Box>
 
             {/* Fourth row: Total Cost and Cost per unit */}
-            <Grid item xs={6}>
+            <Box display="flex" gap={2} mb={2}>
               <TextField
                 label="Total Cost"
                 type="number"
@@ -956,11 +953,9 @@ export default function EditInventoryItemPage() {
                 onChange={(e) => setItem({ ...item, cost: parseFloat(e.target.value) || undefined })}
                 inputProps={{ step: 0.01, min: 0 }}
                 helperText="Total cost for this quantity"
+                sx={{ flex: 1 }}
               />
-            </Grid>
-
-            <Grid item xs={6}>
-              <Box>
+              <Box sx={{ flex: 1 }}>
                 <Typography variant="body2" color="textSecondary" gutterBottom>
                   Cost per unit:
                 </Typography>
@@ -968,10 +963,10 @@ export default function EditInventoryItemPage() {
                   ${item.cost && item.quantity ? (item.cost / item.quantity).toFixed(2) : '0.00'}
                 </Typography>
               </Box>
-            </Grid>
+            </Box>
 
             {/* Fifth row: Notes (full width) */}
-            <Grid item xs={12}>
+            <Box mb={2}>
               <TextField
                 label="Notes"
                 multiline
@@ -981,29 +976,27 @@ export default function EditInventoryItemPage() {
                 onChange={(e) => setItem({ ...item, notes: e.target.value })}
                 placeholder="Add any notes about this item..."
               />
-            </Grid>
+            </Box>
 
             {/* Last row: Action buttons on their own line */}
-            <Grid item xs={12}>
-              <Box display="flex" gap={2} justifyContent="flex-end">
-                <Button
-                  variant="outlined"
-                  onClick={() => router.back()}
-                  disabled={saving}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={handleSave}
-                  disabled={saving}
-                  startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
-                >
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
+            <Box display="flex" gap={2} justifyContent="flex-end">
+              <Button
+                variant="outlined"
+                onClick={() => router.back()}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSave}
+                disabled={saving}
+                startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 
