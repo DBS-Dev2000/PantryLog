@@ -198,6 +198,25 @@ export default function DataManagementAdmin() {
     }
   }
 
+  const handleSaveTaxonomy = async (item: FoodTaxonomyItem) => {
+    try {
+      const response = await fetch('/api/admin/taxonomy-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+      })
+
+      if (response.ok) {
+        loadData()
+        setOpenDialog(null)
+        setEditingItem(null)
+        setNewItem({})
+      }
+    } catch (error) {
+      console.error('Error saving taxonomy data:', error)
+    }
+  }
+
   const handleDeleteItem = async (type: string, id: string) => {
     try {
       const response = await fetch(`/api/admin/${type}/${id}`, {
@@ -562,6 +581,88 @@ export default function DataManagementAdmin() {
     )
   }
 
+  const renderTaxonomyDialog = () => {
+    const item = editingItem || newItem
+    return (
+      <Dialog open={openDialog === 'taxonomy'} onClose={() => setOpenDialog(null)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          {editingItem ? 'Edit Food Taxonomy Entry' : 'Add New Food Taxonomy Entry'}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Category (e.g., proteins, dairy, grains)"
+            value={item.category || ''}
+            onChange={(e) => setNewItem({ ...item, category: e.target.value })}
+            margin="dense"
+          />
+          <TextField
+            fullWidth
+            label="Subcategory (e.g., beef, poultry, seafood)"
+            value={item.subcategory || ''}
+            onChange={(e) => setNewItem({ ...item, subcategory: e.target.value })}
+            margin="dense"
+          />
+
+          <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+            Items/Cuts (one per line):
+          </Typography>
+
+          {(item.items || ['']).map((itemName: string, index: number) => (
+            <Box key={index} display="flex" gap={1} mb={1}>
+              <TextField
+                fullWidth
+                size="small"
+                value={itemName}
+                onChange={(e) => {
+                  const newItems = [...(item.items || [])]
+                  newItems[index] = e.target.value
+                  setNewItem({ ...item, items: newItems })
+                }}
+                placeholder="Enter item (e.g., ribeye, chicken breast, salmon)"
+              />
+              {index === (item.items || []).length - 1 && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    const newItems = [...(item.items || []), '']
+                    setNewItem({ ...item, items: newItems })
+                  }}
+                >
+                  <AddIcon />
+                </Button>
+              )}
+              {(item.items || []).length > 1 && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="error"
+                  onClick={() => {
+                    const newItems = (item.items || []).filter((_: any, i: number) => i !== index)
+                    setNewItem({ ...item, items: newItems })
+                  }}
+                >
+                  <DeleteIcon />
+                </Button>
+              )}
+            </Box>
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => handleSaveTaxonomy(item)}
+            disabled={!item.category || !item.subcategory || !item.items?.some((i: string) => i.trim())}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+    )
+  }
+
   return (
     <Container maxWidth="xl">
       <Box sx={{ mt: 4, mb: 4 }}>
@@ -624,6 +725,7 @@ export default function DataManagementAdmin() {
         {/* Dialogs */}
         {renderEquivalencyDialog()}
         {renderShelfLifeDialog()}
+        {renderTaxonomyDialog()}
       </Box>
     </Container>
   )
