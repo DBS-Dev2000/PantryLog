@@ -503,7 +503,7 @@ export default function EditProductPage() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={5}>
               <TextField
                 label="Brand"
                 fullWidth
@@ -512,7 +512,7 @@ export default function EditProductPage() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={7}>
               <FormControl fullWidth>
                 <InputLabel>Category</InputLabel>
                 <Select
@@ -558,7 +558,7 @@ export default function EditProductPage() {
               <TextField
                 label="Description"
                 multiline
-                rows={3}
+                rows={4}
                 fullWidth
                 value={product.nutritional_info?.description || ''}
                 onChange={(e) => setProduct({
@@ -568,7 +568,7 @@ export default function EditProductPage() {
                     description: e.target.value
                   }
                 })}
-                placeholder="Product description, nutritional info, etc..."
+                placeholder="Product description, nutritional info, notes about the product..."
               />
             </Grid>
 
