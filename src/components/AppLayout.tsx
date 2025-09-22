@@ -92,19 +92,35 @@ export default function AppLayout({ children }: AppLayoutProps) {
       }
 
       try {
-        // First get the user's household ID from user_profiles
+        // First try to get the user's household ID from user_profiles
         const { data: userProfile, error: profileError } = await supabase
           .from('user_profiles')
           .select('household_id')
           .eq('id', user.id)
           .single()
 
-        if (!profileError && userProfile?.household_id) {
+        let householdId = userProfile?.household_id
+
+        // If user_profiles doesn't exist, fall back to old pattern
+        if (profileError) {
+          const { data: householdData, error } = await supabase
+            .from('households')
+            .select('id, name')
+            .eq('id', user.id)
+            .single()
+
+          if (!error && householdData) {
+            setCurrentHousehold({
+              id: householdData.id,
+              name: householdData.name
+            })
+          }
+        } else if (householdId) {
           // Now get the household name using the correct household ID
           const { data: householdData, error } = await supabase
             .from('households')
             .select('id, name')
-            .eq('id', userProfile.household_id)
+            .eq('id', householdId)
             .single()
 
           if (!error && householdData) {

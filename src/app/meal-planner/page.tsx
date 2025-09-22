@@ -167,22 +167,25 @@ export default function MealPlannerPage() {
         return
       }
 
-      // Get the user's household through the user_profiles table
-      const { data: userProfile } = await supabase
+      // Get the user's household through the user_profiles table (with fallback)
+      const { data: userProfile, error: profileError } = await supabase
         .from('user_profiles')
         .select('household_id')
         .eq('id', user.id)
         .single()
 
-      if (!userProfile?.household_id) {
-        router.push('/meal-planner/setup')
-        return
+      let householdId = userProfile?.household_id
+
+      // If user_profiles doesn't exist, fall back to user.id as household.id
+      if (profileError || !householdId) {
+        console.warn('No user_profiles found, using user.id as household.id')
+        householdId = user.id
       }
 
       const { data: household } = await supabase
         .from('households')
         .select('id')
-        .eq('id', userProfile.household_id)
+        .eq('id', householdId)
         .single()
 
       if (!household) {

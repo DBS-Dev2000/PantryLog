@@ -142,22 +142,25 @@ function QuickAddPageContent() {
 
   const loadStorageLocations = async (userId: string) => {
     try {
-      // First get the user's household ID
-      const { data: userProfile } = await supabase
+      // First try to get the user's household ID from user_profiles
+      const { data: userProfile, error: profileError } = await supabase
         .from('user_profiles')
         .select('household_id')
         .eq('id', userId)
         .single()
 
-      if (!userProfile?.household_id) {
-        console.warn('No household found for user')
-        return
+      let householdId = userProfile?.household_id
+
+      // If user_profiles doesn't exist, fall back to using userId as householdId
+      if (profileError || !householdId) {
+        console.warn('No user_profiles found, using userId as householdId')
+        householdId = userId
       }
 
       const { data: locations, error } = await supabase
         .from('storage_locations')
         .select('*')
-        .eq('household_id', userProfile.household_id)
+        .eq('household_id', householdId)
         .eq('is_active', true)
         .order('level')
         .order('sort_order')
@@ -191,16 +194,19 @@ function QuickAddPageContent() {
 
   const loadAvailableProducts = async (userId: string) => {
     try {
-      // First get the user's household ID
-      const { data: userProfile } = await supabase
+      // First try to get the user's household ID from user_profiles
+      const { data: userProfile, error: profileError } = await supabase
         .from('user_profiles')
         .select('household_id')
         .eq('id', userId)
         .single()
 
-      if (!userProfile?.household_id) {
-        console.warn('No household found for user')
-        return
+      let householdId = userProfile?.household_id
+
+      // If user_profiles doesn't exist, fall back to using userId as householdId
+      if (profileError || !householdId) {
+        console.warn('No user_profiles found, using userId as householdId')
+        householdId = userId
       }
 
       // Get products that this household has previously added to inventory
@@ -208,7 +214,7 @@ function QuickAddPageContent() {
       const { data: inventoryItems, error: invError } = await supabase
         .from('inventory_items')
         .select('product_id')
-        .eq('household_id', userProfile.household_id)
+        .eq('household_id', householdId)
 
       if (invError) throw invError
 

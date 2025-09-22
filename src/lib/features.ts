@@ -72,14 +72,36 @@ export async function getUserHouseholdFeatures(userId?: string): Promise<Feature
     console.log('🔍 Fetching fresh feature permissions for user:', userId)
 
     // First, get the user's household ID
+    // TEMPORARY: Fall back to using user ID as household ID if user_profiles doesn't exist
     const { data: userData, error: userError } = await supabase
       .from('user_profiles')
       .select('household_id')
       .eq('id', userId)
       .single()
 
-    if (userError || !userData?.household_id) {
-      console.warn('⚠️ Could not fetch user household:', userError)
+    let householdId = userData?.household_id
+
+    // If user_profiles table doesn't exist or query fails, fall back to user.id = household.id
+    if (userError) {
+      console.warn('⚠️ Could not fetch user household, falling back to user.id:', userError)
+
+      // Check if a household exists with this user's ID (old pattern)
+      const { data: household } = await supabase
+        .from('households')
+        .select('id')
+        .eq('id', userId)
+        .single()
+
+      if (household) {
+        householdId = household.id
+      } else {
+        // If no direct match, just use the user ID as household ID
+        householdId = userId
+      }
+    }
+
+    if (!householdId) {
+      console.warn('⚠️ No household found for user')
       return getDefaultFeatures()
     }
 
@@ -87,7 +109,7 @@ export async function getUserHouseholdFeatures(userId?: string): Promise<Feature
     const { data: household, error: householdError } = await supabase
       .from('households')
       .select('id, name, features')
-      .eq('id', userData.household_id)
+      .eq('id', householdId)
       .single()
 
     if (householdError) {
