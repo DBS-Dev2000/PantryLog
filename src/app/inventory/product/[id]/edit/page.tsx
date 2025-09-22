@@ -295,17 +295,23 @@ export default function EditProductPage() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Box display="flex" alignItems="center" mb={4}>
+    <Container maxWidth="md" sx={{ mt: 4, px: { xs: 2, sm: 3 } }}>
+      <Box
+        display="flex"
+        flexDirection={{ xs: 'column', sm: 'row' }}
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        mb={4}
+        gap={{ xs: 2, sm: 0 }}
+      >
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => router.push(`/inventory/product/${productId}`)}
-          sx={{ mr: 2 }}
+          sx={{ mr: { xs: 0, sm: 2 }, mb: { xs: 2, sm: 0 } }}
         >
           Back
         </Button>
         <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
+          <Typography variant="h4" component="h1" gutterBottom sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
             Edit Product
           </Typography>
           <Typography variant="body1" color="textSecondary">
@@ -329,18 +335,26 @@ export default function EditProductPage() {
       {/* Product Information Header */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Box display="flex" alignItems="center" gap={2}>
+          <Box
+            display="flex"
+            flexDirection={{ xs: 'column', sm: 'row' }}
+            alignItems={{ xs: 'center', sm: 'center' }}
+            gap={2}
+          >
             {productImageUrl ? (
               <Avatar
                 src={productImageUrl}
-                sx={{ width: 80, height: 80 }}
+                sx={{
+                  width: { xs: 120, sm: 80 },
+                  height: { xs: 120, sm: 80 }
+                }}
                 variant="rounded"
               />
             ) : (
               <Box
                 sx={{
-                  width: 80,
-                  height: 80,
+                  width: { xs: 120, sm: 80 },
+                  height: { xs: 120, sm: 80 },
                   border: '2px dashed',
                   borderColor: 'primary.main',
                   borderRadius: 1,
@@ -359,8 +373,8 @@ export default function EditProductPage() {
                 <CameraIcon color="primary" fontSize="large" />
               </Box>
             )}
-            <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="h5" gutterBottom>
+            <Box sx={{ flexGrow: 1, textAlign: { xs: 'center', sm: 'left' }, width: '100%' }}>
+              <Typography variant="h5" gutterBottom sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
                 {product.name}
               </Typography>
               {product.brand && (
@@ -368,7 +382,13 @@ export default function EditProductPage() {
                   Brand: {product.brand}
                 </Typography>
               )}
-              <Box display="flex" gap={1} mt={1}>
+              <Box
+                display="flex"
+                flexWrap="wrap"
+                justifyContent={{ xs: 'center', sm: 'flex-start' }}
+                gap={1}
+                mt={1}
+              >
                 {product.category && (
                   <Chip
                     size="small"
@@ -657,11 +677,18 @@ export default function EditProductPage() {
             </Box>
 
             {/* Action buttons */}
-            <Box display="flex" gap={2} justifyContent="flex-end">
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              justifyContent={{ xs: 'stretch', sm: 'flex-end' }}
+              sx={{ mt: 2 }}
+            >
               <Button
                 variant="outlined"
                 onClick={() => router.push(`/inventory/product/${productId}`)}
                 disabled={saving}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Cancel
               </Button>
@@ -670,6 +697,7 @@ export default function EditProductPage() {
                 onClick={handleSave}
                 disabled={saving}
                 startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </Button>
