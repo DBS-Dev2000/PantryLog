@@ -820,6 +820,7 @@ export default function EditInventoryItemPage() {
           </Typography>
 
           <Grid container spacing={3}>
+            {/* First row: Quantity and Unit */}
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Quantity"
@@ -848,6 +849,7 @@ export default function EditInventoryItemPage() {
               </FormControl>
             </Grid>
 
+            {/* Second row: Purchase Date and Expiration Date on same line */}
             <Grid item xs={12} sm={6}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
@@ -888,19 +890,8 @@ export default function EditInventoryItemPage() {
               </LocalizationProvider>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Total Cost"
-                type="number"
-                fullWidth
-                value={item.cost || ''}
-                onChange={(e) => setItem({ ...item, cost: parseFloat(e.target.value) || undefined })}
-                inputProps={{ step: 0.01, min: 0 }}
-                helperText="Total cost for this quantity"
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
+            {/* Third row: Storage Location (full width) */}
+            <Grid item xs={12}>
               <FormControl fullWidth>
                 <InputLabel>Storage Location</InputLabel>
                 <Select
@@ -955,6 +946,19 @@ export default function EditInventoryItemPage() {
               </FormControl>
             </Grid>
 
+            {/* Fourth row: Total Cost and Cost per unit */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Total Cost"
+                type="number"
+                fullWidth
+                value={item.cost || ''}
+                onChange={(e) => setItem({ ...item, cost: parseFloat(e.target.value) || undefined })}
+                inputProps={{ step: 0.01, min: 0 }}
+                helperText="Total cost for this quantity"
+              />
+            </Grid>
+
             <Grid item xs={12} sm={6}>
               <Box>
                 <Typography variant="body2" color="textSecondary" gutterBottom>
@@ -966,6 +970,7 @@ export default function EditInventoryItemPage() {
               </Box>
             </Grid>
 
+            {/* Fifth row: Notes (full width) */}
             <Grid item xs={12}>
               <TextField
                 label="Notes"
@@ -978,6 +983,7 @@ export default function EditInventoryItemPage() {
               />
             </Grid>
 
+            {/* Last row: Action buttons on their own line */}
             <Grid item xs={12}>
               <Box display="flex" gap={2} justifyContent="flex-end">
                 <Button
