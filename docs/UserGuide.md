@@ -1,7 +1,7 @@
 # PantryIQ Complete User Guide
 
-**Last Updated:** September 14, 2025
-**Version:** 2.0 (AI-Powered Kitchen Intelligence)
+**Last Updated:** January 22, 2025
+**Version:** 2.1 (Intelligent Food Management System)
 
 ## 🧠 Welcome to PantryIQ
 *Where Modern Efficiency Meets Traditional Preparedness*
@@ -57,6 +57,12 @@ PantryIQ is your complete kitchen intelligence system featuring AI-powered recog
 - **Camera icons**: Barcode and AI scanning in same input
 - **Auto-advance**: Skip to location selection when product found
 
+### **🧠 NEW: Intelligent Food Management**
+- **Automatic Expiration Dates**: System calculates shelf life based on food type and storage location
+- **Smart Categorization**: AI matches products to food taxonomy (proteins/beef/steaks instead of generic "meat")
+- **Storage Recommendations**: Suggests optimal storage locations for maximum freshness
+- **Confidence Scoring**: Shows match accuracy (e.g., 85% confidence for category matching)
+
 ### **🛍️ Put Groceries Away Mode:**
 - **Enable continuous mode**: Auto-restart after each item
 - **Location memory**: Remembers last storage location
@@ -67,6 +73,7 @@ PantryIQ is your complete kitchen intelligence system featuring AI-powered recog
 - **Searchable dropdown**: Type to find locations
 - **Hierarchical display**: "Kitchen Pantry > Top Shelf"
 - **QR code scanning**: Camera integration for location codes
+- **Auto Shelf Life**: Expiration dates adjust based on selected storage (7 days in pantry vs 30 days in freezer)
 
 ---
 
@@ -98,9 +105,11 @@ PantryIQ is your complete kitchen intelligence system featuring AI-powered recog
 
 ### **Smart Features:**
 - **Real-time availability**: Green ✓, yellow ⚠️, red ✗ for ingredients
-- **Ingredient matching**: "salt" matches "FINE MEDITERRANEAN SEA SALT"
+- **Intelligent Ingredient Matching**: "steak" in recipe finds your T-bone, ribeye, or NY strip
+- **Food Taxonomy Integration**: Knows that "beef" can use any cut from proteins/beef category
 - **Natural substitutions**: AI suggests alternatives with cooking tips
 - **Recipe versioning**: Save personal versions with your preferences
+- **Leftover Planning**: Track portions for next-day meal planning (steak tacos → taco salad)
 
 ### **Cooking Integration:**
 - **"Make This Recipe"**: Actually consumes ingredients from pantry
@@ -226,6 +235,34 @@ PantryIQ is your complete kitchen intelligence system featuring AI-powered recog
 - 1000 AI requests/month, 50 members
 
 ---
+
+## 🧬 **Intelligent Food Management System**
+
+### **Automatic Shelf Life Calculation:**
+- **500+ Food Database**: Built-in knowledge of shelf lives for common foods
+- **Storage-Aware**: Different shelf lives for pantry (7 days), refrigerator (14 days), freezer (90 days)
+- **Category Defaults**: Smart defaults based on food type (meat: 3 days fridge, dairy: 7 days, canned: 2 years)
+- **Auto-Population**: Expiration dates calculated automatically when adding items
+
+### **Food Taxonomy & Classification:**
+- **Hierarchical Categories**: proteins → beef → steaks → ribeye/t-bone/sirloin
+- **Smart Matching**: 85%+ confidence scoring for automatic categorization
+- **Recipe Intelligence**: "Steak tacos" knows to use any beef steak cut from inventory
+- **Substitution Awareness**: System knows chicken can substitute turkey, oregano for marjoram
+
+### **Portion & Leftover Management:**
+- **Standard Portions**: Knows typical serving sizes (8oz steak, 4oz chicken breast)
+- **Leftover Tracking**: Plans next meals with leftovers (steak dinner → steak salad lunch)
+- **Storage Life**: Different leftover storage times (cooked meat: 4 days, soups: 7 days)
+- **Recipe Scaling**: Adjusts portions based on household size
+
+### **How It Works:**
+1. **Add Product**: Scan barcode or search for "ribeye steak"
+2. **Smart Recognition**: System identifies as proteins/beef/steaks with 92% confidence
+3. **Storage Selection**: Choose "Main Freezer" location
+4. **Auto Calculation**: Sets expiration to 180 days (beef freezer default)
+5. **Recipe Matching**: "Steak tacos" recipe now shows ✓ available
+6. **Leftover Planning**: After cooking, suggests "steak quesadilla" for tomorrow
 
 ## 🔧 **Advanced Features**
 

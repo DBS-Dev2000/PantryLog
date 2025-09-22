@@ -74,7 +74,11 @@ export default function HelpPage() {
       sections: [
         {
           question: "How does Stock Up work?",
-          answer: "Three ways to add items: 1) Search existing products, 2) Scan barcodes, 3) Use AI visual recognition. Perfect for putting groceries away efficiently."
+          answer: "Three ways to add items: 1) Search existing products, 2) Scan barcodes, 3) Use AI visual recognition. The system automatically calculates expiration dates and categorizes items intelligently."
+        },
+        {
+          question: "What's new with intelligent food matching?",
+          answer: "Stock Up now automatically: calculates shelf life based on food type and storage location, matches products to our 500+ food database, suggests optimal storage locations, and categorizes items hierarchically (proteins/beef/steaks instead of generic 'meat')."
         },
         {
           question: "What is Put Groceries Away mode?",
@@ -82,7 +86,11 @@ export default function HelpPage() {
         },
         {
           question: "How does AI recognition work?",
-          answer: "Point your camera at any grocery item and AI identifies it instantly. Great for produce, bulk items, or damaged barcodes."
+          answer: "Point your camera at any grocery item and AI identifies it instantly. Great for produce, bulk items, or damaged barcodes. Now with smart categorization showing confidence scores."
+        },
+        {
+          question: "How are expiration dates calculated?",
+          answer: "The system uses a comprehensive database of 500+ foods with storage-specific shelf lives. For example, chicken: 2 days in fridge, 365 days in freezer. Dates adjust automatically based on your selected storage location."
         }
       ]
     },
