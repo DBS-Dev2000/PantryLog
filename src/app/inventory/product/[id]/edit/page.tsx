@@ -46,6 +46,26 @@ interface ProductDetail {
   is_custom?: boolean
   created_at: string
   updated_at?: string
+  // Comprehensive UPC data fields
+  ean?: string
+  title?: string
+  model?: string
+  color?: string
+  size?: string
+  weight?: string
+  dimension?: any
+  lowest_recorded_price?: number
+  highest_recorded_price?: number
+  currency?: string
+  additional_images?: any
+  offers?: any
+  asin?: string
+  elid?: string
+  manufacturer?: string
+  ingredients?: string
+  nutrition?: any
+  raw_api_response?: any
+  api_last_updated?: string
 }
 
 export default function EditProductPage() {
@@ -136,7 +156,7 @@ export default function EditProductPage() {
     setError(null)
 
     try {
-      // Update product
+      // Update product with all comprehensive UPC fields
       const { error: updateError } = await supabase
         .from('products')
         .update({
@@ -147,6 +167,24 @@ export default function EditProductPage() {
           upc: product.upc || null,
           default_shelf_life_days: product.default_shelf_life_days || null,
           nutritional_info: product.nutritional_info || null,
+          // Comprehensive UPC data fields
+          ean: product.ean || null,
+          title: product.title || null,
+          model: product.model || null,
+          color: product.color || null,
+          size: product.size || null,
+          weight: product.weight || null,
+          dimension: product.dimension || null,
+          lowest_recorded_price: product.lowest_recorded_price || null,
+          highest_recorded_price: product.highest_recorded_price || null,
+          currency: product.currency || null,
+          additional_images: product.additional_images || null,
+          offers: product.offers || null,
+          asin: product.asin || null,
+          elid: product.elid || null,
+          manufacturer: product.manufacturer || null,
+          ingredients: product.ingredients || null,
+          nutrition: product.nutrition || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', productId)
@@ -594,13 +632,10 @@ export default function EditProductPage() {
               <TextField
                 label="Weight"
                 fullWidth
-                value={product.nutritional_info?.weight || ''}
+                value={product.weight || ''}
                 onChange={(e) => setProduct({
                   ...product,
-                  nutritional_info: {
-                    ...product.nutritional_info,
-                    weight: e.target.value
-                  }
+                  weight: e.target.value
                 })}
                 placeholder="e.g., 1.00lb, 500g"
                 sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
@@ -608,33 +643,144 @@ export default function EditProductPage() {
               <TextField
                 label="Size"
                 fullWidth
-                value={product.nutritional_info?.size || ''}
+                value={product.size || ''}
                 onChange={(e) => setProduct({
                   ...product,
-                  nutritional_info: {
-                    ...product.nutritional_info,
-                    size: e.target.value
-                  }
+                  size: e.target.value
                 })}
                 placeholder="e.g., 1 Liter, 12 oz"
                 sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
               />
             </Box>
 
-            {/* Color field - can be on its own or paired with something */}
-            <Box mb={2}>
+            {/* Manufacturer and Model - side by side */}
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              mb={2}
+            >
+              <TextField
+                label="Manufacturer"
+                fullWidth
+                value={product.manufacturer || ''}
+                onChange={(e) => setProduct({
+                  ...product,
+                  manufacturer: e.target.value
+                })}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
+              />
+              <TextField
+                label="Model"
+                fullWidth
+                value={product.model || ''}
+                onChange={(e) => setProduct({
+                  ...product,
+                  model: e.target.value
+                })}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
+              />
+            </Box>
+
+            {/* Color and EAN - side by side */}
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              mb={2}
+            >
               <TextField
                 label="Color"
                 fullWidth
-                value={product.nutritional_info?.color || ''}
+                value={product.color || ''}
                 onChange={(e) => setProduct({
                   ...product,
-                  nutritional_info: {
-                    ...product.nutritional_info,
-                    color: e.target.value
-                  }
+                  color: e.target.value
                 })}
                 placeholder="e.g., Clear, Brown"
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
+              />
+              <TextField
+                label="EAN"
+                fullWidth
+                value={product.ean || ''}
+                onChange={(e) => setProduct({
+                  ...product,
+                  ean: e.target.value
+                })}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
+              />
+            </Box>
+
+            {/* Price Range - side by side */}
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              mb={2}
+            >
+              <TextField
+                label="Lowest Recorded Price"
+                type="number"
+                fullWidth
+                value={product.lowest_recorded_price || ''}
+                onChange={(e) => setProduct({
+                  ...product,
+                  lowest_recorded_price: e.target.value ? parseFloat(e.target.value) : undefined
+                })}
+                InputProps={{ startAdornment: '$' }}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
+              />
+              <TextField
+                label="Highest Recorded Price"
+                type="number"
+                fullWidth
+                value={product.highest_recorded_price || ''}
+                onChange={(e) => setProduct({
+                  ...product,
+                  highest_recorded_price: e.target.value ? parseFloat(e.target.value) : undefined
+                })}
+                InputProps={{ startAdornment: '$' }}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
+              />
+            </Box>
+
+            {/* External IDs - 3 columns */}
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              mb={2}
+            >
+              <TextField
+                label="Amazon ASIN"
+                fullWidth
+                value={product.asin || ''}
+                onChange={(e) => setProduct({
+                  ...product,
+                  asin: e.target.value
+                })}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
+              />
+              <TextField
+                label="eBay ID"
+                fullWidth
+                value={product.elid || ''}
+                onChange={(e) => setProduct({
+                  ...product,
+                  elid: e.target.value
+                })}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
+              />
+              <TextField
+                label="Currency"
+                fullWidth
+                value={product.currency || 'USD'}
+                onChange={(e) => setProduct({
+                  ...product,
+                  currency: e.target.value
+                })}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
               />
             </Box>
 
@@ -657,20 +803,17 @@ export default function EditProductPage() {
               />
             </Box>
 
-            {/* Additional nutritional fields */}
+            {/* Ingredients field */}
             <Box mb={2}>
               <TextField
                 label="Ingredients"
                 multiline
                 rows={3}
                 fullWidth
-                value={product.nutritional_info?.ingredients || ''}
+                value={product.ingredients || ''}
                 onChange={(e) => setProduct({
                   ...product,
-                  nutritional_info: {
-                    ...product.nutritional_info,
-                    ingredients: e.target.value
-                  }
+                  ingredients: e.target.value
                 })}
                 placeholder="List of ingredients..."
               />

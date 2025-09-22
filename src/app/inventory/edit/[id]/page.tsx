@@ -760,6 +760,15 @@ export default function EditInventoryItemPage() {
             >
               {productImageUrl ? 'Change Image' : 'Add Image'}
             </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              startIcon={<EditIcon />}
+              onClick={() => router.push(`/inventory/product/${item.products.id}/edit`)}
+            >
+              Edit Product
+            </Button>
           </Box>
 
           {/* Image Options Section */}
