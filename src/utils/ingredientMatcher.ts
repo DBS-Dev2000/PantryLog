@@ -1,5 +1,10 @@
 import { matchFoodTaxonomy, canSubstitute } from './foodTaxonomyMatcher'
 
+// Cache for taxonomy matches to improve performance
+const taxonomyCache = new Map<string, any>()
+// Clear cache every 5 minutes to prevent memory leak
+setInterval(() => taxonomyCache.clear(), 5 * 60 * 1000)
+
 export interface IngredientMatch {
   inventoryItem: any
   matchType: 'exact' | 'partial' | 'category' | 'substitute'
@@ -201,6 +206,11 @@ export function findIngredientMatches(
   const normIngredient = normalizeIngredient(recipeIngredient)
 
   for (const item of inventoryItems) {
+    // Early exit if we have enough high-confidence matches
+    if (matches.filter(m => m.confidence >= 0.8).length >= 3) {
+      break;
+    }
+
     // Skip items with no quantity
     if (item.quantity <= 0) continue
 
@@ -271,9 +281,20 @@ export function findIngredientMatches(
       }
     }
 
-    // Check taxonomy match
-    const ingredientTaxonomy = matchFoodTaxonomy(recipeIngredient)
-    const productTaxonomy = matchFoodTaxonomy(productName, productCategory, productBrand)
+    // Check taxonomy match with caching
+    const ingredientCacheKey = `ing:${recipeIngredient}`
+    let ingredientTaxonomy = taxonomyCache.get(ingredientCacheKey)
+    if (ingredientTaxonomy === undefined) {
+      ingredientTaxonomy = matchFoodTaxonomy(recipeIngredient)
+      taxonomyCache.set(ingredientCacheKey, ingredientTaxonomy)
+    }
+
+    const productCacheKey = `prod:${productName}:${productCategory}:${productBrand}`
+    let productTaxonomy = taxonomyCache.get(productCacheKey)
+    if (productTaxonomy === undefined) {
+      productTaxonomy = matchFoodTaxonomy(productName, productCategory, productBrand)
+      taxonomyCache.set(productCacheKey, productTaxonomy)
+    }
 
     if (ingredientTaxonomy && productTaxonomy) {
       // Same category and subcategory
@@ -299,8 +320,8 @@ export function findIngredientMatches(
       }
     }
 
-    // Check if items can substitute for each other
-    if (canSubstitute(recipeIngredient, productName, null, productCategory)) {
+    // Check if items can substitute for each other (skip if we already have good matches)
+    if (matches.length < 3 && canSubstitute(recipeIngredient, productName, null, productCategory)) {
       matches.push({
         inventoryItem: item,
         matchType: 'substitute',

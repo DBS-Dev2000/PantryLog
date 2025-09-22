@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { headers } from 'next/headers'
+import { findIngredientMatches } from '@/utils/ingredientMatcher'
 
 // Create untyped Supabase client for meal planning tables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -1091,18 +1092,21 @@ function generatePantryScorecard(mealPlan: any[], inventory: any[], recipes: any
         let totalIngredients = recipe.recipe_ingredients.length
 
         recipe.recipe_ingredients.forEach((ingredient: any) => {
-          // Check if we have this ingredient in inventory
-          const hasIngredient = inventory.some(item => {
-            const productName = item.product?.name?.toLowerCase() || item.name?.toLowerCase() || ''
-            const ingredientName = ingredient.ingredient_name?.toLowerCase() || ''
-
-            // Basic matching - could be enhanced
-            return productName.includes(ingredientName) || ingredientName.includes(productName)
-          })
+          // Use the sophisticated ingredient matching system
+          const matches = findIngredientMatches(ingredient.ingredient_name, inventory)
+          const hasIngredient = matches.length > 0
 
           if (hasIngredient) {
             availableIngredients++
             pantryItemsUsed.add(ingredient.ingredient_name)
+
+            // Also track which specific inventory items are being used
+            matches.forEach(match => {
+              const itemName = match.inventoryItem.product?.name || match.inventoryItem.name
+              if (itemName) {
+                pantryItemsUsed.add(itemName)
+              }
+            })
           }
         })
 
@@ -1116,11 +1120,10 @@ function generatePantryScorecard(mealPlan: any[], inventory: any[], recipes: any
           totalIngredients,
           coverage: `${coverage}%`,
           missingIngredients: recipe.recipe_ingredients
-            .filter((ing: any) => !inventory.some(item => {
-              const productName = item.product?.name?.toLowerCase() || item.name?.toLowerCase() || ''
-              const ingredientName = ing.ingredient_name?.toLowerCase() || ''
-              return productName.includes(ingredientName) || ingredientName.includes(productName)
-            }))
+            .filter((ing: any) => {
+              const matches = findIngredientMatches(ing.ingredient_name, inventory)
+              return matches.length === 0
+            })
             .map((ing: any) => ing.ingredient_name)
         })
       }

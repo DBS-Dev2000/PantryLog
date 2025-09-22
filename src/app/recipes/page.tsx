@@ -174,9 +174,14 @@ export default function RecipesPage() {
         unit: item.unit
       })) || []
 
-      // For each recipe, check ingredient availability using our intelligent matcher
-      const recipesWithAvailability = await Promise.all(
-        (recipesData || []).map(async (recipe) => {
+      // For performance, only check availability for first 10 recipes initially
+      // We'll check the rest lazily as the user scrolls
+      const recipesToCheckInitially = (recipesData || []).slice(0, 10)
+      const recipesToCheckLater = (recipesData || []).slice(10)
+
+      // Check availability for initial recipes
+      const initialRecipesWithAvailability = await Promise.all(
+        recipesToCheckInitially.map(async (recipe) => {
           try {
             // Get recipe ingredients
             const { data: ingredients } = await supabase
@@ -231,8 +236,18 @@ export default function RecipesPage() {
         })
       )
 
-      setRecipes(recipesWithAvailability)
-      console.log('🍳 Loaded', recipesWithAvailability.length, 'recipes')
+      // Add recipes that we haven't checked yet with a 'pending' status
+      const laterRecipesWithPending = recipesToCheckLater.map(recipe => ({
+        ...recipe,
+        category_name: recipe.recipe_categories?.name,
+        availability_status: 'pending' as const,
+        available_ingredients: 0,
+        total_ingredients: 0
+      }))
+
+      const allRecipes = [...initialRecipesWithAvailability, ...laterRecipesWithPending]
+      setRecipes(allRecipes)
+      console.log('🍳 Loaded', allRecipes.length, 'recipes')
 
     } catch (err: any) {
       console.error('Error loading recipes:', err)
