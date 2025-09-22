@@ -1,0 +1,1507 @@
+{
+  "version": "1.0.0",
+  "category": "Food Shelf Life Database",
+  "description": "Comprehensive shelf life information for various food categories",
+  "lastUpdated": "2025-01-22",
+  "storageConditions": {
+    "pantry": "Cool, dry place (50-70°F)",
+    "refrigerator": "35-38°F",
+    "freezer": "0°F or below"
+  },
+  "categories": {
+    "produce": {
+      "fruits": {
+        "apples": {
+          "pantry": 7,
+          "refrigerator": 30,
+          "freezer": 240,
+          "notes": "Store away from other produce to prevent ripening"
+        },
+        "bananas": {
+          "pantry": 5,
+          "refrigerator": 7,
+          "freezer": 60,
+          "notes": "Refrigerate only when ripe; skin will darken but fruit stays good"
+        },
+        "berries": {
+          "strawberries": {
+            "pantry": 1,
+            "refrigerator": 7,
+            "freezer": 240
+          },
+          "blueberries": {
+            "pantry": 1,
+            "refrigerator": 10,
+            "freezer": 300
+          },
+          "raspberries": {
+            "pantry": 1,
+            "refrigerator": 5,
+            "freezer": 240
+          },
+          "blackberries": {
+            "pantry": 1,
+            "refrigerator": 5,
+            "freezer": 240
+          }
+        },
+        "citrus": {
+          "oranges": {
+            "pantry": 7,
+            "refrigerator": 21,
+            "freezer": 120
+          },
+          "lemons": {
+            "pantry": 7,
+            "refrigerator": 28,
+            "freezer": 120
+          },
+          "limes": {
+            "pantry": 7,
+            "refrigerator": 28,
+            "freezer": 120
+          },
+          "grapefruit": {
+            "pantry": 7,
+            "refrigerator": 21,
+            "freezer": 120
+          }
+        },
+        "grapes": {
+          "pantry": 1,
+          "refrigerator": 7,
+          "freezer": 300,
+          "notes": "Store unwashed until ready to eat"
+        },
+        "melons": {
+          "whole": {
+            "pantry": 7,
+            "refrigerator": 10,
+            "freezer": 300
+          },
+          "cut": {
+            "refrigerator": 3,
+            "freezer": 300
+          }
+        },
+        "peaches": {
+          "pantry": 3,
+          "refrigerator": 7,
+          "freezer": 240
+        },
+        "pears": {
+          "pantry": 5,
+          "refrigerator": 10,
+          "freezer": 240
+        },
+        "pineapple": {
+          "whole": {
+            "pantry": 3,
+            "refrigerator": 5,
+            "freezer": 300
+          },
+          "cut": {
+            "refrigerator": 3,
+            "freezer": 300
+          }
+        },
+        "avocados": {
+          "unripe": {
+            "pantry": 4
+          },
+          "ripe": {
+            "refrigerator": 3,
+            "freezer": 120
+          }
+        },
+        "tomatoes": {
+          "pantry": 7,
+          "refrigerator": 14,
+          "freezer": 60,
+          "notes": "Store at room temp for best flavor; refrigerate only when very ripe"
+        }
+      },
+      "vegetables": {
+        "leafyGreens": {
+          "lettuce": {
+            "refrigerator": 10,
+            "freezer": 0,
+            "notes": "Does not freeze well"
+          },
+          "spinach": {
+            "refrigerator": 7,
+            "freezer": 300
+          },
+          "kale": {
+            "refrigerator": 7,
+            "freezer": 240
+          },
+          "arugula": {
+            "refrigerator": 5,
+            "freezer": 0
+          }
+        },
+        "rootVegetables": {
+          "potatoes": {
+            "pantry": 21,
+            "refrigerator": 0,
+            "freezer": 300,
+            "notes": "Do not refrigerate raw; store in cool, dark place"
+          },
+          "sweetPotatoes": {
+            "pantry": 14,
+            "refrigerator": 0,
+            "freezer": 300,
+            "notes": "Do not refrigerate raw"
+          },
+          "carrots": {
+            "refrigerator": 28,
+            "freezer": 300
+          },
+          "beets": {
+            "refrigerator": 14,
+            "freezer": 240
+          },
+          "onions": {
+            "pantry": 30,
+            "refrigerator": 60,
+            "freezer": 240,
+            "notes": "Store in cool, dry, well-ventilated area"
+          },
+          "garlic": {
+            "pantry": 90,
+            "refrigerator": 0,
+            "freezer": 300,
+            "notes": "Do not refrigerate whole bulbs"
+          }
+        },
+        "cruciferous": {
+          "broccoli": {
+            "refrigerator": 7,
+            "freezer": 240
+          },
+          "cauliflower": {
+            "refrigerator": 7,
+            "freezer": 240
+          },
+          "cabbage": {
+            "refrigerator": 21,
+            "freezer": 240
+          },
+          "brusselsSprouts": {
+            "refrigerator": 7,
+            "freezer": 240
+          }
+        },
+        "peppers": {
+          "bellPeppers": {
+            "refrigerator": 14,
+            "freezer": 240
+          },
+          "hotPeppers": {
+            "refrigerator": 14,
+            "freezer": 240
+          }
+        },
+        "corn": {
+          "onCob": {
+            "refrigerator": 3,
+            "freezer": 240
+          },
+          "kernels": {
+            "refrigerator": 3,
+            "freezer": 240
+          }
+        },
+        "cucumber": {
+          "refrigerator": 7,
+          "freezer": 0,
+          "notes": "Does not freeze well"
+        },
+        "celery": {
+          "refrigerator": 14,
+          "freezer": 300
+        },
+        "mushrooms": {
+          "refrigerator": 7,
+          "freezer": 300
+        },
+        "asparagus": {
+          "refrigerator": 4,
+          "freezer": 240
+        },
+        "greenBeans": {
+          "refrigerator": 7,
+          "freezer": 240
+        },
+        "zucchini": {
+          "refrigerator": 5,
+          "freezer": 300
+        },
+        "eggplant": {
+          "refrigerator": 7,
+          "freezer": 240
+        }
+      },
+      "herbs": {
+        "fresh": {
+          "basil": {
+            "refrigerator": 7,
+            "freezer": 120,
+            "notes": "Store stems in water at room temp"
+          },
+          "cilantro": {
+            "refrigerator": 7,
+            "freezer": 60
+          },
+          "parsley": {
+            "refrigerator": 7,
+            "freezer": 60
+          },
+          "mint": {
+            "refrigerator": 7,
+            "freezer": 120
+          },
+          "rosemary": {
+            "refrigerator": 14,
+            "freezer": 120
+          },
+          "thyme": {
+            "refrigerator": 14,
+            "freezer": 120
+          },
+          "oregano": {
+            "refrigerator": 7,
+            "freezer": 120
+          },
+          "dill": {
+            "refrigerator": 7,
+            "freezer": 60
+          }
+        },
+        "dried": {
+          "default": {
+            "pantry": 1095,
+            "notes": "3 years for most dried herbs and spices"
+          }
+        }
+      }
+    },
+    "meat": {
+      "beef": {
+        "ground": {
+          "refrigerator": 2,
+          "freezer": 120
+        },
+        "steaks": {
+          "refrigerator": 5,
+          "freezer": 180
+        },
+        "roasts": {
+          "refrigerator": 5,
+          "freezer": 365
+        },
+        "stew": {
+          "refrigerator": 2,
+          "freezer": 120
+        },
+        "cooked": {
+          "refrigerator": 4,
+          "freezer": 90
+        }
+      },
+      "pork": {
+        "chops": {
+          "refrigerator": 5,
+          "freezer": 180
+        },
+        "ground": {
+          "refrigerator": 2,
+          "freezer": 120
+        },
+        "roasts": {
+          "refrigerator": 5,
+          "freezer": 180
+        },
+        "bacon": {
+          "unopened": {
+            "refrigerator": 14,
+            "freezer": 30
+          },
+          "opened": {
+            "refrigerator": 7,
+            "freezer": 30
+          }
+        },
+        "ham": {
+          "fresh": {
+            "refrigerator": 5,
+            "freezer": 180
+          },
+          "cooked": {
+            "refrigerator": 7,
+            "freezer": 60
+          }
+        },
+        "sausage": {
+          "fresh": {
+            "refrigerator": 2,
+            "freezer": 60
+          },
+          "smoked": {
+            "refrigerator": 7,
+            "freezer": 60
+          }
+        }
+      },
+      "poultry": {
+        "chickenWhole": {
+          "refrigerator": 2,
+          "freezer": 365
+        },
+        "chickenParts": {
+          "refrigerator": 2,
+          "freezer": 270
+        },
+        "chickenGround": {
+          "refrigerator": 2,
+          "freezer": 120
+        },
+        "turkey": {
+          "whole": {
+            "refrigerator": 2,
+            "freezer": 365
+          },
+          "parts": {
+            "refrigerator": 2,
+            "freezer": 270
+          },
+          "ground": {
+            "refrigerator": 2,
+            "freezer": 120
+          }
+        },
+        "duck": {
+          "refrigerator": 2,
+          "freezer": 180
+        },
+        "cooked": {
+          "refrigerator": 4,
+          "freezer": 120
+        }
+      },
+      "lamb": {
+        "chops": {
+          "refrigerator": 5,
+          "freezer": 180
+        },
+        "ground": {
+          "refrigerator": 2,
+          "freezer": 120
+        },
+        "roasts": {
+          "refrigerator": 5,
+          "freezer": 270
+        }
+      },
+      "processedMeats": {
+        "hotDogs": {
+          "unopened": {
+            "refrigerator": 14,
+            "freezer": 60
+          },
+          "opened": {
+            "refrigerator": 7,
+            "freezer": 60
+          }
+        },
+        "lunchMeat": {
+          "unopened": {
+            "refrigerator": 14,
+            "freezer": 60
+          },
+          "opened": {
+            "refrigerator": 5,
+            "freezer": 60
+          }
+        },
+        "pepperoni": {
+          "unopened": {
+            "pantry": 180,
+            "refrigerator": 365
+          },
+          "opened": {
+            "refrigerator": 21,
+            "freezer": 180
+          }
+        },
+        "jerky": {
+          "unopened": {
+            "pantry": 365
+          },
+          "opened": {
+            "pantry": 30
+          }
+        }
+      }
+    },
+    "seafood": {
+      "fish": {
+        "fresh": {
+          "lean": {
+            "refrigerator": 2,
+            "freezer": 180,
+            "notes": "Cod, flounder, haddock, halibut, sole"
+          },
+          "fatty": {
+            "refrigerator": 2,
+            "freezer": 90,
+            "notes": "Salmon, tuna, mackerel, sardines"
+          }
+        },
+        "smoked": {
+          "unopened": {
+            "refrigerator": 14,
+            "freezer": 60
+          },
+          "opened": {
+            "refrigerator": 5,
+            "freezer": 60
+          }
+        },
+        "cooked": {
+          "refrigerator": 3,
+          "freezer": 120
+        }
+      },
+      "shellfish": {
+        "shrimp": {
+          "fresh": {
+            "refrigerator": 2,
+            "freezer": 90
+          },
+          "cooked": {
+            "refrigerator": 3,
+            "freezer": 90
+          }
+        },
+        "crab": {
+          "fresh": {
+            "refrigerator": 2,
+            "freezer": 90
+          },
+          "cooked": {
+            "refrigerator": 3,
+            "freezer": 90
+          }
+        },
+        "lobster": {
+          "fresh": {
+            "refrigerator": 1,
+            "freezer": 90
+          },
+          "cooked": {
+            "refrigerator": 3,
+            "freezer": 90
+          }
+        },
+        "clams": {
+          "fresh": {
+            "refrigerator": 2,
+            "freezer": 90
+          }
+        },
+        "oysters": {
+          "fresh": {
+            "refrigerator": 2,
+            "freezer": 90
+          }
+        },
+        "scallops": {
+          "fresh": {
+            "refrigerator": 2,
+            "freezer": 90
+          }
+        }
+      },
+      "canned": {
+        "unopened": {
+          "pantry": 1095,
+          "notes": "3-5 years for most canned seafood"
+        },
+        "opened": {
+          "refrigerator": 3,
+          "freezer": 60
+        }
+      }
+    },
+    "dairy": {
+      "milk": {
+        "whole": {
+          "unopened": {
+            "refrigerator": 7,
+            "freezer": 90
+          },
+          "opened": {
+            "refrigerator": 5,
+            "freezer": 90
+          }
+        },
+        "skim": {
+          "unopened": {
+            "refrigerator": 7,
+            "freezer": 90
+          },
+          "opened": {
+            "refrigerator": 5,
+            "freezer": 90
+          }
+        },
+        "lactoseFree": {
+          "unopened": {
+            "refrigerator": 10,
+            "freezer": 90
+          },
+          "opened": {
+            "refrigerator": 7,
+            "freezer": 90
+          }
+        },
+        "plantBased": {
+          "unopened": {
+            "pantry": 30,
+            "refrigerator": 10
+          },
+          "opened": {
+            "refrigerator": 7,
+            "freezer": 90
+          }
+        }
+      },
+      "cheese": {
+        "hard": {
+          "unopened": {
+            "refrigerator": 180,
+            "freezer": 240
+          },
+          "opened": {
+            "refrigerator": 30,
+            "freezer": 240
+          },
+          "notes": "Parmesan, aged cheddar, Swiss"
+        },
+        "semiHard": {
+          "unopened": {
+            "refrigerator": 60,
+            "freezer": 240
+          },
+          "opened": {
+            "refrigerator": 21,
+            "freezer": 240
+          },
+          "notes": "Cheddar, Colby, Monterey Jack"
+        },
+        "soft": {
+          "unopened": {
+            "refrigerator": 14,
+            "freezer": 60
+          },
+          "opened": {
+            "refrigerator": 7,
+            "freezer": 60
+          },
+          "notes": "Brie, Camembert, cottage cheese, ricotta"
+        },
+        "shredded": {
+          "unopened": {
+            "refrigerator": 60,
+            "freezer": 240
+          },
+          "opened": {
+            "refrigerator": 14,
+            "freezer": 240
+          }
+        },
+        "creamCheese": {
+          "unopened": {
+            "refrigerator": 30,
+            "freezer": 60
+          },
+          "opened": {
+            "refrigerator": 14,
+            "freezer": 60
+          }
+        }
+      },
+      "yogurt": {
+        "unopened": {
+          "refrigerator": 14,
+          "freezer": 60
+        },
+        "opened": {
+          "refrigerator": 7,
+          "freezer": 60
+        }
+      },
+      "sourCream": {
+        "unopened": {
+          "refrigerator": 21,
+          "freezer": 0
+        },
+        "opened": {
+          "refrigerator": 14,
+          "freezer": 0
+        }
+      },
+      "butter": {
+        "refrigerator": 30,
+        "freezer": 240
+      },
+      "eggs": {
+        "fresh": {
+          "refrigerator": 35,
+          "freezer": 365,
+          "notes": "Don't freeze in shell"
+        },
+        "hardBoiled": {
+          "refrigerator": 7,
+          "freezer": 0
+        },
+        "eggSubstitute": {
+          "unopened": {
+            "refrigerator": 10,
+            "freezer": 365
+          },
+          "opened": {
+            "refrigerator": 3,
+            "freezer": 365
+          }
+        }
+      },
+      "cream": {
+        "heavy": {
+          "unopened": {
+            "refrigerator": 10,
+            "freezer": 120
+          },
+          "opened": {
+            "refrigerator": 5,
+            "freezer": 120
+          }
+        },
+        "halfAndHalf": {
+          "unopened": {
+            "refrigerator": 7,
+            "freezer": 120
+          },
+          "opened": {
+            "refrigerator": 5,
+            "freezer": 120
+          }
+        },
+        "whipped": {
+          "aerosol": {
+            "refrigerator": 90,
+            "freezer": 0
+          },
+          "tub": {
+            "refrigerator": 14,
+            "freezer": 120
+          }
+        }
+      }
+    },
+    "grains": {
+      "rice": {
+        "white": {
+          "pantry": 1460,
+          "notes": "4-5 years"
+        },
+        "brown": {
+          "pantry": 180,
+          "refrigerator": 365,
+          "freezer": 540
+        },
+        "wild": {
+          "pantry": 180,
+          "refrigerator": 365,
+          "freezer": 540
+        },
+        "cooked": {
+          "refrigerator": 6,
+          "freezer": 180
+        }
+      },
+      "pasta": {
+        "dry": {
+          "pantry": 730,
+          "notes": "2-3 years"
+        },
+        "fresh": {
+          "refrigerator": 5,
+          "freezer": 240
+        },
+        "cooked": {
+          "refrigerator": 5,
+          "freezer": 60
+        }
+      },
+      "flour": {
+        "allPurpose": {
+          "pantry": 240,
+          "refrigerator": 365,
+          "freezer": 730
+        },
+        "whole": {
+          "pantry": 90,
+          "refrigerator": 180,
+          "freezer": 365
+        },
+        "almond": {
+          "pantry": 90,
+          "refrigerator": 180,
+          "freezer": 365
+        },
+        "coconut": {
+          "pantry": 180,
+          "refrigerator": 365,
+          "freezer": 730
+        }
+      },
+      "oats": {
+        "pantry": 730,
+        "notes": "2 years"
+      },
+      "quinoa": {
+        "dry": {
+          "pantry": 730
+        },
+        "cooked": {
+          "refrigerator": 7,
+          "freezer": 240
+        }
+      },
+      "breadProducts": {
+        "bread": {
+          "pantry": 7,
+          "refrigerator": 14,
+          "freezer": 90
+        },
+        "rolls": {
+          "pantry": 7,
+          "refrigerator": 14,
+          "freezer": 90
+        },
+        "bagels": {
+          "pantry": 7,
+          "refrigerator": 14,
+          "freezer": 180
+        },
+        "tortillas": {
+          "pantry": 7,
+          "refrigerator": 30,
+          "freezer": 240
+        },
+        "pita": {
+          "pantry": 7,
+          "refrigerator": 14,
+          "freezer": 90
+        }
+      },
+      "cereal": {
+        "unopened": {
+          "pantry": 365
+        },
+        "opened": {
+          "pantry": 90
+        }
+      },
+      "crackers": {
+        "unopened": {
+          "pantry": 270
+        },
+        "opened": {
+          "pantry": 60
+        }
+      }
+    },
+    "bakingSupplies": {
+      "sugar": {
+        "granulated": {
+          "pantry": 9999,
+          "notes": "Indefinite if kept dry"
+        },
+        "brown": {
+          "pantry": 540,
+          "notes": "18 months, may harden but still safe"
+        },
+        "powdered": {
+          "pantry": 9999,
+          "notes": "Indefinite if kept dry"
+        }
+      },
+      "honey": {
+        "pantry": 9999,
+        "notes": "Indefinite, may crystallize"
+      },
+      "mapleSyrup": {
+        "unopened": {
+          "pantry": 9999
+        },
+        "opened": {
+          "refrigerator": 365
+        }
+      },
+      "vanillaExtract": {
+        "pantry": 9999,
+        "notes": "Indefinite"
+      },
+      "bakingPowder": {
+        "pantry": 540
+      },
+      "bakingSoda": {
+        "pantry": 730
+      },
+      "yeast": {
+        "dry": {
+          "pantry": 730,
+          "freezer": 9999
+        },
+        "fresh": {
+          "refrigerator": 14,
+          "freezer": 120
+        }
+      },
+      "chocolate": {
+        "chips": {
+          "pantry": 730
+        },
+        "bars": {
+          "pantry": 730
+        },
+        "cocoa": {
+          "pantry": 1095
+        }
+      },
+      "oil": {
+        "vegetable": {
+          "unopened": {
+            "pantry": 730
+          },
+          "opened": {
+            "pantry": 240
+          }
+        },
+        "olive": {
+          "unopened": {
+            "pantry": 730
+          },
+          "opened": {
+            "pantry": 180
+          }
+        },
+        "coconut": {
+          "unopened": {
+            "pantry": 1095
+          },
+          "opened": {
+            "pantry": 365
+          }
+        }
+      },
+      "shortening": {
+        "unopened": {
+          "pantry": 730
+        },
+        "opened": {
+          "pantry": 365
+        }
+      }
+    },
+    "condiments": {
+      "ketchup": {
+        "unopened": {
+          "pantry": 365
+        },
+        "opened": {
+          "refrigerator": 180
+        }
+      },
+      "mustard": {
+        "unopened": {
+          "pantry": 730
+        },
+        "opened": {
+          "refrigerator": 365
+        }
+      },
+      "mayonnaise": {
+        "unopened": {
+          "pantry": 90
+        },
+        "opened": {
+          "refrigerator": 60
+        }
+      },
+      "salad dressing": {
+        "unopened": {
+          "pantry": 365
+        },
+        "opened": {
+          "refrigerator": 90
+        }
+      },
+      "soy sauce": {
+        "unopened": {
+          "pantry": 1095
+        },
+        "opened": {
+          "pantry": 180,
+          "refrigerator": 730
+        }
+      },
+      "hot sauce": {
+        "unopened": {
+          "pantry": 1095
+        },
+        "opened": {
+          "pantry": 180,
+          "refrigerator": 1095
+        }
+      },
+      "barbecue sauce": {
+        "unopened": {
+          "pantry": 365
+        },
+        "opened": {
+          "refrigerator": 120
+        }
+      },
+      "vinegar": {
+        "pantry": 9999,
+        "notes": "Indefinite"
+      },
+      "worcestershire": {
+        "unopened": {
+          "pantry": 1095
+        },
+        "opened": {
+          "pantry": 365
+        }
+      },
+      "pickles": {
+        "unopened": {
+          "pantry": 730
+        },
+        "opened": {
+          "refrigerator": 365
+        }
+      },
+      "relish": {
+        "unopened": {
+          "pantry": 730
+        },
+        "opened": {
+          "refrigerator": 365
+        }
+      },
+      "jam": {
+        "unopened": {
+          "pantry": 730
+        },
+        "opened": {
+          "refrigerator": 365
+        }
+      },
+      "peanutButter": {
+        "unopened": {
+          "pantry": 270
+        },
+        "opened": {
+          "pantry": 90,
+          "refrigerator": 270
+        }
+      },
+      "nutella": {
+        "unopened": {
+          "pantry": 365
+        },
+        "opened": {
+          "pantry": 60
+        }
+      }
+    },
+    "beverages": {
+      "juice": {
+        "unopened": {
+          "pantry": 270,
+          "refrigerator": 21
+        },
+        "opened": {
+          "refrigerator": 10
+        }
+      },
+      "soda": {
+        "unopened": {
+          "pantry": 270
+        },
+        "opened": {
+          "refrigerator": 3
+        }
+      },
+      "water": {
+        "bottled": {
+          "pantry": 730
+        }
+      },
+      "coffee": {
+        "ground": {
+          "unopened": {
+            "pantry": 150,
+            "freezer": 730
+          },
+          "opened": {
+            "pantry": 14,
+            "freezer": 30
+          }
+        },
+        "beans": {
+          "unopened": {
+            "pantry": 270,
+            "freezer": 1095
+          },
+          "opened": {
+            "pantry": 14,
+            "freezer": 30
+          }
+        },
+        "instant": {
+          "unopened": {
+            "pantry": 7300
+          },
+          "opened": {
+            "pantry": 1095
+          }
+        }
+      },
+      "tea": {
+        "bags": {
+          "pantry": 540
+        },
+        "loose": {
+          "pantry": 730
+        }
+      },
+      "sports drinks": {
+        "unopened": {
+          "pantry": 270
+        },
+        "opened": {
+          "refrigerator": 5
+        }
+      },
+      "alcohol": {
+        "beer": {
+          "pantry": 120,
+          "refrigerator": 240
+        },
+        "wine": {
+          "unopened": {
+            "pantry": 1095
+          },
+          "opened": {
+            "refrigerator": 5
+          }
+        },
+        "spirits": {
+          "unopened": {
+            "pantry": 9999
+          },
+          "opened": {
+            "pantry": 9999
+          }
+        }
+      }
+    },
+    "snacks": {
+      "chips": {
+        "unopened": {
+          "pantry": 90
+        },
+        "opened": {
+          "pantry": 7
+        }
+      },
+      "cookies": {
+        "unopened": {
+          "pantry": 240
+        },
+        "opened": {
+          "pantry": 14
+        }
+      },
+      "nuts": {
+        "unopened": {
+          "pantry": 365,
+          "refrigerator": 730
+        },
+        "opened": {
+          "pantry": 180,
+          "refrigerator": 365
+        }
+      },
+      "popcorn": {
+        "unpopped": {
+          "pantry": 730
+        },
+        "popped": {
+          "pantry": 14
+        }
+      },
+      "granolaBars": {
+        "unopened": {
+          "pantry": 240
+        },
+        "opened": {
+          "pantry": 7
+        }
+      },
+      "driedFruit": {
+        "unopened": {
+          "pantry": 365
+        },
+        "opened": {
+          "pantry": 180
+        }
+      },
+      "pretzels": {
+        "unopened": {
+          "pantry": 270
+        },
+        "opened": {
+          "pantry": 14
+        }
+      }
+    },
+    "canned": {
+      "vegetables": {
+        "unopened": {
+          "pantry": 730,
+          "notes": "2-5 years for most canned vegetables"
+        },
+        "opened": {
+          "refrigerator": 3,
+          "freezer": 60
+        }
+      },
+      "fruits": {
+        "unopened": {
+          "pantry": 540,
+          "notes": "12-18 months for best quality"
+        },
+        "opened": {
+          "refrigerator": 7,
+          "freezer": 60
+        }
+      },
+      "soups": {
+        "unopened": {
+          "pantry": 730,
+          "notes": "2-5 years"
+        },
+        "opened": {
+          "refrigerator": 3,
+          "freezer": 60
+        }
+      },
+      "beans": {
+        "unopened": {
+          "pantry": 1095,
+          "notes": "3-5 years"
+        },
+        "opened": {
+          "refrigerator": 3,
+          "freezer": 60
+        }
+      },
+      "tomatoes": {
+        "unopened": {
+          "pantry": 540,
+          "notes": "18-24 months"
+        },
+        "opened": {
+          "refrigerator": 7,
+          "freezer": 60
+        }
+      },
+      "pasta sauce": {
+        "unopened": {
+          "pantry": 540
+        },
+        "opened": {
+          "refrigerator": 10,
+          "freezer": 180
+        }
+      }
+    },
+    "frozen": {
+      "vegetables": {
+        "unopened": {
+          "freezer": 240,
+          "notes": "8-10 months for best quality"
+        }
+      },
+      "fruits": {
+        "unopened": {
+          "freezer": 270,
+          "notes": "9-12 months for best quality"
+        }
+      },
+      "pizza": {
+        "unopened": {
+          "freezer": 540
+        }
+      },
+      "dinners": {
+        "unopened": {
+          "freezer": 120
+        }
+      },
+      "iceCream": {
+        "unopened": {
+          "freezer": 60
+        },
+        "opened": {
+          "freezer": 60
+        }
+      },
+      "fries": {
+        "unopened": {
+          "freezer": 240
+        }
+      },
+      "waffles": {
+        "unopened": {
+          "freezer": 120
+        }
+      }
+    },
+    "leftovers": {
+      "cooked": {
+        "meat": {
+          "refrigerator": 4,
+          "freezer": 90
+        },
+        "poultry": {
+          "refrigerator": 4,
+          "freezer": 120
+        },
+        "seafood": {
+          "refrigerator": 3,
+          "freezer": 90
+        },
+        "rice": {
+          "refrigerator": 6,
+          "freezer": 180
+        },
+        "pasta": {
+          "refrigerator": 5,
+          "freezer": 60
+        },
+        "soup": {
+          "refrigerator": 4,
+          "freezer": 90
+        },
+        "stew": {
+          "refrigerator": 4,
+          "freezer": 90
+        },
+        "casserole": {
+          "refrigerator": 4,
+          "freezer": 90
+        },
+        "pizza": {
+          "refrigerator": 4,
+          "freezer": 60
+        },
+        "chinese": {
+          "refrigerator": 4,
+          "freezer": 90
+        },
+        "mexican": {
+          "refrigerator": 4,
+          "freezer": 90
+        }
+      }
+    },
+    "homeCanned": {
+      "highAcid": {
+        "fruits": {
+          "pantry": 365,
+          "notes": "Jams, jellies, fruit preserves"
+        },
+        "tomatoes": {
+          "pantry": 365,
+          "notes": "With added acid"
+        },
+        "pickles": {
+          "pantry": 365
+        },
+        "salsa": {
+          "pantry": 365
+        }
+      },
+      "lowAcid": {
+        "vegetables": {
+          "pantry": 730,
+          "notes": "Properly pressure canned"
+        },
+        "meats": {
+          "pantry": 730,
+          "notes": "Properly pressure canned"
+        },
+        "seafood": {
+          "pantry": 365,
+          "notes": "Properly pressure canned"
+        },
+        "soups": {
+          "pantry": 730,
+          "notes": "Properly pressure canned"
+        },
+        "stocks": {
+          "pantry": 730,
+          "notes": "Properly pressure canned"
+        }
+      },
+      "opened": {
+        "all": {
+          "refrigerator": 7,
+          "notes": "Once opened, treat as leftovers"
+        }
+      }
+    },
+    "babyFood": {
+      "formula": {
+        "unopened": {
+          "pantry": 365,
+          "notes": "Check expiration date"
+        },
+        "opened": {
+          "refrigerator": 2,
+          "notes": "Prepared formula"
+        }
+      },
+      "jarred": {
+        "unopened": {
+          "pantry": 365
+        },
+        "opened": {
+          "refrigerator": 2
+        }
+      },
+      "cereal": {
+        "unopened": {
+          "pantry": 365
+        },
+        "opened": {
+          "pantry": 30
+        }
+      },
+      "homemade": {
+        "refrigerator": 3,
+        "freezer": 30
+      }
+    },
+    "petFood": {
+      "dry": {
+        "unopened": {
+          "pantry": 365
+        },
+        "opened": {
+          "pantry": 42
+        }
+      },
+      "canned": {
+        "unopened": {
+          "pantry": 730
+        },
+        "opened": {
+          "refrigerator": 3
+        }
+      },
+      "treats": {
+        "unopened": {
+          "pantry": 365
+        },
+        "opened": {
+          "pantry": 90
+        }
+      }
+    }
+  },
+  "defaultRules": {
+    "unknownProduct": {
+      "pantry": 365,
+      "refrigerator": 7,
+      "freezer": 90,
+      "notes": "When in doubt, use these conservative estimates"
+    },
+    "sellByDate": {
+      "addDays": 7,
+      "notes": "Generally safe for 7 days past sell-by date if properly stored"
+    },
+    "bestByDate": {
+      "pantry": {
+        "addDays": 180,
+        "notes": "Quality may decline but usually safe"
+      },
+      "refrigerated": {
+        "addDays": 7,
+        "notes": "Use within a week of best-by date"
+      }
+    },
+    "useByDate": {
+      "addDays": 0,
+      "notes": "Should not be consumed after use-by date"
+    }
+  },
+  "safetyTips": {
+    "generalRules": [
+      "When in doubt, throw it out",
+      "Never taste food to determine if it's safe",
+      "Trust your senses - if it looks, smells, or feels off, discard it",
+      "Keep refrigerator at 40°F or below",
+      "Keep freezer at 0°F or below",
+      "Don't leave perishable foods at room temperature for more than 2 hours",
+      "In temperatures above 90°F, don't leave food out for more than 1 hour"
+    ],
+    "signsSpoilage": [
+      "Unusual odor",
+      "Change in texture (slimy, sticky)",
+      "Visible mold",
+      "Discoloration",
+      "Bulging or leaking containers",
+      "Fizzing or bubbling when container is opened"
+    ],
+    "highRiskGroups": [
+      "Pregnant women",
+      "Young children",
+      "Elderly",
+      "Immunocompromised individuals"
+    ]
+  },
+  "storageExtension": {
+    "vacuum sealing": {
+      "multiplier": 3,
+      "notes": "Can extend freezer storage by 3-5 times"
+    },
+    "freezerBags": {
+      "multiplier": 1.5,
+      "notes": "Better than regular storage containers"
+    },
+    "glasContainers": {
+      "multiplier": 1.2,
+      "notes": "Better than plastic for refrigerator storage"
+    }
+  }
+}

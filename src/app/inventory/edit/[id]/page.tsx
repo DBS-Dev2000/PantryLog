@@ -42,6 +42,7 @@ import {
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { suggestExpirationDate, getStorageRecommendation } from '@/utils/shelfLifeCalculator'
 
 interface InventoryItemDetail {
   id: string
@@ -172,7 +173,25 @@ export default function EditInventoryItemPage() {
 
       if (error) throw error
 
-      setItem(itemData as InventoryItemDetail)
+      // Check if expiration date is missing and product has default shelf life
+      let updatedItemData = { ...itemData }
+      if (!itemData.expiration_date && itemData.products?.default_shelf_life_days) {
+        // Calculate expiration date based on purchase date and default shelf life
+        const suggestedExpiration = suggestExpirationDate(
+          itemData.products.name,
+          itemData.products.category,
+          itemData.purchase_date,
+          undefined, // Will auto-detect storage location
+          itemData.products.default_shelf_life_days
+        )
+
+        if (suggestedExpiration) {
+          updatedItemData.expiration_date = suggestedExpiration.toISOString().split('T')[0]
+          console.log('📅 Auto-calculated expiration date:', updatedItemData.expiration_date)
+        }
+      }
+
+      setItem(updatedItemData as InventoryItemDetail)
       setOriginalItem(itemData as InventoryItemDetail) // Keep original for comparison
       setCustomProductName(itemData.products?.name || '')
       setProductImageUrl(itemData.products?.image_url || '')
@@ -864,9 +883,27 @@ export default function EditInventoryItemPage() {
                   label="Purchase Date"
                   value={item.purchase_date ? new Date(item.purchase_date) : null}
                   onChange={(newValue) => {
+                    const newPurchaseDate = newValue ? newValue.toISOString().split('T')[0] : ''
+
+                    // If there's a default shelf life and no manual expiration set, recalculate
+                    let newExpiration = item.expiration_date
+                    if (newPurchaseDate && item.products?.default_shelf_life_days && !originalItem?.expiration_date) {
+                      const suggestedExpiration = suggestExpirationDate(
+                        item.products.name,
+                        item.products.category,
+                        newPurchaseDate,
+                        undefined,
+                        item.products.default_shelf_life_days
+                      )
+                      if (suggestedExpiration) {
+                        newExpiration = suggestedExpiration.toISOString().split('T')[0]
+                      }
+                    }
+
                     setItem({
                       ...item,
-                      purchase_date: newValue ? newValue.toISOString().split('T')[0] : ''
+                      purchase_date: newPurchaseDate,
+                      expiration_date: newExpiration
                     })
                   }}
                   slotProps={{
@@ -879,7 +916,9 @@ export default function EditInventoryItemPage() {
               </LocalizationProvider>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
-                  label="Expiration Date"
+                  label={item.products?.default_shelf_life_days && !originalItem?.expiration_date ?
+                    `Expiration Date (Auto: ${item.products.default_shelf_life_days} days)` :
+                    "Expiration Date"}
                   value={item.expiration_date ? new Date(item.expiration_date) : null}
                   onChange={(newValue) => {
                     setItem({
@@ -890,7 +929,9 @@ export default function EditInventoryItemPage() {
                   slotProps={{
                     textField: {
                       fullWidth: true,
-                      sx: { flex: 1 }
+                      sx: { flex: 1 },
+                      helperText: item.products?.default_shelf_life_days && !originalItem?.expiration_date ?
+                        "Calculated from default shelf life" : undefined
                     }
                   }}
                 />
@@ -994,11 +1035,18 @@ export default function EditInventoryItemPage() {
             </Box>
 
             {/* Last row: Action buttons on their own line */}
-            <Box display="flex" gap={2} justifyContent="flex-end">
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              justifyContent={{ xs: 'stretch', sm: 'flex-end' }}
+              sx={{ mt: 2 }}
+            >
               <Button
                 variant="outlined"
                 onClick={() => router.back()}
                 disabled={saving}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Cancel
               </Button>
@@ -1007,6 +1055,7 @@ export default function EditInventoryItemPage() {
                 onClick={handleSave}
                 disabled={saving}
                 startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </Button>

@@ -1,0 +1,823 @@
+{
+  "version": "1.0.0",
+  "category": "Food Taxonomy and Ingredient Matching System",
+  "description": "Hierarchical food classification for intelligent recipe matching and substitution",
+  "lastUpdated": "2025-01-22",
+  "taxonomy": {
+    "proteins": {
+      "beef": {
+        "category": "Red Meat",
+        "subcategories": {
+          "steaks": {
+            "cuts": ["ribeye", "sirloin", "t-bone", "porterhouse", "new york strip", "filet mignon", "flank", "skirt", "flat iron", "denver", "tri-tip", "top round", "eye of round", "chuck eye"],
+            "properties": {
+              "cookingMethods": ["grill", "pan-sear", "broil", "sous-vide"],
+              "tenderness": "varies by cut",
+              "averagePortionOz": 8
+            },
+            "recipeMatches": {
+              "direct": ["steak tacos", "beef fajitas", "steak salad", "steak sandwich", "beef stir-fry"],
+              "leftoverUses": ["steak salad", "beef quesadilla", "steak and eggs", "beef fried rice", "steak pizza"]
+            }
+          },
+          "roasts": {
+            "cuts": ["chuck roast", "rump roast", "bottom round", "eye round", "sirloin tip", "prime rib", "brisket", "pot roast"],
+            "properties": {
+              "cookingMethods": ["roast", "slow-cook", "braise", "smoke"],
+              "averagePortionOz": 6
+            },
+            "recipeMatches": {
+              "direct": ["pot roast", "beef stew", "sunday roast", "beef barbacoa"],
+              "leftoverUses": ["roast beef sandwich", "beef hash", "beef tacos", "beef soup"]
+            }
+          },
+          "ground": {
+            "fatContent": ["70/30", "80/20", "85/15", "90/10", "93/7"],
+            "properties": {
+              "cookingMethods": ["sauté", "grill", "bake", "simmer"],
+              "averagePortionOz": 4
+            },
+            "recipeMatches": {
+              "direct": ["hamburgers", "meatloaf", "tacos", "spaghetti sauce", "chili", "lasagna", "meatballs", "sloppy joes"],
+              "leftoverUses": ["taco salad", "beef pizza", "stuffed peppers", "beef nachos"]
+            }
+          },
+          "stew": {
+            "cuts": ["stew meat", "chuck chunks", "short ribs", "shank", "oxtail"],
+            "properties": {
+              "cookingMethods": ["stew", "braise", "slow-cook"],
+              "averagePortionOz": 5
+            },
+            "recipeMatches": {
+              "direct": ["beef stew", "beef bourguignon", "beef curry", "beef soup"],
+              "leftoverUses": ["beef pot pie", "beef and noodles", "beef empanadas"]
+            }
+          }
+        },
+        "substitutions": {
+          "withinCategory": "Most beef cuts can substitute for similar tenderness levels",
+          "crossCategory": ["bison", "venison", "lamb (stronger flavor)", "pork (for ground)"]
+        }
+      },
+      "pork": {
+        "category": "White Meat",
+        "subcategories": {
+          "chops": {
+            "cuts": ["center cut", "rib chop", "loin chop", "sirloin chop", "blade chop", "boneless"],
+            "properties": {
+              "cookingMethods": ["grill", "pan-fry", "bake", "broil"],
+              "averagePortionOz": 6
+            },
+            "recipeMatches": {
+              "direct": ["grilled pork chops", "breaded pork chops", "pork piccata", "honey garlic pork"],
+              "leftoverUses": ["pork fried rice", "pork sandwich", "pork salad", "pork tacos"]
+            }
+          },
+          "roasts": {
+            "cuts": ["pork loin", "pork shoulder", "boston butt", "picnic roast", "tenderloin", "crown roast"],
+            "properties": {
+              "cookingMethods": ["roast", "slow-cook", "smoke", "grill"],
+              "averagePortionOz": 5
+            },
+            "recipeMatches": {
+              "direct": ["pulled pork", "carnitas", "roast pork", "char siu", "porchetta"],
+              "leftoverUses": ["pulled pork sandwich", "pork tacos", "pork fried rice", "pork ramen"]
+            }
+          },
+          "bacon": {
+            "types": ["regular", "thick-cut", "center-cut", "turkey bacon", "canadian bacon", "pancetta"],
+            "properties": {
+              "cookingMethods": ["fry", "bake", "microwave"],
+              "averagePortionOz": 2
+            },
+            "recipeMatches": {
+              "direct": ["BLT", "carbonara", "bacon wrapped anything", "breakfast"],
+              "leftoverUses": ["bacon bits for salad", "bacon mac and cheese", "bacon pizza"]
+            }
+          },
+          "sausage": {
+            "types": ["italian", "bratwurst", "kielbasa", "chorizo", "andouille", "breakfast sausage"],
+            "properties": {
+              "cookingMethods": ["grill", "pan-fry", "bake", "simmer"],
+              "averagePortionOz": 4
+            },
+            "recipeMatches": {
+              "direct": ["sausage pasta", "jambalaya", "sausage and peppers", "breakfast hash"],
+              "leftoverUses": ["sausage pizza", "sausage soup", "sausage sandwich"]
+            }
+          },
+          "ham": {
+            "types": ["spiral", "bone-in", "boneless", "ham steak", "country ham", "prosciutto"],
+            "properties": {
+              "cookingMethods": ["bake", "glaze", "fry", "cold"],
+              "averagePortionOz": 4
+            },
+            "recipeMatches": {
+              "direct": ["baked ham", "ham and beans", "ham sandwich", "quiche lorraine"],
+              "leftoverUses": ["ham salad", "ham and cheese omelet", "ham pizza", "split pea soup"]
+            }
+          },
+          "ground": {
+            "types": ["regular", "lean", "sausage seasoned"],
+            "properties": {
+              "cookingMethods": ["sauté", "bake", "simmer"],
+              "averagePortionOz": 4
+            },
+            "recipeMatches": {
+              "direct": ["pork meatballs", "pork burgers", "dumplings", "wontons", "mapo tofu"],
+              "leftoverUses": ["pork fried rice", "pork lettuce wraps", "pork pizza"]
+            }
+          }
+        }
+      },
+      "poultry": {
+        "chicken": {
+          "category": "White Meat",
+          "subcategories": {
+            "whole": {
+              "properties": {
+                "cookingMethods": ["roast", "rotisserie", "smoke", "spatchcock"],
+                "averagePortionOz": 6,
+                "yields": "Provides mixed cuts for various uses"
+              },
+              "recipeMatches": {
+                "direct": ["roast chicken", "beer can chicken", "chicken soup base"],
+                "leftoverUses": ["chicken salad", "chicken sandwiches", "chicken soup", "chicken pot pie", "chicken tacos"]
+              }
+            },
+            "breast": {
+              "forms": ["boneless skinless", "bone-in", "tenderloins", "cutlets"],
+              "properties": {
+                "cookingMethods": ["grill", "bake", "pan-fry", "poach", "air-fry"],
+                "averagePortionOz": 6
+              },
+              "recipeMatches": {
+                "direct": ["chicken parmesan", "chicken piccata", "grilled chicken", "chicken stir-fry", "chicken cordon bleu"],
+                "leftoverUses": ["chicken caesar salad", "chicken quesadillas", "chicken alfredo", "buffalo chicken dip"]
+              }
+            },
+            "thighs": {
+              "forms": ["bone-in skin-on", "boneless skinless", "bone-in skinless"],
+              "properties": {
+                "cookingMethods": ["braise", "grill", "bake", "fry"],
+                "averagePortionOz": 5,
+                "benefits": "More flavorful, stays moist"
+              },
+              "recipeMatches": {
+                "direct": ["chicken adobo", "chicken curry", "jerk chicken", "teriyaki chicken", "coq au vin"],
+                "leftoverUses": ["chicken fried rice", "chicken tacos", "chicken soup", "chicken salad"]
+              }
+            },
+            "wings": {
+              "forms": ["whole", "drummettes", "flats", "boneless"],
+              "properties": {
+                "cookingMethods": ["fry", "bake", "grill", "air-fry"],
+                "averagePortionOz": 6
+              },
+              "recipeMatches": {
+                "direct": ["buffalo wings", "bbq wings", "korean wings", "lemon pepper wings"],
+                "leftoverUses": ["wing meat for dips", "wing soup", "wing salad"]
+              }
+            },
+            "ground": {
+              "properties": {
+                "cookingMethods": ["sauté", "bake", "simmer"],
+                "averagePortionOz": 4
+              },
+              "recipeMatches": {
+                "direct": ["chicken burgers", "chicken meatballs", "chicken chili", "lettuce wraps", "stuffed peppers"],
+                "leftoverUses": ["chicken tacos", "chicken pasta sauce", "chicken pizza"]
+              }
+            }
+          }
+        },
+        "turkey": {
+          "category": "White Meat",
+          "subcategories": {
+            "whole": {
+              "properties": {
+                "cookingMethods": ["roast", "smoke", "deep-fry"],
+                "averagePortionOz": 6
+              },
+              "recipeMatches": {
+                "direct": ["thanksgiving turkey", "smoked turkey", "turkey roulade"],
+                "leftoverUses": ["turkey sandwiches", "turkey soup", "turkey tetrazzini", "turkey pot pie"]
+              }
+            },
+            "breast": {
+              "forms": ["whole breast", "cutlets", "tenderloin", "deli sliced"],
+              "properties": {
+                "cookingMethods": ["roast", "grill", "pan-fry"],
+                "averagePortionOz": 5
+              },
+              "recipeMatches": {
+                "direct": ["turkey cutlets", "turkey roll", "turkey scallopini"],
+                "leftoverUses": ["turkey club", "turkey salad", "turkey wrap"]
+              }
+            },
+            "ground": {
+              "fatContent": ["93/7", "85/15", "99/1"],
+              "properties": {
+                "cookingMethods": ["sauté", "bake", "grill"],
+                "averagePortionOz": 4
+              },
+              "recipeMatches": {
+                "direct": ["turkey burgers", "turkey meatloaf", "turkey chili", "turkey lasagna"],
+                "leftoverUses": ["turkey tacos", "turkey sloppy joes", "turkey soup"]
+              }
+            }
+          }
+        },
+        "duck": {
+          "category": "Dark Meat",
+          "properties": {
+            "cookingMethods": ["roast", "confit", "pan-sear"],
+            "averagePortionOz": 5,
+            "notes": "Rich, gamey flavor"
+          },
+          "recipeMatches": {
+            "direct": ["peking duck", "duck confit", "duck breast", "duck l'orange"],
+            "leftoverUses": ["duck fried rice", "duck ramen", "duck salad"]
+          }
+        }
+      },
+      "seafood": {
+        "fish": {
+          "whitefish": {
+            "types": ["cod", "halibut", "tilapia", "flounder", "sole", "haddock", "sea bass", "grouper", "mahi-mahi", "snapper"],
+            "properties": {
+              "flavor": "mild",
+              "texture": "flaky",
+              "cookingMethods": ["bake", "pan-fry", "grill", "steam", "poach"],
+              "averagePortionOz": 6
+            },
+            "recipeMatches": {
+              "direct": ["fish tacos", "fish and chips", "baked fish", "fish curry", "ceviche"],
+              "leftoverUses": ["fish cakes", "fish salad", "fish chowder", "fish sandwich"]
+            },
+            "substitutable": true
+          },
+          "salmon": {
+            "types": ["atlantic", "sockeye", "coho", "chinook", "pink"],
+            "forms": ["fillet", "steak", "whole side", "smoked"],
+            "properties": {
+              "flavor": "rich",
+              "texture": "firm",
+              "cookingMethods": ["grill", "bake", "pan-sear", "smoke", "poach"],
+              "averagePortionOz": 6
+            },
+            "recipeMatches": {
+              "direct": ["grilled salmon", "salmon teriyaki", "salmon wellington", "salmon poke"],
+              "leftoverUses": ["salmon salad", "salmon cakes", "salmon pasta", "salmon sandwich"]
+            }
+          },
+          "tuna": {
+            "types": ["yellowfin", "bluefin", "albacore", "skipjack"],
+            "forms": ["steak", "sashimi grade", "canned"],
+            "properties": {
+              "flavor": "meaty",
+              "texture": "firm",
+              "cookingMethods": ["sear", "grill", "raw", "bake"],
+              "averagePortionOz": 5
+            },
+            "recipeMatches": {
+              "direct": ["seared tuna", "tuna poke", "tuna casserole", "tuna salad"],
+              "leftoverUses": ["tuna sandwich", "tuna melt", "tuna pasta", "tuna rice bowl"]
+            }
+          }
+        },
+        "shellfish": {
+          "shrimp": {
+            "sizes": ["small", "medium", "large", "jumbo", "colossal"],
+            "forms": ["shell-on", "peeled", "deveined", "tail-on"],
+            "properties": {
+              "cookingMethods": ["sauté", "grill", "boil", "fry", "roast"],
+              "averagePortionOz": 6
+            },
+            "recipeMatches": {
+              "direct": ["shrimp scampi", "shrimp tacos", "shrimp curry", "shrimp and grits", "tempura"],
+              "leftoverUses": ["shrimp salad", "shrimp fried rice", "shrimp cocktail", "shrimp pasta"]
+            }
+          },
+          "crab": {
+            "types": ["blue", "dungeness", "king", "snow", "lump meat"],
+            "properties": {
+              "cookingMethods": ["steam", "boil", "bake", "sauté"],
+              "averagePortionOz": 4
+            },
+            "recipeMatches": {
+              "direct": ["crab cakes", "crab bisque", "crab legs", "crab dip"],
+              "leftoverUses": ["crab salad", "crab sandwich", "crab pasta", "crab rangoon"]
+            }
+          },
+          "lobster": {
+            "forms": ["whole", "tails", "claws", "meat"],
+            "properties": {
+              "cookingMethods": ["boil", "steam", "grill", "broil"],
+              "averagePortionOz": 5
+            },
+            "recipeMatches": {
+              "direct": ["lobster roll", "lobster bisque", "lobster thermidor", "lobster mac and cheese"],
+              "leftoverUses": ["lobster salad", "lobster pasta", "lobster risotto"]
+            }
+          },
+          "scallops": {
+            "types": ["sea scallops", "bay scallops", "diver scallops"],
+            "properties": {
+              "cookingMethods": ["sear", "grill", "broil", "bake"],
+              "averagePortionOz": 5
+            },
+            "recipeMatches": {
+              "direct": ["seared scallops", "scallop pasta", "scallop risotto", "bacon wrapped scallops"],
+              "leftoverUses": ["scallop salad", "scallop chowder", "scallop ceviche"]
+            }
+          }
+        }
+      },
+      "lamb": {
+        "category": "Red Meat",
+        "subcategories": {
+          "chops": {
+            "cuts": ["rib chops", "loin chops", "shoulder chops", "lamb lollipops"],
+            "properties": {
+              "cookingMethods": ["grill", "pan-sear", "broil", "roast"],
+              "averagePortionOz": 5
+            },
+            "recipeMatches": {
+              "direct": ["grilled lamb chops", "herb crusted lamb", "lamb korma"],
+              "leftoverUses": ["lamb salad", "lamb pita", "lamb fried rice"]
+            }
+          },
+          "roasts": {
+            "cuts": ["leg of lamb", "rack of lamb", "shoulder roast", "lamb shank"],
+            "properties": {
+              "cookingMethods": ["roast", "braise", "slow-cook"],
+              "averagePortionOz": 5
+            },
+            "recipeMatches": {
+              "direct": ["roast lamb", "braised lamb shanks", "lamb tagine"],
+              "leftoverUses": ["lamb sandwiches", "lamb curry", "shepherd's pie"]
+            }
+          },
+          "ground": {
+            "properties": {
+              "cookingMethods": ["sauté", "grill", "bake"],
+              "averagePortionOz": 4
+            },
+            "recipeMatches": {
+              "direct": ["lamb burgers", "kofta", "moussaka", "lamb meatballs"],
+              "leftoverUses": ["lamb tacos", "lamb pizza", "lamb pasta sauce"]
+            }
+          }
+        }
+      },
+      "game": {
+        "venison": {
+          "cuts": ["steaks", "roasts", "ground", "sausage"],
+          "properties": {
+            "flavor": "lean, gamey",
+            "cookingMethods": ["grill", "roast", "stew", "smoke"],
+            "averagePortionOz": 5
+          },
+          "recipeMatches": {
+            "direct": ["venison stew", "venison chili", "venison steaks", "venison jerky"],
+            "leftoverUses": ["venison hash", "venison tacos", "venison soup"]
+          }
+        },
+        "bison": {
+          "cuts": ["steaks", "roasts", "ground"],
+          "properties": {
+            "flavor": "similar to beef but leaner",
+            "cookingMethods": ["grill", "roast", "sauté"],
+            "averagePortionOz": 5
+          },
+          "recipeMatches": {
+            "direct": ["bison burgers", "bison steak", "bison chili"],
+            "leftoverUses": ["bison tacos", "bison stew", "bison sandwiches"]
+          }
+        }
+      },
+      "plantBased": {
+        "legumes": {
+          "beans": {
+            "types": ["black", "pinto", "kidney", "navy", "cannellini", "great northern", "lima", "garbanzo/chickpeas"],
+            "properties": {
+              "protein": "complete when paired with grains",
+              "cookingMethods": ["boil", "slow-cook", "pressure-cook", "bake"],
+              "averagePortionOz": 6
+            },
+            "recipeMatches": {
+              "direct": ["bean chili", "bean burgers", "hummus", "falafel", "bean soup", "refried beans"],
+              "leftoverUses": ["bean salad", "bean tacos", "bean dip", "bean and rice bowls"]
+            }
+          },
+          "lentils": {
+            "types": ["green", "brown", "red", "black/beluga", "french/puy"],
+            "properties": {
+              "cookingMethods": ["simmer", "slow-cook", "pressure-cook"],
+              "cookTime": "15-45 minutes",
+              "averagePortionOz": 6
+            },
+            "recipeMatches": {
+              "direct": ["lentil soup", "dal", "lentil curry", "lentil loaf", "lentil bolognese"],
+              "leftoverUses": ["lentil salad", "lentil wraps", "lentil fritters"]
+            }
+          }
+        },
+        "soy": {
+          "tofu": {
+            "types": ["silken", "soft", "firm", "extra-firm", "super-firm"],
+            "properties": {
+              "cookingMethods": ["pan-fry", "bake", "grill", "scramble", "blend"],
+              "averagePortionOz": 5
+            },
+            "recipeMatches": {
+              "direct": ["mapo tofu", "tofu scramble", "tofu stir-fry", "agedashi tofu"],
+              "leftoverUses": ["tofu salad", "tofu sandwich", "tofu smoothie"]
+            }
+          },
+          "tempeh": {
+            "properties": {
+              "texture": "firm, nutty",
+              "cookingMethods": ["pan-fry", "grill", "crumble", "steam"],
+              "averagePortionOz": 4
+            },
+            "recipeMatches": {
+              "direct": ["tempeh bacon", "tempeh tacos", "tempeh stir-fry"],
+              "leftoverUses": ["tempeh salad", "tempeh sandwich", "tempeh bowl"]
+            }
+          }
+        },
+        "nuts": {
+          "types": ["almonds", "cashews", "walnuts", "pecans", "peanuts", "pistachios"],
+          "uses": {
+            "protein": "Can be made into meat substitutes",
+            "forms": ["whole", "butter", "milk", "flour", "cheese"],
+            "averagePortionOz": 2
+          },
+          "recipeMatches": {
+            "direct": ["nut roast", "cashew chicken", "walnut meat", "almond crusted"],
+            "leftoverUses": ["nut butter", "trail mix", "salad topping"]
+          }
+        }
+      },
+      "eggs": {
+        "chicken": {
+          "sizes": ["small", "medium", "large", "extra-large", "jumbo"],
+          "properties": {
+            "cookingMethods": ["boil", "fry", "scramble", "poach", "bake"],
+            "averagePortionCount": 2
+          },
+          "recipeMatches": {
+            "direct": ["omelets", "frittata", "quiche", "egg salad", "deviled eggs", "shakshuka"],
+            "leftoverUses": ["egg sandwich", "egg fried rice", "egg drop soup", "egg curry"]
+          }
+        },
+        "alternatives": {
+          "types": ["duck eggs", "quail eggs", "egg substitutes", "egg whites"],
+          "uses": "Similar to chicken eggs with variations"
+        }
+      },
+      "dairy": {
+        "cheese": {
+          "categories": {
+            "hard": ["parmesan", "aged cheddar", "gruyere", "manchego", "pecorino"],
+            "semiHard": ["cheddar", "swiss", "gouda", "edam", "provolone"],
+            "semiSoft": ["mozzarella", "monterey jack", "havarti", "fontina"],
+            "soft": ["brie", "camembert", "ricotta", "mascarpone", "cream cheese", "cottage cheese"],
+            "blue": ["gorgonzola", "roquefort", "stilton", "danish blue"]
+          },
+          "uses": {
+            "melting": ["mozzarella", "cheddar", "swiss", "provolone"],
+            "grating": ["parmesan", "pecorino", "aged cheddar"],
+            "spreading": ["cream cheese", "ricotta", "mascarpone"],
+            "crumbling": ["feta", "goat cheese", "blue cheese"]
+          },
+          "recipeMatches": {
+            "direct": ["mac and cheese", "grilled cheese", "cheese fondue", "cheese soufflé"],
+            "component": ["pizza", "lasagna", "enchiladas", "quesadillas", "salads"]
+          }
+        },
+        "yogurt": {
+          "types": ["greek", "regular", "icelandic/skyr", "australian", "plant-based"],
+          "fatContent": ["non-fat", "low-fat", "whole milk"],
+          "uses": {
+            "cooking": ["marinades", "sauces", "baking substitute"],
+            "direct": ["parfaits", "smoothies", "tzatziki", "lassi"]
+          }
+        }
+      }
+    },
+    "grains": {
+      "rice": {
+        "types": {
+          "white": {
+            "varieties": ["long grain", "medium grain", "short grain", "jasmine", "basmati"],
+            "properties": {
+              "cookingRatio": "1:2 water",
+              "cookTime": "15-20 minutes",
+              "texture": "fluffy to sticky depending on type"
+            }
+          },
+          "brown": {
+            "varieties": ["long grain", "short grain", "basmati"],
+            "properties": {
+              "cookingRatio": "1:2.5 water",
+              "cookTime": "40-45 minutes",
+              "nutrition": "higher fiber and nutrients"
+            }
+          },
+          "specialty": {
+            "varieties": ["wild rice", "black rice", "red rice", "arborio", "sushi rice"],
+            "uses": "Specific dishes like risotto, sushi, pilaf"
+          }
+        },
+        "recipeMatches": {
+          "direct": ["fried rice", "risotto", "rice pilaf", "sushi", "rice pudding", "congee"],
+          "side": ["curry companion", "stir-fry base", "soup addition"],
+          "leftoverUses": ["fried rice", "rice fritters", "rice soup", "rice salad"]
+        }
+      },
+      "pasta": {
+        "shapes": {
+          "long": ["spaghetti", "linguine", "fettuccine", "angel hair", "bucatini"],
+          "short": ["penne", "rigatoni", "fusilli", "farfalle", "rotini", "shells"],
+          "tubes": ["macaroni", "ziti", "cannelloni", "manicotti"],
+          "flat": ["lasagna", "pappardelle", "tagliatelle"],
+          "filled": ["ravioli", "tortellini", "cappelletti", "agnolotti"],
+          "tiny": ["orzo", "ditalini", "stelline", "pastina"]
+        },
+        "materials": {
+          "wheat": ["regular", "whole wheat", "semolina"],
+          "alternative": ["rice", "corn", "quinoa", "chickpea", "lentil", "konjac"]
+        },
+        "recipeMatches": {
+          "sauced": ["spaghetti bolognese", "fettuccine alfredo", "penne arrabbiata"],
+          "baked": ["lasagna", "baked ziti", "mac and cheese"],
+          "cold": ["pasta salad", "pasta primavera"],
+          "soup": ["minestrone", "chicken noodle soup"],
+          "leftoverUses": ["pasta frittata", "pasta bake", "pasta salad"]
+        }
+      },
+      "bread": {
+        "types": {
+          "loaves": ["white", "wheat", "multigrain", "sourdough", "rye", "pumpernickel"],
+          "rolls": ["dinner rolls", "hamburger buns", "hot dog buns", "hoagie rolls", "kaiser rolls"],
+          "flatbreads": ["tortillas", "pita", "naan", "lavash", "chapati", "focaccia"],
+          "specialty": ["bagels", "english muffins", "croissants", "brioche", "challah"]
+        },
+        "uses": {
+          "sandwiches": "All sandwich varieties",
+          "toast": "Breakfast and snacks",
+          "breadcrumbs": "Coating and binding",
+          "croutons": "Salads and soups",
+          "stuffing": "Holiday and side dishes"
+        },
+        "recipeMatches": {
+          "direct": ["sandwiches", "french toast", "bread pudding", "stuffing", "bruschetta"],
+          "leftoverUses": ["breadcrumbs", "croutons", "bread pudding", "panzanella"]
+        }
+      },
+      "other": {
+        "quinoa": {
+          "colors": ["white", "red", "black", "tricolor"],
+          "properties": {
+            "protein": "complete protein",
+            "cookingRatio": "1:2 water",
+            "cookTime": "15-20 minutes"
+          },
+          "recipeMatches": {
+            "direct": ["quinoa salad", "quinoa bowl", "quinoa pilaf"],
+            "substitute": "Can replace rice or couscous"
+          }
+        },
+        "oats": {
+          "types": ["rolled", "steel-cut", "instant", "oat flour"],
+          "recipeMatches": {
+            "direct": ["oatmeal", "overnight oats", "granola", "oat cookies"],
+            "component": ["meatloaf binder", "smoothie addition", "crisp topping"]
+          }
+        },
+        "barley": {
+          "types": ["pearl", "hulled", "quick-cooking"],
+          "recipeMatches": {
+            "direct": ["barley soup", "barley pilaf", "barley risotto"],
+            "component": ["soup addition", "salad base"]
+          }
+        },
+        "couscous": {
+          "types": ["moroccan", "israeli/pearl", "lebanese"],
+          "recipeMatches": {
+            "direct": ["couscous salad", "moroccan couscous", "couscous pilaf"],
+            "side": "Quick side dish for any protein"
+          }
+        }
+      }
+    },
+    "produce": {
+      "vegetables": {
+        "nightshades": {
+          "types": ["tomatoes", "peppers", "eggplant", "potatoes"],
+          "tomatoes": {
+            "varieties": ["beefsteak", "roma", "cherry", "grape", "heirloom", "green"],
+            "forms": ["fresh", "canned", "paste", "sauce", "sun-dried"],
+            "recipeMatches": {
+              "direct": ["caprese", "bruschetta", "tomato sauce", "salsa", "tomato soup"],
+              "component": ["pizza", "pasta", "salads", "sandwiches"]
+            }
+          },
+          "peppers": {
+            "sweet": ["bell peppers", "mini peppers", "pimientos"],
+            "hot": ["jalapeño", "serrano", "habanero", "thai chili", "cayenne"],
+            "recipeMatches": {
+              "direct": ["stuffed peppers", "fajitas", "pepper steak", "roasted peppers"],
+              "component": ["stir-fry", "pizza", "salads", "salsas"]
+            }
+          },
+          "potatoes": {
+            "types": ["russet", "yukon gold", "red", "fingerling", "purple", "sweet potatoes"],
+            "preparations": ["mashed", "baked", "fried", "roasted", "boiled"],
+            "recipeMatches": {
+              "direct": ["french fries", "mashed potatoes", "potato salad", "hasselback", "gnocchi"],
+              "leftoverUses": ["potato pancakes", "potato soup", "shepherd's pie topping"]
+            }
+          }
+        },
+        "cruciferous": {
+          "types": ["broccoli", "cauliflower", "cabbage", "brussels sprouts", "kale", "bok choy"],
+          "properties": {
+            "nutrition": "High in vitamins and fiber",
+            "cooking": "Can be eaten raw or cooked"
+          },
+          "recipeMatches": {
+            "broccoli": ["broccoli beef", "broccoli soup", "roasted broccoli"],
+            "cauliflower": ["cauliflower rice", "cauliflower wings", "cauliflower mash"],
+            "cabbage": ["coleslaw", "sauerkraut", "cabbage rolls", "stir-fry"]
+          }
+        },
+        "root": {
+          "types": ["carrots", "beets", "turnips", "parsnips", "radishes", "rutabaga"],
+          "properties": {
+            "storage": "Long shelf life",
+            "cooking": "Roasting brings out sweetness"
+          },
+          "recipeMatches": {
+            "direct": ["roasted root vegetables", "carrot soup", "glazed carrots", "pickled beets"],
+            "component": ["stews", "soups", "salads", "sides"]
+          }
+        },
+        "leafy": {
+          "salad": ["lettuce", "spinach", "arugula", "mixed greens", "romaine", "iceberg"],
+          "cooking": ["spinach", "kale", "collards", "chard", "mustard greens"],
+          "herbs": ["basil", "cilantro", "parsley", "mint", "dill", "oregano"],
+          "recipeMatches": {
+            "direct": ["salads", "sautéed greens", "green smoothies", "pesto"],
+            "component": ["sandwiches", "wraps", "soups", "garnishes"]
+          }
+        },
+        "squash": {
+          "summer": ["zucchini", "yellow squash", "pattypan"],
+          "winter": ["butternut", "acorn", "spaghetti", "pumpkin", "kabocha"],
+          "recipeMatches": {
+            "direct": ["zucchini noodles", "butternut soup", "stuffed squash", "pumpkin pie"],
+            "component": ["roasted vegetables", "soups", "pasta additions"]
+          }
+        },
+        "alliums": {
+          "types": ["onions", "garlic", "shallots", "leeks", "scallions", "chives"],
+          "properties": {
+            "flavor": "Foundation of many dishes",
+            "storage": "Long shelf life when stored properly"
+          },
+          "recipeMatches": {
+            "direct": ["french onion soup", "caramelized onions", "garlic bread", "leek soup"],
+            "component": ["base for almost all savory dishes"]
+          }
+        }
+      },
+      "fruits": {
+        "citrus": {
+          "types": ["oranges", "lemons", "limes", "grapefruit", "tangerines", "clementines"],
+          "uses": {
+            "juice": "Drinks, marinades, dressings",
+            "zest": "Flavor enhancement",
+            "segments": "Salads, desserts"
+          },
+          "recipeMatches": {
+            "direct": ["lemonade", "orange chicken", "key lime pie", "citrus salad"],
+            "component": ["marinades", "dressings", "sauces", "cocktails"]
+          }
+        },
+        "berries": {
+          "types": ["strawberries", "blueberries", "raspberries", "blackberries", "cranberries"],
+          "properties": {
+            "seasonality": "Best fresh in season",
+            "freezing": "Freeze well for later use"
+          },
+          "recipeMatches": {
+            "direct": ["berry pie", "jam", "smoothies", "berry salad"],
+            "component": ["yogurt parfaits", "pancake topping", "desserts"]
+          }
+        },
+        "stone": {
+          "types": ["peaches", "plums", "nectarines", "apricots", "cherries"],
+          "properties": {
+            "seasonality": "Summer fruits",
+            "ripening": "Ripen at room temperature"
+          },
+          "recipeMatches": {
+            "direct": ["peach cobbler", "plum tart", "cherry pie", "grilled peaches"],
+            "component": ["salads", "salsas", "desserts", "preserves"]
+          }
+        },
+        "tropical": {
+          "types": ["pineapple", "mango", "papaya", "kiwi", "passion fruit", "dragon fruit"],
+          "recipeMatches": {
+            "direct": ["pineapple upside-down cake", "mango salsa", "tropical smoothie"],
+            "component": ["fruit salads", "salsas", "marinades", "desserts"]
+          }
+        },
+        "apples": {
+          "varieties": {
+            "eating": ["gala", "fuji", "honeycrisp", "pink lady"],
+            "cooking": ["granny smith", "jonagold", "braeburn"],
+            "all-purpose": ["golden delicious", "jonathan"]
+          },
+          "recipeMatches": {
+            "direct": ["apple pie", "apple sauce", "apple crisp", "baked apples"],
+            "component": ["salads", "stuffing", "pork pairing"]
+          }
+        }
+      }
+    }
+  },
+  "portionManagement": {
+    "standardPortions": {
+      "proteins": {
+        "rawMeat": "4-6 oz per person",
+        "cookedMeat": "3-4 oz per person",
+        "wholeBird": "1-1.5 lbs per person",
+        "fish": "6-8 oz per person",
+        "shellfish": "4-6 oz per person",
+        "eggs": "2-3 per person",
+        "beans": "1/2 cup cooked per person"
+      },
+      "starches": {
+        "rice": "1/2 cup cooked per person",
+        "pasta": "2 oz dry per person",
+        "potatoes": "1 medium or 5 oz per person",
+        "bread": "1-2 slices per person"
+      },
+      "vegetables": {
+        "raw": "1-2 cups per person",
+        "cooked": "1/2-1 cup per person",
+        "salad": "2 cups per person"
+      }
+    },
+    "leftoverCalculations": {
+      "minimumLeftover": "2 oz cooked protein",
+      "usableLeftovers": {
+        "largeProtein": "> 8 oz = main dish for 2",
+        "mediumProtein": "4-8 oz = lunch for 2 or addition to another dish",
+        "smallProtein": "2-4 oz = salad topping or sandwich filling"
+      },
+      "transformation": {
+        "whole to ground": "Chop/shred for different texture",
+        "solid to soup": "Add liquid for volume",
+        "plain to seasoned": "Add sauces/spices for new flavor profile"
+      }
+    }
+  },
+  "substitutionRules": {
+    "principles": {
+      "texture": "Match cooking method and final texture",
+      "flavor": "Consider intensity and complementary flavors",
+      "nutrition": "Maintain protein/nutrient balance",
+      "cooking": "Adjust time/temperature as needed"
+    },
+    "commonSubstitutions": {
+      "beef for": ["bison", "lamb", "pork (ground)", "mushrooms (umami)"],
+      "chicken for": ["turkey", "pork", "rabbit", "tofu (texture)"],
+      "fish for": ["different white fish interchangeable", "chicken (mild dishes)"],
+      "dairy for": ["plant milks", "coconut cream", "cashew cream"],
+      "eggs for": ["flax eggs", "chia eggs", "applesauce (baking)", "tofu (scrambles)"],
+      "gluten for": ["gluten-free flours", "almond flour", "coconut flour", "rice flour"]
+    }
+  },
+  "recipeMatching": {
+    "intelligentMatching": {
+      "exactMatch": "Product name contains recipe ingredient",
+      "categoryMatch": "Product category matches ingredient type",
+      "substitutionMatch": "Product can substitute for ingredient",
+      "preparationMatch": "Product can be prepared to match (e.g., chicken breast → ground chicken)"
+    },
+    "scoringSystem": {
+      "exact": 100,
+      "sameSubcategory": 90,
+      "sameCategory": 80,
+      "validSubstitute": 70,
+      "preparationRequired": 60,
+      "creativeSubstitute": 50
+    }
+  }
+}

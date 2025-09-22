@@ -55,6 +55,14 @@ import VisualItemScanner from '@/components/VisualItemScanner'
 import VoiceAssistant from '@/components/VoiceAssistant'
 import WhisperVoiceAssistant from '@/components/WhisperVoiceAssistant'
 import { canUseVoiceAssistant, getVoiceAssistantType } from '@/lib/features'
+import {
+  suggestExpirationDate,
+  getStorageRecommendation,
+  getStorageOptions,
+  getDefaultShelfLife,
+  type StorageLocation as ShelfLifeLocation
+} from '@/utils/shelfLifeCalculator'
+import { matchFoodTaxonomy, getPortionInfo } from '@/utils/foodTaxonomyMatcher'
 
 interface ProductData {
   name: string
@@ -312,25 +320,52 @@ function QuickAddPageContent() {
 
       console.log('✅ Household ready:', householdId)
 
-      // Find or create product
+      // Find or create product with automatic shelf life calculation
       let productId: string
+      let defaultShelfLifeDays: number | null = null
+
       const { data: existingProduct } = await supabase
         .from('products')
-        .select('id')
+        .select('id, default_shelf_life_days')
         .eq('upc', productData.upc)
         .maybeSingle()
 
       if (existingProduct) {
         productId = existingProduct.id
+        defaultShelfLifeDays = existingProduct.default_shelf_life_days
       } else {
+        // Get storage recommendation and default shelf life
+        const storageType = storageLocation.type?.toLowerCase() as ShelfLifeLocation ||
+                           getStorageRecommendation(productData.name, productData.category)
+
+        // Calculate default shelf life based on our database
+        defaultShelfLifeDays = getDefaultShelfLife(
+          productData.name,
+          productData.category,
+          storageType
+        )
+
+        // Match food taxonomy for better categorization
+        const taxonomyMatch = matchFoodTaxonomy(
+          productData.name,
+          productData.category,
+          productData.brand
+        )
+
+        // Enhanced category from taxonomy if we have a good match
+        const enhancedCategory = taxonomyMatch && taxonomyMatch.confidence > 0.5
+          ? `${taxonomyMatch.category}${taxonomyMatch.subcategory ? `/${taxonomyMatch.subcategory}` : ''}`
+          : productData.category
+
         const { data: newProduct, error: productError } = await supabase
           .from('products')
           .insert([{
             name: productData.name,
             brand: productData.brand || null,
-            category: productData.category || null,
+            category: enhancedCategory || null,
             upc: productData.upc,
             image_url: productData.image_url || null,
+            default_shelf_life_days: defaultShelfLifeDays,
             created_by: user.id
           }])
           .select('id')
@@ -338,6 +373,13 @@ function QuickAddPageContent() {
 
         if (productError) throw productError
         productId = newProduct.id
+
+        console.log('📊 Product created with taxonomy match:', {
+          product: productData.name,
+          taxonomyCategory: enhancedCategory,
+          confidence: taxonomyMatch?.confidence,
+          shelfLife: defaultShelfLifeDays
+        })
       }
 
       // Validate required data before insert
@@ -345,14 +387,42 @@ function QuickAddPageContent() {
         throw new Error('Missing required data for inventory item')
       }
 
+      // Calculate expiration date
+      const purchaseDate = new Date().toISOString().split('T')[0]
+      const storageType = storageLocation.type?.toLowerCase() as ShelfLifeLocation ||
+                         getStorageRecommendation(productData.name, productData.category)
+
+      const expirationDate = defaultShelfLifeDays
+        ? suggestExpirationDate(
+            productData.name,
+            productData.category,
+            purchaseDate,
+            storageType,
+            defaultShelfLifeDays
+          )
+        : null
+
+      // Get portion information from taxonomy
+      const portionInfo = getPortionInfo(productData.name, productData.category)
+
+      // Match food taxonomy for metadata
+      const taxonomyMatch = matchFoodTaxonomy(
+        productData.name,
+        productData.category,
+        productData.brand
+      )
+
       console.log('📦 Creating inventory item:', {
         product_id: productId,
         storage_location_id: storageLocation.id,
         household_id: householdId,
-        quantity: quantity
+        quantity: quantity,
+        expiration_date: expirationDate,
+        portion_size: portionInfo.standardPortion,
+        taxonomy: taxonomyMatch
       })
 
-      // Add inventory item with audit tracking
+      // Add inventory item with enhanced metadata
       const { data: newInventoryItem, error: inventoryError } = await supabase
         .from('inventory_items')
         .insert([{
@@ -361,7 +431,11 @@ function QuickAddPageContent() {
           household_id: householdId,
           quantity: quantity,
           unit: 'pieces',
-          purchase_date: new Date().toISOString().split('T')[0],
+          purchase_date: purchaseDate,
+          expiration_date: expirationDate ? expirationDate.toISOString().split('T')[0] : null,
+          notes: taxonomyMatch && taxonomyMatch.confidence > 0.5
+            ? `Category: ${taxonomyMatch.category}${taxonomyMatch.subcategory ? `/${taxonomyMatch.subcategory}` : ''}`
+            : null,
           created_by: user.id,
           last_modified_by: user.id,
           last_modified_at: new Date().toISOString()
@@ -617,6 +691,42 @@ function QuickAddPageContent() {
                           <Typography variant="body2">{productData.description}</Typography>
                         </Grid>
                       )}
+                      {/* Show smart categorization */}
+                      {(() => {
+                        const taxonomyMatch = matchFoodTaxonomy(productData.name, productData.category, productData.brand)
+                        const storageType = storageLocation?.type?.toLowerCase() as ShelfLifeLocation ||
+                                           getStorageRecommendation(productData.name, productData.category)
+                        const shelfLife = getDefaultShelfLife(productData.name, productData.category, storageType)
+
+                        return (
+                          <>
+                            {taxonomyMatch && taxonomyMatch.confidence > 0.5 && (
+                              <Grid item xs={12}>
+                                <Typography variant="body2" color="textSecondary">Smart Category:</Typography>
+                                <Chip
+                                  label={`${taxonomyMatch.category}${taxonomyMatch.subcategory ? ` > ${taxonomyMatch.subcategory}` : ''}`}
+                                  size="small"
+                                  color="primary"
+                                  sx={{ mr: 1 }}
+                                />
+                                <Typography variant="caption" color="textSecondary">
+                                  ({Math.round(taxonomyMatch.confidence * 100)}% match)
+                                </Typography>
+                              </Grid>
+                            )}
+                            {shelfLife && (
+                              <Grid item xs={12}>
+                                <Typography variant="body2" color="textSecondary">Auto Shelf Life:</Typography>
+                                <Chip
+                                  label={`${shelfLife} days in ${storageLocation?.name || storageType}`}
+                                  size="small"
+                                  color="info"
+                                />
+                              </Grid>
+                            )}
+                          </>
+                        )
+                      })()}
                     </Grid>
                   </AccordionDetails>
                 </Accordion>
