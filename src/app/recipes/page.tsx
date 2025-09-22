@@ -286,7 +286,7 @@ export default function RecipesPage() {
 
   return (
     <FeatureGuard feature="recipes_enabled">
-      <Container maxWidth={isMobile ? "sm" : "lg"} sx={{ mt: 4, px: isMobile ? 2 : 3 }}>
+      <Container maxWidth="lg" sx={{ mt: 4, px: isMobile ? 2 : 3 }}>
         <Box sx={{ mb: 3 }}>
         <Box display="flex" alignItems="center" mb={2}>
           <RecipeIcon sx={{ mr: 2, fontSize: isMobile ? 28 : 32, color: 'primary.main' }} />
@@ -458,8 +458,8 @@ export default function RecipesPage() {
       ) : (
         <Grid container spacing={isMobile ? 2 : 3}>
           {filteredRecipes.map((recipe) => (
-            <Grid item xs={12} sm={6} lg={4} key={recipe.id}>
-              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Grid item xs={12} sm={6} md={4} key={recipe.id}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 400 }}>
                 {recipe.image_url && (
                   <CardMedia
                     component="img"
