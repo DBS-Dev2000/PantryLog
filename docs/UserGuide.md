@@ -1,7 +1,7 @@
 # PantryIQ Complete User Guide
 
 **Last Updated:** January 22, 2025
-**Version:** 2.1 (Intelligent Food Management System)
+**Version:** 2.2 (Comprehensive UPC Data Capture)
 
 ## 🧠 Welcome to PantryIQ
 *Where Modern Efficiency Meets Traditional Preparedness*
@@ -74,6 +74,67 @@ PantryIQ is your complete kitchen intelligence system featuring AI-powered recog
 - **Hierarchical display**: "Kitchen Pantry > Top Shelf"
 - **QR code scanning**: Camera integration for location codes
 - **Auto Shelf Life**: Expiration dates adjust based on selected storage (7 days in pantry vs 30 days in freezer)
+
+### **📊 NEW: Comprehensive UPC Data Capture**
+When scanning barcodes, PantryIQ now captures ALL available product information:
+
+**Package Information:**
+- **Size & Weight**: Product dimensions and weight (e.g., 57 oz, 1.5 lbs)
+- **Package Type**: Box, can, bottle, bag specifications
+- **Serving Information**: Portions and serving sizes
+
+**Product Details:**
+- **Manufacturer**: Company that makes the product
+- **Model/SKU**: Product identification codes
+- **Color & Variants**: Different product versions
+- **Ingredients**: Full ingredient list for allergen tracking
+- **Nutrition Facts**: Complete nutritional information
+
+**Price Intelligence:**
+- **Price History**: Lowest and highest recorded prices
+- **Current Offers**: Available deals from various merchants
+- **Store Comparison**: Price tracking across retailers
+- **Currency**: Support for international products
+
+**External Identifiers:**
+- **EAN**: European Article Number for international products
+- **Amazon ASIN**: Direct Amazon product lookup
+- **eBay ID**: eBay marketplace identification
+- **Additional Barcodes**: Alternative product codes
+
+All this data is automatically saved and viewable when editing products!
+
+---
+
+## ✏️ **Product & Food Item Editing**
+
+### **Enhanced Food Item Editor:**
+When editing a food item from your pantry:
+- **Complete Product Details**: View all captured UPC data in organized sections
+- **Quick Actions**: Mark as used, delete, or change image
+- **Edit Product Button**: Direct access to comprehensive product editor
+- **Location Management**: Move items between storage locations
+- **Cost Tracking**: Track purchase price and calculate unit costs
+- **Audit Trail**: See complete history of changes
+
+### **Comprehensive Product Editor:**
+Access via "Edit Product" button on food items:
+- **Package Information**: Edit size, weight, dimensions
+- **Manufacturing Details**: Update manufacturer, model, color
+- **Price Tracking**: Maintain lowest/highest recorded prices
+- **External IDs**: Add Amazon ASIN, eBay ID, EAN codes
+- **Ingredients List**: Full ingredient text for allergen tracking
+- **Nutrition Facts**: Complete nutritional information
+- **Product Images**: Upload or link product photos
+- **Shelf Life Defaults**: Set standard expiration periods
+
+### **Navigation Flow:**
+1. **My Pantry** → Select item → **Edit Food Item**
+2. From Edit Food Item → **Edit Product** button
+3. Make comprehensive product edits → Save
+4. Navigate back to food item or pantry view
+
+All changes are saved to the database and available across your household!
 
 ---
 
@@ -362,6 +423,8 @@ System prevents common false matches:
 ### **Troubleshooting:**
 - **AI Recognition Issues**: Use thumbs up/down to improve accuracy
 - **Barcode Scanning Problems**: Try better lighting or manual entry
+- **Missing UPC Data**: Not all products have complete data; edit manually if needed
+- **Product Details Not Showing**: Rescan barcode to fetch latest data
 - **Household Sharing**: Check invite codes and member permissions
 - **Feature Access**: Verify subscription tier for advanced features
 
