@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Container,
   Typography,
@@ -128,6 +129,12 @@ export default function AdminPage() {
     predictive_shopping: `Analyze consumption patterns and current inventory to generate a predictive shopping list. Consider usage frequency, expiration dates, and seasonal preferences.`
   })
   const [editingPrompts, setEditingPrompts] = useState(false)
+
+  // Ingredient Rules statistics
+  const [activeRules, setActiveRules] = useState(0)
+  const [pendingSuggestions, setPendingSuggestions] = useState(0)
+  const [userFeedback, setUserFeedback] = useState(0)
+  const [matchAccuracy, setMatchAccuracy] = useState(0)
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -1057,6 +1064,85 @@ export default function AdminPage() {
                   </Box>
                 </Grid>
               </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Ingredient Rules Management */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    🧠 Ingredient Matching Rules
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Manage ingredient equivalencies, exclusions, and ML feedback for intelligent recipe matching
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<EditIcon />}
+                  onClick={() => router.push('/admin/ingredient-rules')}
+                >
+                  Manage Rules
+                </Button>
+              </Box>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={3}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="body2" color="textSecondary">
+                        Active Rules
+                      </Typography>
+                      <Typography variant="h4" color="primary">
+                        {activeRules || 0}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="body2" color="textSecondary">
+                        Pending Suggestions
+                      </Typography>
+                      <Typography variant="h4" color="warning.main">
+                        {pendingSuggestions || 0}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="body2" color="textSecondary">
+                        User Feedback
+                      </Typography>
+                      <Typography variant="h4" color="info.main">
+                        {userFeedback || 0}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="body2" color="textSecondary">
+                        Match Accuracy
+                      </Typography>
+                      <Typography variant="h4" color="success.main">
+                        {matchAccuracy || 0}%
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+                💡 The ingredient rules system learns from user feedback to improve recipe matching accuracy over time.
+              </Typography>
             </CardContent>
           </Card>
         </>

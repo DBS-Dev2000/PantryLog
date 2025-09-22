@@ -144,11 +144,11 @@ export default function IngredientRulesAdmin() {
     if (session?.user) {
       setUser(session.user)
 
-      // Check if user is an admin
+      // Check if user is a system admin
       const { data: adminUser } = await supabase
-        .from('admin_users')
+        .from('system_admins')
         .select('*')
-        .eq('id', session.user.id)
+        .eq('user_id', session.user.id)
         .single()
 
       if (adminUser) {
