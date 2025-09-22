@@ -1,0 +1,414 @@
+{
+  "version": "1.0.0",
+  "category": "Medical and Therapeutic Dietary Protocols",
+  "protocols": {
+    "elimination": {
+      "name": "Elimination Diet",
+      "purpose": "Identify food sensitivities and intolerances",
+      "phases": {
+        "elimination": {
+          "duration": "3-6 weeks",
+          "remove": [
+            "gluten",
+            "dairy",
+            "eggs",
+            "soy",
+            "corn",
+            "peanuts",
+            "tree nuts",
+            "shellfish",
+            "nightshades",
+            "citrus",
+            "alcohol",
+            "caffeine",
+            "processed foods",
+            "added sugars"
+          ],
+          "allowed": [
+            "most vegetables (non-nightshade)",
+            "most fruits (non-citrus)",
+            "lean meats",
+            "fish (non-shellfish)",
+            "rice",
+            "sweet potatoes",
+            "herbs and spices"
+          ]
+        },
+        "reintroduction": {
+          "method": "One food every 3-4 days",
+          "monitor": "Symptoms for 72 hours",
+          "order": "Least to most likely triggers",
+          "documentation": "Detailed symptom journal"
+        },
+        "maintenance": {
+          "avoid": "Identified trigger foods",
+          "rotate": "Prevent new sensitivities",
+          "reassess": "Periodically retry foods"
+        }
+      }
+    },
+    "lowFodmap": {
+      "name": "Low FODMAP Protocol",
+      "purpose": "Manage IBS and digestive symptoms",
+      "phases": {
+        "restriction": {
+          "duration": "2-6 weeks",
+          "strict": "All high FODMAP foods eliminated",
+          "lowFodmap": {
+            "proteins": ["meat", "fish", "eggs", "firm tofu"],
+            "grains": ["rice", "quinoa", "oats", "sourdough spelt"],
+            "vegetables": ["carrots", "cucumber", "lettuce", "tomatoes", "spinach", "zucchini"],
+            "fruits": ["strawberries", "oranges", "grapes", "cantaloupe"],
+            "dairy": ["lactose-free options", "hard cheeses"],
+            "nuts": ["almonds (limited)", "walnuts", "peanuts"]
+          }
+        },
+        "reintroduction": {
+          "systematic": "Test each FODMAP group",
+          "oligosaccharides": {
+            "fructans": ["wheat", "onions", "garlic"],
+            "gos": ["legumes", "cashews"]
+          },
+          "disaccharides": ["milk", "yogurt", "soft cheese"],
+          "monosaccharides": ["apples", "pears", "honey"],
+          "polyols": {
+            "sorbitol": ["stone fruits", "avocados"],
+            "mannitol": ["mushrooms", "cauliflower"]
+          }
+        },
+        "personalization": {
+          "tolerance": "Individual thresholds vary",
+          "combinations": "Some foods tolerated alone but not together"
+        }
+      }
+    },
+    "dash": {
+      "name": "DASH Diet",
+      "purpose": "Lower blood pressure and improve heart health",
+      "dailyServings": {
+        "grains": "6-8 servings",
+        "vegetables": "4-5 servings",
+        "fruits": "4-5 servings",
+        "dairy": "2-3 servings (low-fat)",
+        "leanProtein": "6 or fewer servings",
+        "nutsSeeds": "4-5 servings/week",
+        "fatsOils": "2-3 servings"
+      },
+      "nutrients": {
+        "sodium": {
+          "standard": "2300mg/day",
+          "lower": "1500mg/day"
+        },
+        "potassium": "4700mg/day",
+        "calcium": "1250mg/day",
+        "magnesium": "500mg/day",
+        "fiber": "30g/day"
+      },
+      "emphasize": [
+        "whole grains",
+        "lean proteins",
+        "low-fat dairy",
+        "fruits and vegetables",
+        "nuts and seeds",
+        "legumes"
+      ],
+      "limit": [
+        "saturated fat",
+        "trans fat",
+        "cholesterol",
+        "sodium",
+        "sweets",
+        "sugar-sweetened beverages"
+      ]
+    },
+    "tlc": {
+      "name": "Therapeutic Lifestyle Changes",
+      "purpose": "Lower cholesterol levels",
+      "targets": {
+        "saturatedFat": "<7% of calories",
+        "cholesterol": "<200mg/day",
+        "totalFat": "25-35% of calories",
+        "sodium": "<2300mg/day",
+        "fiber": "20-30g/day",
+        "plantSterols": "2g/day optional"
+      },
+      "foods": {
+        "choose": [
+          "lean meats",
+          "skinless poultry",
+          "fish",
+          "low-fat dairy",
+          "fruits",
+          "vegetables",
+          "whole grains",
+          "legumes"
+        ],
+        "limit": [
+          "fatty meats",
+          "whole milk dairy",
+          "egg yolks",
+          "fried foods",
+          "processed foods"
+        ]
+      }
+    },
+    "renalDiet": {
+      "name": "Renal Diet",
+      "purpose": "Manage chronic kidney disease",
+      "stageSpecific": {
+        "early": {
+          "protein": "0.8g/kg",
+          "focus": "Slow progression"
+        },
+        "moderate": {
+          "protein": "0.6-0.8g/kg",
+          "restrict": ["phosphorus", "potassium", "sodium"]
+        },
+        "advanced": {
+          "protein": "0.6g/kg",
+          "strict": "All minerals restricted"
+        },
+        "dialysis": {
+          "protein": "1.2-1.3g/kg",
+          "fluid": "Restricted based on output"
+        }
+      },
+      "restrictions": {
+        "potassium": {
+          "limit": "2000-3000mg if elevated",
+          "leaching": "Soak and boil vegetables"
+        },
+        "phosphorus": {
+          "limit": "800-1000mg",
+          "binders": "With meals as prescribed"
+        },
+        "sodium": {
+          "limit": "2000mg",
+          "avoid": "Processed foods"
+        },
+        "fluid": {
+          "calculation": "Output + 500-750ml",
+          "includes": "All liquids and foods that melt"
+        }
+      }
+    },
+    "carbCounting": {
+      "name": "Carbohydrate Counting",
+      "purpose": "Diabetes management",
+      "methods": {
+        "basic": {
+          "serving": "15g carbs = 1 serving",
+          "meals": "3-4 servings",
+          "snacks": "1-2 servings"
+        },
+        "advanced": {
+          "ratio": "Insulin to carb ratio",
+          "factor": "Correction factor",
+          "precision": "Exact gram counting"
+        }
+      },
+      "tools": {
+        "labels": "Read nutrition facts",
+        "exchanges": "Use exchange lists",
+        "apps": "Carb counting applications",
+        "scale": "Weigh portions"
+      }
+    },
+    "pureeDiet": {
+      "name": "Pureed/Mechanical Soft Diet",
+      "purpose": "Dysphagia or chewing difficulties",
+      "textures": {
+        "puree": {
+          "consistency": "Smooth, no lumps",
+          "examples": ["smooth soups", "pureed meats", "smooth yogurt"]
+        },
+        "mechanicalSoft": {
+          "consistency": "Soft, moist, easy to chew",
+          "examples": ["ground meats", "soft fruits", "cooked vegetables"]
+        },
+        "advanced": {
+          "consistency": "Soft solids with no tough textures",
+          "avoid": ["nuts", "seeds", "tough meats"]
+        }
+      },
+      "liquids": {
+        "thin": "Water, juice, coffee",
+        "nectar": "Tomato juice consistency",
+        "honey": "Honey consistency",
+        "pudding": "Pudding consistency"
+      }
+    },
+    "neutropenic": {
+      "name": "Neutropenic Diet",
+      "purpose": "Reduce infection risk during immunosuppression",
+      "avoid": [
+        "raw meats",
+        "raw eggs",
+        "unpasteurized dairy",
+        "raw honey",
+        "raw sprouts",
+        "unwashed produce",
+        "deli meats",
+        "soft cheeses",
+        "raw nuts",
+        "tap water (if advised)"
+      ],
+      "foodSafety": {
+        "temperature": "Cook to safe internal temperatures",
+        "storage": "Proper refrigeration",
+        "hygiene": "Strict hand washing",
+        "freshness": "No leftovers >24 hours"
+      }
+    },
+    "migraine": {
+      "name": "Migraine Prevention Diet",
+      "purpose": "Reduce migraine frequency and severity",
+      "commonTriggers": {
+        "tyramine": ["aged cheese", "cured meats", "fermented foods"],
+        "nitrites": ["processed meats", "hot dogs"],
+        "msg": ["Chinese food", "seasoning blends"],
+        "artificial": ["aspartame", "sucralose"],
+        "alcohol": ["red wine", "beer"],
+        "caffeine": ["withdrawal or excess"]
+      },
+      "approach": {
+        "elimination": "Remove all potential triggers",
+        "reintroduction": "Test individually",
+        "diary": "Track food and symptoms"
+      }
+    },
+    "gastroparesis": {
+      "name": "Gastroparesis Diet",
+      "purpose": "Manage delayed gastric emptying",
+      "principles": {
+        "small": "4-6 small meals",
+        "lowFat": "Fat delays emptying",
+        "lowFiber": "Reduces bezoar risk",
+        "liquid": "Liquids empty faster"
+      },
+      "avoid": [
+        "high-fat foods",
+        "high-fiber foods",
+        "tough meats",
+        "raw vegetables",
+        "carbonated beverages"
+      ],
+      "emphasize": [
+        "liquid nutrition",
+        "pureed foods",
+        "low-fat proteins",
+        "cooked vegetables",
+        "white bread/pasta"
+      ]
+    },
+    "dysphagiaLevels": {
+      "name": "IDDSI Framework",
+      "purpose": "Standardized texture modification",
+      "levels": {
+        "0": "Thin liquids",
+        "1": "Slightly thick liquids",
+        "2": "Mildly thick liquids",
+        "3": "Liquidised/Moderately thick",
+        "4": "Pureed/Extremely thick",
+        "5": "Minced and moist",
+        "6": "Soft and bite-sized",
+        "7": "Regular/Easy to chew"
+      }
+    },
+    "bariatric": {
+      "name": "Post-Bariatric Surgery",
+      "purpose": "Support healing and weight loss after surgery",
+      "stages": {
+        "stage1": {
+          "duration": "Days 1-2",
+          "diet": "Clear liquids only"
+        },
+        "stage2": {
+          "duration": "Weeks 1-2",
+          "diet": "Full liquids, protein shakes"
+        },
+        "stage3": {
+          "duration": "Weeks 3-4",
+          "diet": "Pureed foods"
+        },
+        "stage4": {
+          "duration": "Weeks 5-8",
+          "diet": "Soft foods"
+        },
+        "stage5": {
+          "duration": "Week 9+",
+          "diet": "Regular texture, small portions"
+        }
+      },
+      "lifelong": {
+        "protein": "60-80g daily priority",
+        "portions": "2-4 oz per meal",
+        "liquids": "No drinking with meals",
+        "supplements": "Required vitamins",
+        "avoid": ["sugar", "high fat", "tough textures"]
+      }
+    },
+    "elemental": {
+      "name": "Elemental Diet",
+      "purpose": "Complete bowel rest",
+      "composition": {
+        "proteins": "Amino acids",
+        "carbs": "Simple sugars",
+        "fats": "MCT oil or minimal",
+        "vitamins": "Complete supplementation"
+      },
+      "indications": [
+        "Crohn's disease",
+        "SIBO",
+        "Eosinophilic esophagitis",
+        "Severe malabsorption"
+      ],
+      "duration": "2-4 weeks typically",
+      "transition": "Gradual food reintroduction"
+    },
+    "specificProtocols": {
+      "autoimmune": {
+        "aip": {
+          "eliminate": "Inflammatory foods",
+          "duration": "30-90 days",
+          "reintroduce": "Systematic testing"
+        },
+        "wahls": {
+          "levels": ["Wahls Diet", "Wahls Paleo", "Wahls Paleo Plus"],
+          "focus": "Mitochondrial support"
+        }
+      },
+      "metabolic": {
+        "protocols": ["Fasting mimicking", "Protein sparing modified fast"],
+        "supervision": "Medical monitoring required"
+      },
+      "cancer": {
+        "protocols": ["Neutropenic", "Anti-nausea", "High calorie/protein"],
+        "individualized": "Based on treatment and symptoms"
+      }
+    }
+  },
+  "implementation": {
+    "medical": {
+      "consultation": "Healthcare provider approval",
+      "monitoring": "Regular lab work",
+      "adjustment": "Based on response"
+    },
+    "practical": {
+      "planning": "Meal prep essential",
+      "education": "Understand rationale",
+      "support": "Family involvement"
+    },
+    "compliance": {
+      "barriers": "Identify challenges",
+      "solutions": "Problem-solving approach",
+      "flexibility": "Modifications as needed"
+    }
+  },
+  "contraindications": {
+    "pregnancy": "Many therapeutic diets not appropriate",
+    "children": "Growth needs consideration",
+    "elderly": "Risk of malnutrition",
+    "comorbidities": "May conflict with other conditions"
+  }
+}

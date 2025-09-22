@@ -1,0 +1,749 @@
+{
+  "version": "1.0.0",
+  "category": "Lifestyle and Philosophical Dietary Choices",
+  "diets": {
+    "vegetarian": {
+      "name": "Vegetarian",
+      "description": "Excludes meat, poultry, and seafood",
+      "variations": {
+        "lactoOvo": "Includes dairy and eggs",
+        "lacto": "Includes dairy, excludes eggs",
+        "ovo": "Includes eggs, excludes dairy"
+      },
+      "excluded": [
+        "beef",
+        "pork",
+        "poultry",
+        "fish",
+        "shellfish",
+        "gelatin",
+        "animal rennet",
+        "lard",
+        "tallow",
+        "anchovies (in sauces)",
+        "meat broths/stocks",
+        "animal-based enzymes"
+      ],
+      "included": [
+        "fruits",
+        "vegetables",
+        "grains",
+        "legumes",
+        "nuts and seeds",
+        "dairy (if lacto)",
+        "eggs (if ovo)",
+        "honey",
+        "plant oils"
+      ],
+      "nutritionalConsiderations": [
+        "protein combining",
+        "vitamin B12 (if vegan tendency)",
+        "iron absorption",
+        "omega-3 fatty acids",
+        "vitamin D",
+        "calcium (if no dairy)",
+        "zinc"
+      ],
+      "hiddenAnimalProducts": [
+        "worcestershire sauce",
+        "caesar dressing",
+        "marshmallows",
+        "gummy candies",
+        "some wines/beers",
+        "parmesan cheese (traditional)",
+        "thai fish sauce",
+        "some pasta (may contain eggs)"
+      ]
+    },
+    "vegan": {
+      "name": "Vegan",
+      "description": "Excludes all animal products",
+      "philosophy": "Ethical, environmental, and health motivations",
+      "excluded": [
+        "all meat",
+        "poultry",
+        "fish",
+        "dairy",
+        "eggs",
+        "honey",
+        "gelatin",
+        "lanolin",
+        "carmine",
+        "casein",
+        "whey",
+        "lactose",
+        "shellac",
+        "isinglass",
+        "vitamin D3 (animal-derived)",
+        "omega-3 (fish-derived)",
+        "bee pollen",
+        "royal jelly"
+      ],
+      "included": [
+        "fruits",
+        "vegetables",
+        "grains",
+        "legumes",
+        "nuts and seeds",
+        "plant-based milks",
+        "nutritional yeast",
+        "plant oils",
+        "maple syrup",
+        "agave nectar"
+      ],
+      "essentialNutrients": {
+        "b12": {
+          "requirement": "Must supplement or fortified foods",
+          "sources": ["fortified plant milks", "nutritional yeast", "supplements"]
+        },
+        "vitaminD": {
+          "sources": ["fortified foods", "D2 supplements", "sun exposure"]
+        },
+        "omega3": {
+          "sources": ["flax seeds", "chia seeds", "walnuts", "algae supplements"]
+        },
+        "iron": {
+          "sources": ["legumes", "spinach", "fortified cereals"],
+          "tip": "Combine with vitamin C for absorption"
+        },
+        "calcium": {
+          "sources": ["fortified plant milks", "tofu", "leafy greens", "tahini"]
+        },
+        "protein": {
+          "sources": ["legumes", "nuts", "seeds", "whole grains", "soy products"]
+        },
+        "zinc": {
+          "sources": ["legumes", "nuts", "seeds", "whole grains"]
+        },
+        "iodine": {
+          "sources": ["iodized salt", "seaweed (careful with amount)"]
+        }
+      },
+      "substitutions": {
+        "milk": "almond, soy, oat, coconut, rice milk",
+        "butter": "vegan margarine, coconut oil",
+        "eggs": "flax eggs, chia eggs, commercial replacers",
+        "cheese": "nutritional yeast, cashew cheese, commercial vegan cheese",
+        "meat": "tofu, tempeh, seitan, legumes, mushrooms",
+        "honey": "maple syrup, agave, date syrup"
+      }
+    },
+    "plantBased": {
+      "name": "Plant-Based/Whole Food Plant-Based",
+      "description": "Focuses on whole plant foods, minimizes processed",
+      "emphasis": [
+        "whole grains",
+        "legumes",
+        "fruits",
+        "vegetables",
+        "nuts and seeds"
+      ],
+      "limited": [
+        "refined sugars",
+        "white flour",
+        "processed oils",
+        "processed foods"
+      ],
+      "flexible": "May include small amounts of animal products",
+      "benefits": [
+        "heart health",
+        "weight management",
+        "diabetes prevention",
+        "cancer risk reduction"
+      ]
+    },
+    "pescatarian": {
+      "name": "Pescatarian",
+      "description": "Vegetarian plus fish and seafood",
+      "excluded": [
+        "beef",
+        "pork",
+        "poultry",
+        "game meats"
+      ],
+      "included": [
+        "fish",
+        "shellfish",
+        "plant foods",
+        "dairy (usually)",
+        "eggs (usually)"
+      ],
+      "benefits": [
+        "omega-3 fatty acids",
+        "lean protein",
+        "vitamin B12",
+        "vitamin D"
+      ],
+      "sustainability": "Consider sustainable seafood choices"
+    },
+    "flexitarian": {
+      "name": "Flexitarian/Semi-Vegetarian",
+      "description": "Primarily plant-based with occasional meat",
+      "approach": "Flexible, no strict rules",
+      "typical pattern": [
+        "meatless mondays",
+        "vegetarian before 6pm",
+        "meat only on weekends",
+        "meat as condiment not main"
+      ],
+      "benefits": [
+        "health improvements",
+        "environmental impact",
+        "easier social situations",
+        "gradual transition option"
+      ]
+    },
+    "mediterranean": {
+      "name": "Mediterranean Diet",
+      "description": "Traditional eating pattern of Mediterranean regions",
+      "pyramid": {
+        "daily": [
+          "fruits and vegetables",
+          "whole grains",
+          "olive oil",
+          "nuts and seeds",
+          "herbs and spices"
+        ],
+        "weekly": [
+          "fish and seafood (2-3x)",
+          "poultry (2-3x)",
+          "eggs (up to 4)",
+          "dairy (moderate)"
+        ],
+        "monthly": [
+          "red meat (limited)"
+        ]
+      },
+      "keyComponents": [
+        "olive oil as primary fat",
+        "red wine in moderation",
+        "fresh, seasonal foods",
+        "minimal processed foods",
+        "social meals"
+      ],
+      "benefits": [
+        "heart health",
+        "brain health",
+        "reduced inflammation",
+        "longevity"
+      ]
+    },
+    "paleo": {
+      "name": "Paleolithic Diet",
+      "description": "Based on presumed ancient human diet",
+      "included": [
+        "grass-fed meats",
+        "wild-caught fish",
+        "eggs",
+        "vegetables",
+        "fruits",
+        "nuts and seeds",
+        "healthy oils (olive, coconut, avocado)"
+      ],
+      "excluded": [
+        "grains",
+        "legumes",
+        "dairy",
+        "refined sugar",
+        "processed foods",
+        "potatoes (debated)",
+        "refined vegetable oils",
+        "artificial sweeteners"
+      ],
+      "philosophy": "Eat foods available to paleolithic humans",
+      "variations": {
+        "primal": "Includes some dairy",
+        "autoimmune": "More restrictive for autoimmune conditions"
+      }
+    },
+    "keto": {
+      "name": "Ketogenic Diet",
+      "description": "Very low carb, high fat diet",
+      "macros": {
+        "fat": "70-80%",
+        "protein": "15-25%",
+        "carbs": "5-10% (<50g daily)"
+      },
+      "included": [
+        "meat",
+        "fatty fish",
+        "eggs",
+        "butter and cream",
+        "cheese",
+        "nuts and seeds",
+        "healthy oils",
+        "low-carb vegetables",
+        "avocados"
+      ],
+      "excluded": [
+        "grains",
+        "sugar",
+        "most fruits",
+        "potatoes",
+        "legumes",
+        "root vegetables",
+        "beer",
+        "low-fat products"
+      ],
+      "goals": [
+        "ketosis state",
+        "fat adaptation",
+        "blood sugar control",
+        "weight loss"
+      ],
+      "types": {
+        "standard": "SKD - standard ratios",
+        "cyclical": "CKD - carb refeed days",
+        "targeted": "TKD - carbs around workouts",
+        "highProtein": "More protein, less fat"
+      },
+      "considerations": [
+        "keto flu initially",
+        "electrolyte balance crucial",
+        "may need supplements",
+        "medical supervision for some conditions"
+      ]
+    },
+    "lowCarb": {
+      "name": "Low Carbohydrate",
+      "description": "Reduced carbohydrate intake",
+      "variations": {
+        "moderate": "100-150g carbs/day",
+        "low": "50-100g carbs/day",
+        "veryLow": "<50g carbs/day"
+      },
+      "included": [
+        "proteins",
+        "healthy fats",
+        "non-starchy vegetables",
+        "some fruits",
+        "nuts and seeds",
+        "dairy"
+      ],
+      "limited": [
+        "bread",
+        "pasta",
+        "rice",
+        "sugars",
+        "starchy vegetables",
+        "most fruits"
+      ]
+    },
+    "whole30": {
+      "name": "Whole30",
+      "description": "30-day elimination diet",
+      "duration": "30 days strict, then reintroduction",
+      "excluded": [
+        "sugar (all forms)",
+        "alcohol",
+        "grains",
+        "legumes",
+        "dairy",
+        "carrageenan",
+        "msg",
+        "sulfites",
+        "baked goods",
+        "junk food"
+      ],
+      "included": [
+        "meat",
+        "seafood",
+        "eggs",
+        "vegetables",
+        "fruits",
+        "natural fats",
+        "herbs and spices",
+        "vinegar"
+      ],
+      "rules": [
+        "no weighing or measuring",
+        "no recreating baked goods",
+        "no snacking mindlessly",
+        "read all labels"
+      ],
+      "purpose": "Reset relationship with food, identify sensitivities"
+    },
+    "rawFood": {
+      "name": "Raw Food Diet",
+      "description": "Uncooked and unprocessed foods",
+      "threshold": "75-100% raw foods",
+      "maxTemperature": "104-118°F (40-48°C)",
+      "included": [
+        "raw fruits",
+        "raw vegetables",
+        "nuts and seeds (raw)",
+        "sprouted grains",
+        "dried fruits",
+        "nut milks",
+        "nut butters",
+        "cold-pressed oils",
+        "fermented foods",
+        "seaweed",
+        "sprouts"
+      ],
+      "excluded": [
+        "cooked foods",
+        "pasteurized products",
+        "refined foods",
+        "table salt",
+        "refined sugars",
+        "coffee (usually)",
+        "alcohol"
+      ],
+      "techniques": [
+        "soaking",
+        "sprouting",
+        "dehydrating",
+        "blending",
+        "juicing",
+        "fermenting"
+      ]
+    },
+    "macrobiotic": {
+      "name": "Macrobiotic Diet",
+      "description": "Japanese-inspired holistic approach",
+      "philosophy": "Balance of yin and yang foods",
+      "composition": {
+        "wholeGrains": "50-60%",
+        "vegetables": "25-30%",
+        "legumes": "5-10%",
+        "seaVegetables": "5%",
+        "other": "5-10%"
+      },
+      "principles": [
+        "local and seasonal",
+        "minimal processing",
+        "chew thoroughly",
+        "eat in moderation",
+        "express gratitude"
+      ],
+      "avoided": [
+        "meat",
+        "dairy",
+        "refined sugars",
+        "tropical fruits",
+        "nightshades (often)"
+      ]
+    },
+    "intermittentFasting": {
+      "name": "Intermittent Fasting",
+      "description": "Timed eating patterns",
+      "methods": {
+        "16:8": {
+          "description": "16 hour fast, 8 hour eating window",
+          "example": "Eat 12pm-8pm, fast 8pm-12pm"
+        },
+        "5:2": {
+          "description": "Normal eating 5 days, restricted 2 days",
+          "calories": "500-600 calories on fasting days"
+        },
+        "eatStopEat": {
+          "description": "24-hour fasts 1-2 times per week"
+        },
+        "alternateDay": {
+          "description": "Alternate between fasting and eating days"
+        },
+        "warriorDiet": {
+          "description": "20 hour fast, 4 hour eating window"
+        },
+        "omad": {
+          "description": "One meal a day"
+        }
+      },
+      "during fast": [
+        "water",
+        "black coffee",
+        "plain tea",
+        "zero-calorie beverages"
+      ],
+      "benefits": [
+        "weight loss",
+        "insulin sensitivity",
+        "cellular repair",
+        "mental clarity"
+      ]
+    },
+    "carnivore": {
+      "name": "Carnivore Diet",
+      "description": "Animal products only",
+      "included": [
+        "beef",
+        "pork",
+        "lamb",
+        "poultry",
+        "fish",
+        "eggs",
+        "some dairy",
+        "organ meats",
+        "bone broth",
+        "animal fats"
+      ],
+      "excluded": [
+        "all plants",
+        "fruits",
+        "vegetables",
+        "grains",
+        "legumes",
+        "nuts and seeds",
+        "plant oils"
+      ],
+      "variations": {
+        "strict": "Beef, salt, water only",
+        "standard": "All animal products",
+        "animalBased": "Mostly animal with some plants"
+      },
+      "considerations": [
+        "electrolyte balance",
+        "adaptation period",
+        "organ meats for nutrients",
+        "controversial approach"
+      ]
+    },
+    "antiInflammatory": {
+      "name": "Anti-Inflammatory Diet",
+      "description": "Reduces chronic inflammation",
+      "emphasize": [
+        "fatty fish",
+        "colorful vegetables",
+        "berries",
+        "nuts and seeds",
+        "olive oil",
+        "turmeric",
+        "ginger",
+        "green tea",
+        "dark chocolate",
+        "cherries"
+      ],
+      "avoid": [
+        "refined sugars",
+        "processed foods",
+        "trans fats",
+        "excess omega-6 oils",
+        "refined grains",
+        "excessive alcohol",
+        "processed meats"
+      ],
+      "principles": [
+        "whole foods",
+        "variety of colors",
+        "omega-3 rich foods",
+        "antioxidants",
+        "spices and herbs"
+      ]
+    },
+    "gaps": {
+      "name": "GAPS Diet",
+      "description": "Gut and Psychology Syndrome diet",
+      "phases": {
+        "introduction": {
+          "stages": 6,
+          "starts": "bone broth, boiled meats",
+          "progresses": "gradually adds foods"
+        },
+        "full": {
+          "included": [
+            "meat stocks and broths",
+            "meats",
+            "fish",
+            "eggs",
+            "fermented foods",
+            "vegetables (non-starchy)"
+          ],
+          "excluded": [
+            "grains",
+            "processed foods",
+            "refined sugars",
+            "starchy vegetables initially"
+          ]
+        }
+      },
+      "focus": "Healing gut lining, improving digestion"
+    },
+    "scd": {
+      "name": "Specific Carbohydrate Diet",
+      "description": "For digestive disorders",
+      "principle": "Only monosaccharides allowed",
+      "allowed": [
+        "meat",
+        "fish",
+        "eggs",
+        "some cheeses",
+        "homemade yogurt",
+        "fruits",
+        "nuts",
+        "non-starchy vegetables",
+        "honey"
+      ],
+      "notAllowed": [
+        "grains",
+        "sugar",
+        "most dairy",
+        "starchy vegetables",
+        "processed foods",
+        "mucilaginous foods"
+      ],
+      "conditions": [
+        "Crohn's disease",
+        "ulcerative colitis",
+        "IBS",
+        "celiac disease"
+      ]
+    },
+    "ayurvedic": {
+      "name": "Ayurvedic Diet",
+      "description": "Based on Indian traditional medicine",
+      "doshas": {
+        "vata": {
+          "qualities": "dry, light, cold",
+          "balancing": "warm, moist, grounding foods",
+          "avoid": "raw foods, cold foods, dry foods"
+        },
+        "pitta": {
+          "qualities": "hot, sharp, oily",
+          "balancing": "cool, sweet, bitter foods",
+          "avoid": "spicy, sour, salty foods"
+        },
+        "kapha": {
+          "qualities": "heavy, slow, cold",
+          "balancing": "light, warm, spicy foods",
+          "avoid": "heavy, oily, cold foods"
+        }
+      },
+      "principles": [
+        "eat according to dosha",
+        "seasonal eating",
+        "proper food combining",
+        "mindful eating",
+        "largest meal at lunch"
+      ]
+    },
+    "bloodType": {
+      "name": "Blood Type Diet",
+      "description": "Eating based on blood type",
+      "types": {
+        "O": {
+          "description": "Hunter",
+          "emphasize": "high protein, meat, vegetables",
+          "avoid": "grains, legumes, dairy"
+        },
+        "A": {
+          "description": "Cultivator",
+          "emphasize": "vegetarian, grains, legumes",
+          "avoid": "meat, dairy"
+        },
+        "B": {
+          "description": "Nomad",
+          "emphasize": "varied diet, dairy, meat",
+          "avoid": "corn, wheat, tomatoes"
+        },
+        "AB": {
+          "description": "Enigma",
+          "emphasize": "mixed diet, seafood, dairy",
+          "avoid": "red meat, kidney beans"
+        }
+      },
+      "scientificSupport": "Limited evidence"
+    },
+    "volumetrics": {
+      "name": "Volumetrics",
+      "description": "Focus on food density",
+      "principle": "Eat larger volumes of low-density foods",
+      "categories": {
+        "veryLowDensity": {
+          "examples": ["non-starchy vegetables", "broth-based soups", "fruits"],
+          "approach": "eat freely"
+        },
+        "lowDensity": {
+          "examples": ["grains", "lean proteins", "legumes"],
+          "approach": "reasonable portions"
+        },
+        "mediumDensity": {
+          "examples": ["bread", "desserts", "cheese"],
+          "approach": "moderate portions"
+        },
+        "highDensity": {
+          "examples": ["nuts", "oils", "chocolate"],
+          "approach": "small portions"
+        }
+      }
+    },
+    "nordic": {
+      "name": "Nordic Diet",
+      "description": "Traditional Scandinavian eating pattern",
+      "emphasize": [
+        "fatty fish (salmon, herring, mackerel)",
+        "whole grains (rye, barley, oats)",
+        "root vegetables",
+        "berries",
+        "canola oil",
+        "low-fat dairy",
+        "game meats"
+      ],
+      "principles": [
+        "local and seasonal",
+        "wild foods",
+        "minimal processing",
+        "sustainable choices"
+      ],
+      "limited": [
+        "red meat",
+        "processed foods",
+        "added sugars",
+        "excessive salt"
+      ]
+    },
+    "mindfulEating": {
+      "name": "Mindful Eating",
+      "description": "Conscious eating practice",
+      "principles": [
+        "eat without distractions",
+        "chew thoroughly",
+        "notice hunger and fullness cues",
+        "appreciate food",
+        "eat slowly",
+        "engage all senses"
+      ],
+      "noFoodRules": "Focus on how rather than what",
+      "benefits": [
+        "improved digestion",
+        "better portion control",
+        "reduced emotional eating",
+        "increased satisfaction"
+      ]
+    },
+    "intuitive": {
+      "name": "Intuitive Eating",
+      "description": "Non-diet approach to eating",
+      "principles": [
+        "reject diet mentality",
+        "honor hunger",
+        "make peace with food",
+        "challenge food police",
+        "feel fullness",
+        "discover satisfaction",
+        "cope with emotions without food",
+        "respect your body",
+        "joyful movement",
+        "gentle nutrition"
+      ],
+      "noRestrictions": "All foods allowed",
+      "focus": "Internal cues rather than external rules"
+    }
+  },
+  "comparisons": {
+    "proteinSources": {
+      "plantBased": ["legumes", "nuts", "seeds", "whole grains"],
+      "animalBased": ["meat", "poultry", "fish", "eggs", "dairy"],
+      "considerations": "Complete vs incomplete proteins"
+    },
+    "carbApproach": {
+      "lowCarb": ["keto", "paleo", "carnivore"],
+      "moderateCarb": ["mediterranean", "flexitarian"],
+      "highCarb": ["vegan", "vegetarian", "whole food plant-based"]
+    },
+    "sustainability": {
+      "mostSustainable": ["plant-based", "vegan", "reducetarian"],
+      "leastSustainable": ["carnivore", "high animal product diets"]
+    }
+  }
+}

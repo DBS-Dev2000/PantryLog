@@ -1,0 +1,528 @@
+{
+  "version": "1.0.0",
+  "category": "Religious and Cultural Dietary Laws",
+  "religions": {
+    "kosher": {
+      "name": "Kosher (Jewish Dietary Laws)",
+      "hebrew": "Kashrut",
+      "sources": ["Torah", "Talmud", "Rabbinical law"],
+      "principles": {
+        "permitted": {
+          "landAnimals": {
+            "requirements": ["cloven hooves", "chews cud"],
+            "examples": ["cattle", "sheep", "goats", "deer"],
+            "excluded": ["pork", "rabbit", "camel", "carnivores"]
+          },
+          "seafood": {
+            "requirements": ["fins", "scales"],
+            "examples": ["salmon", "tuna", "carp", "herring"],
+            "excluded": ["shellfish", "eel", "shark", "swordfish"]
+          },
+          "birds": {
+            "permitted": ["chicken", "duck", "goose", "dove", "pigeon"],
+            "forbidden": ["birds of prey", "scavengers", "ostrich"]
+          }
+        },
+        "slaughter": {
+          "method": "Shechita by trained shochet",
+          "requirements": [
+            "swift single cut",
+            "sharp blade",
+            "no stunning",
+            "blood must be drained",
+            "inspection for defects"
+          ]
+        },
+        "meatDairy": {
+          "separation": "Complete separation required",
+          "waiting": {
+            "meatToDairy": "1-6 hours depending on tradition",
+            "dairyToMeat": "30 minutes to 1 hour"
+          },
+          "equipment": "Separate dishes, utensils, sinks",
+          "neutral": "Pareve foods (neither meat nor dairy)"
+        },
+        "preparation": {
+          "blood": "Must be removed via salting/soaking",
+          "insects": "Vegetables must be checked",
+          "liver": "Must be broiled",
+          "eggs": "Check for blood spots"
+        }
+      },
+      "passover": {
+        "additional": "No chametz (leavened grain products)",
+        "forbidden": ["wheat", "barley", "rye", "oats", "spelt unless supervised"],
+        "kitniyot": "Rice, corn, legumes (Ashkenazi tradition)",
+        "matzo": "Unleavened bread substitute"
+      },
+      "certification": {
+        "symbols": ["OU", "OK", "Kof-K", "Star-K"],
+        "levels": [
+          "Kosher",
+          "Kosher for Passover",
+          "Cholov Yisroel (Jewish-supervised dairy)",
+          "Pas Yisroel (Jewish-baked bread)",
+          "Yoshon (aged grain)"
+        ]
+      }
+    },
+    "halal": {
+      "name": "Halal (Islamic Dietary Laws)",
+      "arabic": "حلال",
+      "sources": ["Quran", "Hadith", "Sunnah"],
+      "principles": {
+        "haram": {
+          "forbidden": [
+            "pork and pork products",
+            "blood",
+            "carrion (dead animals)",
+            "animals killed by strangling",
+            "animals killed by beating",
+            "animals killed by falling",
+            "animals gored to death",
+            "animals partially eaten by predators",
+            "animals sacrificed to idols",
+            "alcohol and intoxicants",
+            "carnivorous animals",
+            "birds of prey",
+            "reptiles",
+            "insects (except locusts)",
+            "donkey",
+            "mule"
+          ]
+        },
+        "halal": {
+          "permitted": [
+            "cattle",
+            "sheep",
+            "goats",
+            "deer",
+            "chicken",
+            "duck",
+            "fish with scales",
+            "vegetables",
+            "fruits",
+            "grains",
+            "dairy from halal animals",
+            "eggs from halal birds"
+          ]
+        },
+        "slaughter": {
+          "method": "Dhabiha/Zabiha",
+          "requirements": [
+            "performed by Muslim",
+            "animal must be alive",
+            "invoke name of Allah",
+            "swift cut to throat",
+            "sever jugular vein, carotid artery, windpipe",
+            "blood must drain completely"
+          ]
+        },
+        "preparation": {
+          "crossContamination": "Avoid contact with haram",
+          "utensils": "Must not be contaminated with haram",
+          "alcohol": "Not even in cooking or extracts"
+        }
+      },
+      "certification": {
+        "organizations": ["IFANCA", "ISNA", "HMA"],
+        "considerations": [
+          "ingredients",
+          "processing",
+          "handling",
+          "storage"
+        ]
+      },
+      "gelatin": {
+        "concern": "Must be from halal-slaughtered animals",
+        "alternatives": "Fish gelatin, agar, plant-based"
+      }
+    },
+    "hindu": {
+      "name": "Hindu Dietary Practices",
+      "sanskrit": "Ahimsa (non-violence)",
+      "variations": "Diverse based on region, caste, deity",
+      "principles": {
+        "vegetarianism": {
+          "prevalence": "30-40% of Hindus",
+          "motivation": "Ahimsa, karma, spiritual purity",
+          "strict": "No meat, fish, eggs",
+          "lacto": "Dairy permitted"
+        },
+        "sacred": {
+          "cow": "Sacred animal, beef forbidden",
+          "dairy": "Milk products considered pure"
+        },
+        "ayurvedic": {
+          "sattvic": {
+            "pure": ["fruits", "vegetables", "grains", "nuts", "dairy"],
+            "promotes": "clarity, harmony, wisdom"
+          },
+          "rajasic": {
+            "stimulating": ["spicy foods", "coffee", "tea", "chocolate"],
+            "promotes": "activity, passion, restlessness"
+          },
+          "tamasic": {
+            "dulling": ["meat", "alcohol", "fermented foods", "leftover food"],
+            "promotes": "ignorance, inertia, darkness"
+          }
+        },
+        "fasting": {
+          "occasions": ["Ekadashi", "Navratri", "Shivaratri"],
+          "types": [
+            "complete fast",
+            "fruit only",
+            "single meal",
+            "specific food restrictions"
+          ]
+        },
+        "purity": {
+          "leftHand": "Considered impure for eating",
+          "sharing": "Food sharing rules based on caste (historically)",
+          "cooking": "Who can cook for whom",
+          "prasad": "Blessed food offered to deities"
+        }
+      },
+      "regionalVariations": {
+        "brahmin": "Strictly vegetarian traditionally",
+        "bengali": "Fish considered 'vegetarian'",
+        "kashmiri": "Lamb permitted for some",
+        "coastal": "Seafood more accepted"
+      },
+      "prohibited": {
+        "common": ["beef", "pork often avoided"],
+        "onionGarlic": "Avoided by strict practitioners",
+        "mushrooms": "Some consider impure",
+        "alcohol": "Generally avoided"
+      }
+    },
+    "buddhist": {
+      "name": "Buddhist Dietary Practices",
+      "principle": "Compassion and non-harm",
+      "variations": "Differs by tradition and region",
+      "guidelines": {
+        "vegetarianism": {
+          "theravada": "Not required, avoid killing",
+          "mahayana": "Often vegetarian",
+          "chinese": "Strictly vegetarian",
+          "tibetan": "Meat permitted due to climate"
+        },
+        "firstPrecept": "Avoid killing living beings",
+        "mindfulness": {
+          "eating": "Conscious consumption",
+          "moderation": "Avoid excess",
+          "gratitude": "Appreciation for food"
+        },
+        "monastic": {
+          "alms": "Eat what is offered",
+          "noon": "No solid food after noon",
+          "noChoice": "Cannot request specific foods"
+        },
+        "avoided": {
+          "fiveProhibited": ["garlic", "onions", "leeks", "chives", "shallots"],
+          "reason": "Considered to excite senses",
+          "alcohol": "Clouds the mind",
+          "meat": "If killed specifically for you"
+        }
+      },
+      "offerings": {
+        "temple": "Vegetarian offerings common",
+        "ancestors": "Food offerings in ceremonies"
+      }
+    },
+    "jain": {
+      "name": "Jain Dietary Practices",
+      "principle": "Extreme non-violence (Ahimsa)",
+      "strictness": "Most restrictive major religion",
+      "rules": {
+        "vegetarian": {
+          "requirement": "Strict lacto-vegetarian",
+          "noEggs": "Considered to contain life"
+        },
+        "rootVegetables": {
+          "prohibited": ["potatoes", "onions", "garlic", "carrots", "beets"],
+          "reason": "Harvesting kills entire plant and soil organisms"
+        },
+        "timing": {
+          "daylight": "Eat only during daylight",
+          "reason": "Avoid harming insects in dark"
+        },
+        "water": {
+          "filtered": "Strain to avoid consuming microorganisms",
+          "boiled": "Kill minimum organisms at once"
+        },
+        "fermented": {
+          "avoided": "Contains many microorganisms",
+          "includes": ["alcohol", "vinegar", "overripe fruit"]
+        },
+        "honey": {
+          "forbidden": "Considered violence to bees"
+        },
+        "freshness": {
+          "requirement": "Eat fresh food only",
+          "leftover": "Avoid food kept overnight"
+        },
+        "seasons": {
+          "monsoon": "Additional restrictions",
+          "chaumasa": "4-month rainy season fasting"
+        }
+      },
+      "acceptable": {
+        "grains": ["rice", "wheat", "millet"],
+        "legumes": ["lentils", "beans", "peas"],
+        "vegetables": ["above-ground only"],
+        "dairy": ["milk", "yogurt", "ghee"],
+        "fruits": ["most permitted"]
+      },
+      "practices": {
+        "inspection": "Check food for insects",
+        "straining": "Multiple filters for water",
+        "sunlight": "Dry grains in sun to remove insects"
+      }
+    },
+    "sikh": {
+      "name": "Sikh Dietary Practices",
+      "principles": ["Simplicity", "Equality", "Sharing"],
+      "guidelines": {
+        "meat": {
+          "debate": "No consensus requirement",
+          "kuttha": "Ritual slaughter meat forbidden",
+          "jhatka": "Quick kill method preferred if eating meat"
+        },
+        "prohibited": {
+          "halal": "Ritually slaughtered meat",
+          "kosher": "Ritually slaughtered meat",
+          "tobacco": "Strictly forbidden",
+          "alcohol": "Generally avoided",
+          "drugs": "Intoxicants forbidden"
+        },
+        "langar": {
+          "description": "Community kitchen",
+          "vegetarian": "Always vegetarian for inclusivity",
+          "equality": "All eat together regardless of background",
+          "free": "Provided to all visitors"
+        },
+        "simplicity": {
+          "focus": "Simple, nutritious food",
+          "avoid": "Excessive spices or rich foods",
+          "moderation": "Eat to live, not live to eat"
+        }
+      },
+      "baptized": {
+        "amritdhari": "Initiated Sikhs",
+        "additional": "May follow stricter guidelines",
+        "commitment": "Some choose vegetarianism"
+      }
+    },
+    "christian": {
+      "name": "Christian Dietary Practices",
+      "variation": "Differs significantly by denomination",
+      "denominations": {
+        "catholic": {
+          "fasting": {
+            "lent": "40 days before Easter",
+            "ashWednesday": "Fast and abstinence",
+            "goodFriday": "Fast and abstinence",
+            "fridays": "Abstain from meat (traditional)"
+          },
+          "abstinence": {
+            "meat": "No meat on specific days",
+            "age": "14 and older",
+            "exceptions": "Fish permitted"
+          },
+          "communion": {
+            "fast": "1 hour before receiving",
+            "exceptions": "Water and medicine"
+          }
+        },
+        "orthodox": {
+          "fasting": {
+            "days": "180-200 days per year",
+            "periods": ["Great Lent", "Nativity Fast", "Apostles Fast", "Dormition Fast"],
+            "wednesdays": "Betrayal of Christ",
+            "fridays": "Crucifixion"
+          },
+          "restrictions": {
+            "meat": "All animal products",
+            "dairy": "Milk, cheese, eggs",
+            "oil": "On strict days",
+            "wine": "On strict days",
+            "fish": "Only certain feast days"
+          }
+        },
+        "seventhDayAdventist": {
+          "vegetarian": "Strongly encouraged",
+          "clean": "Follow Levitical laws",
+          "prohibited": ["pork", "shellfish", "unclean meats"],
+          "health": "Body as temple principle",
+          "avoid": ["alcohol", "tobacco", "caffeine often"]
+        },
+        "mormon": {
+          "wordOfWisdom": "Health code",
+          "prohibited": ["alcohol", "tobacco", "coffee", "tea"],
+          "encouraged": ["grains", "fruits", "vegetables"],
+          "meat": "Sparingly",
+          "herbs": "In season"
+        },
+        "protestantGeneral": {
+          "freedom": "All foods generally permitted",
+          "moderation": "Avoid gluttony",
+          "conscience": "Personal conviction",
+          "thanksgiving": "Gratitude for food"
+        }
+      },
+      "biblicalReferences": {
+        "oldTestament": "Levitical laws (not binding for most Christians)",
+        "newTestament": "All foods declared clean (Acts 10)",
+        "paul": "Eat whatever is sold in meat market (1 Cor 10:25)"
+      }
+    },
+    "rastafarian": {
+      "name": "Rastafarian (Ital)",
+      "principle": "Natural, pure living",
+      "ital": {
+        "meaning": "Vital, natural, clean",
+        "guidelines": {
+          "natural": "Organic, unprocessed foods",
+          "noChemicals": "No artificial additives",
+          "fresh": "Preferably home-grown"
+        },
+        "avoided": {
+          "meat": "Many avoid all meat",
+          "pork": "Strictly forbidden",
+          "shellfish": "Scavengers forbidden",
+          "dairy": "Some avoid",
+          "salt": "Many avoid added salt",
+          "alcohol": "Forbidden",
+          "coffee": "Often avoided"
+        },
+        "emphasized": {
+          "vegetables": "Foundation of diet",
+          "fruits": "Natural and fresh",
+          "grains": "Whole grains",
+          "legumes": "Beans and peas",
+          "nuts": "Natural protein",
+          "herbs": "Medicinal and culinary"
+        }
+      },
+      "variations": {
+        "strict": "Raw vegan",
+        "moderate": "Vegetarian with fish",
+        "relaxed": "Avoid only pork and shellfish"
+      }
+    },
+    "bahai": {
+      "name": "Bahá'í Faith",
+      "principles": "Moderation and health",
+      "guidelines": {
+        "alcohol": "Forbidden",
+        "drugs": "Forbidden except medical",
+        "meat": "Permitted but not required",
+        "hunting": "Permitted with conditions",
+        "kindness": "To animals in slaughter"
+      },
+      "fasting": {
+        "period": "19 days in March",
+        "sunrise": "No food or drink sunrise to sunset",
+        "exemptions": ["children", "elderly", "sick", "pregnant", "nursing", "travelers"]
+      }
+    },
+    "zoroastrian": {
+      "name": "Zoroastrian",
+      "principle": "Good thoughts, words, deeds",
+      "guidelines": {
+        "purity": "Physical and spiritual cleanliness",
+        "meat": {
+          "permitted": "Most meats allowed",
+          "preparation": "Specific prayers"
+        },
+        "prohibited": {
+          "intoxication": "Excess alcohol",
+          "combinations": "Some food combinations"
+        }
+      }
+    }
+  },
+  "cultural": {
+    "chinese": {
+      "name": "Traditional Chinese",
+      "principle": "Balance and harmony",
+      "concepts": {
+        "yinYang": {
+          "yin": ["cooling foods", "fruits", "vegetables", "water"],
+          "yang": ["warming foods", "meat", "spices", "fried foods"],
+          "balance": "Maintain equilibrium"
+        },
+        "fiveElements": {
+          "wood": ["sour", "liver", "green"],
+          "fire": ["bitter", "heart", "red"],
+          "earth": ["sweet", "spleen", "yellow"],
+          "metal": ["pungent", "lungs", "white"],
+          "water": ["salty", "kidneys", "black"]
+        },
+        "hotCold": {
+          "classification": "Foods have thermal nature",
+          "balance": "Match to body constitution and season"
+        }
+      },
+      "practices": {
+        "freshness": "Fresh ingredients prioritized",
+        "seasonal": "Eat according to season",
+        "medicinal": "Food as medicine",
+        "variety": "Multiple dishes per meal",
+        "communal": "Shared dining important"
+      }
+    },
+    "mediterranean": {
+      "cultural": "Social and cultural importance",
+      "practices": {
+        "family": "Meals as family time",
+        "seasonal": "Local, seasonal ingredients",
+        "tradition": "Passed down recipes",
+        "celebration": "Food central to festivities"
+      }
+    },
+    "japanese": {
+      "principle": "Seasonal, aesthetic, balanced",
+      "concepts": {
+        "ichijuuSansai": "One soup, three dishes",
+        "washoku": "Traditional dietary culture",
+        "umami": "Fifth taste",
+        "hara8bu": "Eat until 80% full"
+      },
+      "presentation": "Visual appeal crucial"
+    },
+    "indian": {
+      "regional": "Vast regional differences",
+      "concepts": {
+        "sixTastes": ["sweet", "sour", "salty", "pungent", "bitter", "astringent"],
+        "thali": "Balanced meal on one plate",
+        "spices": "Medicinal and flavor purposes"
+      }
+    },
+    "mexican": {
+      "indigenous": "Pre-Columbian influences",
+      "staples": ["corn", "beans", "squash"],
+      "practices": {
+        "nixtamalization": "Corn preparation with lime",
+        "communal": "Food as community bond"
+      }
+    },
+    "african": {
+      "diversity": "Varies by region and tribe",
+      "common": {
+        "communal": "Shared meals from common dish",
+        "seasonal": "Based on harvest",
+        "preservation": "Fermentation, drying, smoking"
+      }
+    }
+  },
+  "considerations": {
+    "respect": "Understanding and respecting dietary laws",
+    "askDontAssume": "Ask about specific requirements",
+    "certification": "Look for appropriate certifications",
+    "crossContamination": "Separate preparation areas/tools",
+    "transparency": "Clear ingredient labeling",
+    "alternatives": "Provide suitable substitutions"
+  }
+}

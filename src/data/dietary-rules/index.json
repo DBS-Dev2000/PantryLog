@@ -1,0 +1,37 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-22",
+  "description": "Comprehensive dietary rules system for meal planning AI agent RAG",
+  "categories": {
+    "allergies": {
+      "file": "allergies.json",
+      "description": "Food allergies and intolerances with detailed avoidance rules"
+    },
+    "medical-conditions": {
+      "file": "medical-conditions.json",
+      "description": "Disease and condition-based dietary requirements"
+    },
+    "lifestyle-diets": {
+      "file": "lifestyle-diets.json",
+      "description": "Voluntary dietary choices and philosophies"
+    },
+    "religious-cultural": {
+      "file": "religious-cultural.json",
+      "description": "Religious and cultural dietary laws"
+    },
+    "health-goals": {
+      "file": "health-goals.json",
+      "description": "Goal-oriented dietary plans for specific outcomes"
+    },
+    "therapeutic-diets": {
+      "file": "therapeutic-diets.json",
+      "description": "Medical and therapeutic dietary protocols"
+    }
+  },
+  "usage": {
+    "aiAgent": "Load relevant files based on user's dietary preferences and restrictions",
+    "priority": "Allergies > Medical Conditions > Religious/Cultural > Lifestyle > Goals",
+    "conflictResolution": "Most restrictive rule takes precedence",
+    "customization": "Allow user overrides for non-medical restrictions"
+  }
+}

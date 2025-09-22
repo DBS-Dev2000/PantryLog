@@ -1,0 +1,845 @@
+{
+  "version": "1.0.0",
+  "category": "Medical Condition-Based Dietary Requirements",
+  "conditions": {
+    "diabetes": {
+      "name": "Diabetes (Type 1 & Type 2)",
+      "description": "Blood sugar regulation disorder",
+      "dietaryGoals": [
+        "maintain stable blood glucose",
+        "prevent complications",
+        "achieve healthy weight",
+        "reduce cardiovascular risk"
+      ],
+      "guidelines": {
+        "carbohydrates": {
+          "approach": "consistent carb counting",
+          "glycemicIndex": "prefer low GI foods",
+          "timing": "spread throughout day",
+          "amount": "45-60g per meal typical",
+          "quality": "complex over simple"
+        },
+        "avoid": [
+          "sugar-sweetened beverages",
+          "fruit juices",
+          "regular soda",
+          "candy",
+          "white bread",
+          "white rice",
+          "sugary cereals",
+          "processed snacks",
+          "baked goods with added sugars"
+        ],
+        "limit": [
+          "refined grains",
+          "saturated fats",
+          "sodium",
+          "alcohol",
+          "high-glycemic fruits",
+          "dried fruits",
+          "fruit smoothies"
+        ],
+        "emphasize": [
+          "non-starchy vegetables",
+          "whole grains",
+          "lean proteins",
+          "healthy fats",
+          "fiber-rich foods",
+          "legumes",
+          "nuts and seeds"
+        ],
+        "mealPlanning": {
+          "plateMethod": "1/2 vegetables, 1/4 protein, 1/4 carbs",
+          "frequency": "regular meals and snacks",
+          "portion": "controlled portions",
+          "consistency": "similar carb amounts daily"
+        }
+      },
+      "monitoring": [
+        "blood glucose before/after meals",
+        "A1C levels",
+        "ketones (Type 1)",
+        "weight",
+        "blood pressure",
+        "cholesterol"
+      ]
+    },
+    "hypertension": {
+      "name": "High Blood Pressure",
+      "description": "Elevated blood pressure requiring dietary management",
+      "dietaryApproaches": {
+        "dash": "Dietary Approaches to Stop Hypertension",
+        "mediterranean": "Heart-healthy Mediterranean pattern"
+      },
+      "sodiumLimits": {
+        "standard": "2300mg/day",
+        "restricted": "1500mg/day for most adults with hypertension"
+      },
+      "avoid": [
+        "processed meats",
+        "canned soups (regular)",
+        "fast food",
+        "frozen dinners",
+        "salted snacks",
+        "pickled foods",
+        "soy sauce",
+        "bottled salad dressings",
+        "cheese (high sodium types)"
+      ],
+      "limit": [
+        "alcohol",
+        "caffeine",
+        "saturated fats",
+        "added sugars",
+        "refined grains"
+      ],
+      "emphasize": [
+        "potassium-rich foods (bananas, potatoes, spinach)",
+        "magnesium sources (nuts, whole grains)",
+        "calcium (low-fat dairy, leafy greens)",
+        "fruits and vegetables",
+        "whole grains",
+        "lean proteins",
+        "omega-3 fatty acids"
+      ],
+      "tips": [
+        "read labels for sodium content",
+        "cook from scratch",
+        "use herbs and spices instead of salt",
+        "rinse canned foods",
+        "choose fresh or frozen vegetables"
+      ]
+    },
+    "ckd": {
+      "name": "Chronic Kidney Disease",
+      "description": "Progressive kidney function decline",
+      "stages": {
+        "early": "Stages 1-2: General healthy eating",
+        "moderate": "Stage 3: Begin restrictions",
+        "advanced": "Stages 4-5: Strict limitations"
+      },
+      "restrictions": {
+        "protein": {
+          "early": "0.8g/kg body weight",
+          "advanced": "0.6g/kg body weight",
+          "dialysis": "1.2g/kg body weight"
+        },
+        "sodium": "2000-3000mg/day",
+        "potassium": {
+          "limit": "2000-3000mg/day if elevated",
+          "highPotassiumFoods": [
+            "bananas",
+            "oranges",
+            "potatoes",
+            "tomatoes",
+            "spinach",
+            "beans",
+            "nuts",
+            "chocolate",
+            "avocados"
+          ]
+        },
+        "phosphorus": {
+          "limit": "800-1000mg/day",
+          "highPhosphorusFoods": [
+            "dairy products",
+            "nuts and seeds",
+            "beans",
+            "whole grains",
+            "chocolate",
+            "colas",
+            "processed meats",
+            "organ meats"
+          ]
+        },
+        "fluids": "may need restriction in advanced stages"
+      },
+      "emphasize": [
+        "appropriate calories",
+        "controlled portions",
+        "fresh foods over processed",
+        "white bread/pasta (lower phosphorus)",
+        "rice milk (if dairy restricted)",
+        "egg whites"
+      ]
+    },
+    "heartDisease": {
+      "name": "Cardiovascular Disease",
+      "description": "Heart and blood vessel conditions",
+      "goals": [
+        "reduce cholesterol",
+        "lower blood pressure",
+        "maintain healthy weight",
+        "reduce inflammation"
+      ],
+      "avoid": [
+        "trans fats",
+        "processed meats",
+        "fried foods",
+        "full-fat dairy",
+        "butter",
+        "lard",
+        "palm oil",
+        "coconut oil",
+        "sugary drinks",
+        "excessive sodium"
+      ],
+      "limit": [
+        "saturated fat (<7% calories)",
+        "dietary cholesterol (<200mg/day)",
+        "sodium (<2300mg/day)",
+        "added sugars",
+        "refined grains",
+        "alcohol"
+      ],
+      "emphasize": [
+        "omega-3 fatty acids (fish, walnuts, flax)",
+        "soluble fiber (oats, beans, apples)",
+        "plant sterols",
+        "nuts and seeds",
+        "whole grains",
+        "fruits and vegetables",
+        "lean proteins",
+        "olive oil",
+        "avocados"
+      ],
+      "specificRecommendations": {
+        "fish": "2 servings fatty fish per week",
+        "fiber": "25-35g daily",
+        "nuts": "1 oz daily",
+        "plantBased": "emphasize plant proteins"
+      }
+    },
+    "gerd": {
+      "name": "Gastroesophageal Reflux Disease",
+      "description": "Chronic acid reflux condition",
+      "triggerFoods": [
+        "citrus fruits",
+        "tomatoes and tomato sauce",
+        "chocolate",
+        "peppermint",
+        "coffee",
+        "alcohol",
+        "carbonated beverages",
+        "spicy foods",
+        "garlic",
+        "onions",
+        "fatty foods",
+        "fried foods"
+      ],
+      "mealGuidelines": [
+        "eat smaller meals",
+        "avoid eating 3 hours before bed",
+        "eat slowly",
+        "remain upright after eating",
+        "avoid tight clothing after meals"
+      ],
+      "safeFoods": [
+        "lean proteins",
+        "whole grains",
+        "non-citrus fruits",
+        "vegetables (non-acidic)",
+        "low-fat dairy",
+        "ginger",
+        "oatmeal",
+        "melons",
+        "bananas",
+        "rice",
+        "potatoes"
+      ]
+    },
+    "ibs": {
+      "name": "Irritable Bowel Syndrome",
+      "description": "Functional gastrointestinal disorder",
+      "subtypes": {
+        "ibsD": "Diarrhea predominant",
+        "ibsC": "Constipation predominant",
+        "ibsM": "Mixed type"
+      },
+      "dietaryApproach": "Low FODMAP diet often recommended",
+      "commonTriggers": [
+        "dairy products",
+        "gluten",
+        "fried foods",
+        "beans and legumes",
+        "caffeinated drinks",
+        "processed foods",
+        "sugar alcohols",
+        "garlic and onions",
+        "cruciferous vegetables",
+        "artificial sweeteners"
+      ],
+      "management": {
+        "fiber": {
+          "soluble": "helpful for all types",
+          "insoluble": "may worsen IBS-D"
+        },
+        "probiotics": "may help some individuals",
+        "mealSize": "smaller, frequent meals",
+        "hydration": "adequate water intake",
+        "stress": "stress management important"
+      },
+      "safeFoods": [
+        "rice",
+        "oats",
+        "quinoa",
+        "lean meats",
+        "fish",
+        "eggs",
+        "lactose-free dairy",
+        "bananas",
+        "blueberries",
+        "carrots",
+        "potatoes",
+        "spinach"
+      ]
+    },
+    "ibd": {
+      "name": "Inflammatory Bowel Disease",
+      "types": {
+        "crohns": "Can affect entire GI tract",
+        "ulcerativeColitis": "Limited to colon"
+      },
+      "phases": {
+        "flare": {
+          "avoid": [
+            "high-fiber foods",
+            "raw fruits and vegetables",
+            "nuts and seeds",
+            "whole grains",
+            "beans and legumes",
+            "popcorn",
+            "fatty foods",
+            "spicy foods",
+            "dairy (if lactose intolerant)",
+            "alcohol",
+            "caffeinated beverages"
+          ],
+          "emphasize": [
+            "low-residue foods",
+            "white rice",
+            "white bread",
+            "lean proteins",
+            "cooked vegetables (peeled)",
+            "clear broths",
+            "electrolyte drinks"
+          ]
+        },
+        "remission": {
+          "focus": "maintaining nutrition",
+          "gradualReintroduction": "slowly add trigger foods",
+          "emphasize": [
+            "nutrient-dense foods",
+            "adequate protein",
+            "omega-3 fatty acids",
+            "probiotics",
+            "prebiotics",
+            "vitamins and minerals"
+          ]
+        }
+      },
+      "nutritionalConcerns": [
+        "malabsorption",
+        "vitamin B12 deficiency",
+        "iron deficiency",
+        "vitamin D deficiency",
+        "dehydration",
+        "weight loss"
+      ]
+    },
+    "gout": {
+      "name": "Gout",
+      "description": "Arthritis caused by uric acid buildup",
+      "avoid": [
+        "organ meats (liver, kidney)",
+        "red meat",
+        "shellfish",
+        "anchovies",
+        "sardines",
+        "mackerel",
+        "scallops",
+        "gravy",
+        "beer",
+        "liquor",
+        "sugary drinks",
+        "high-fructose corn syrup"
+      ],
+      "limit": [
+        "poultry",
+        "fish (moderate amounts)",
+        "wine",
+        "asparagus",
+        "spinach",
+        "mushrooms",
+        "cauliflower",
+        "peas"
+      ],
+      "emphasize": [
+        "low-fat dairy",
+        "complex carbohydrates",
+        "coffee (may lower risk)",
+        "vitamin C foods",
+        "cherries",
+        "water (8+ glasses daily)",
+        "plant-based proteins",
+        "whole grains"
+      ],
+      "targetUricAcid": "<6mg/dL"
+    },
+    "osteoporosis": {
+      "name": "Osteoporosis",
+      "description": "Bone density loss condition",
+      "keyNutrients": {
+        "calcium": {
+          "target": "1200mg/day (adults >50)",
+          "sources": [
+            "dairy products",
+            "fortified plant milks",
+            "leafy greens",
+            "canned fish with bones",
+            "tofu (calcium-set)",
+            "almonds",
+            "fortified orange juice"
+          ]
+        },
+        "vitaminD": {
+          "target": "800-1000 IU/day",
+          "sources": [
+            "fatty fish",
+            "egg yolks",
+            "fortified milk",
+            "fortified cereals",
+            "sunlight exposure"
+          ]
+        },
+        "protein": {
+          "importance": "maintains muscle mass",
+          "amount": "1-1.2g/kg body weight"
+        }
+      },
+      "avoid": [
+        "excessive sodium",
+        "excessive caffeine",
+        "excessive alcohol",
+        "smoking"
+      ],
+      "additionalNutrients": [
+        "magnesium",
+        "vitamin K",
+        "potassium",
+        "vitamin C",
+        "zinc"
+      ]
+    },
+    "anemia": {
+      "name": "Anemia",
+      "types": {
+        "ironDeficiency": {
+          "emphasize": [
+            "red meat",
+            "poultry",
+            "fish",
+            "beans",
+            "fortified cereals",
+            "spinach",
+            "tofu",
+            "pumpkin seeds"
+          ],
+          "enhancers": [
+            "vitamin C foods",
+            "citrus fruits",
+            "tomatoes",
+            "bell peppers"
+          ],
+          "inhibitors": [
+            "calcium supplements with meals",
+            "tea and coffee with meals",
+            "phytates (whole grains)",
+            "polyphenols"
+          ]
+        },
+        "b12Deficiency": {
+          "sources": [
+            "animal products",
+            "fortified plant milks",
+            "nutritional yeast",
+            "fortified cereals"
+          ],
+          "atRisk": [
+            "vegans",
+            "elderly",
+            "gastric surgery patients"
+          ]
+        },
+        "folateDeficiency": {
+          "sources": [
+            "leafy greens",
+            "legumes",
+            "fortified grains",
+            "citrus fruits",
+            "asparagus",
+            "avocado"
+          ]
+        }
+      }
+    },
+    "thyroid": {
+      "name": "Thyroid Disorders",
+      "hypothyroidism": {
+        "considerations": [
+          "adequate iodine",
+          "limit goitrogens when raw",
+          "timing of medication with food"
+        ],
+        "goitrogens": [
+          "cruciferous vegetables (cook to reduce)",
+          "soy products",
+          "millet",
+          "cassava",
+          "lima beans",
+          "sweet potatoes"
+        ],
+        "nutrients": [
+          "selenium",
+          "zinc",
+          "iron",
+          "vitamin D",
+          "B vitamins"
+        ]
+      },
+      "hyperthyroidism": {
+        "limit": [
+          "iodine-rich foods",
+          "seaweed",
+          "iodized salt",
+          "dairy",
+          "egg yolks"
+        ],
+        "emphasize": [
+          "calcium-rich foods",
+          "vitamin D",
+          "antioxidants",
+          "adequate calories"
+        ]
+      }
+    },
+    "pcos": {
+      "name": "Polycystic Ovary Syndrome",
+      "description": "Hormonal disorder affecting women",
+      "dietaryGoals": [
+        "improve insulin sensitivity",
+        "reduce inflammation",
+        "manage weight",
+        "balance hormones"
+      ],
+      "guidelines": {
+        "carbohydrates": {
+          "type": "complex, low glycemic",
+          "amount": "40-45% of calories",
+          "pairing": "combine with protein/fat"
+        },
+        "avoid": [
+          "refined sugars",
+          "white bread",
+          "sugary drinks",
+          "processed foods",
+          "trans fats"
+        ],
+        "emphasize": [
+          "whole grains",
+          "lean proteins",
+          "omega-3 fatty acids",
+          "anti-inflammatory foods",
+          "fiber-rich foods",
+          "spearmint tea",
+          "cinnamon"
+        ]
+      }
+    },
+    "autoimmune": {
+      "name": "Autoimmune Conditions",
+      "commonConditions": [
+        "rheumatoid arthritis",
+        "lupus",
+        "multiple sclerosis",
+        "hashimoto's thyroiditis",
+        "psoriasis"
+      ],
+      "aip": {
+        "name": "Autoimmune Protocol",
+        "eliminate": [
+          "grains",
+          "legumes",
+          "dairy",
+          "eggs",
+          "nightshades",
+          "nuts and seeds",
+          "coffee",
+          "alcohol",
+          "refined sugars",
+          "processed foods",
+          "food additives"
+        ],
+        "emphasize": [
+          "quality meats",
+          "wild-caught fish",
+          "vegetables (non-nightshade)",
+          "fruits (moderation)",
+          "healthy fats",
+          "bone broth",
+          "fermented foods",
+          "organ meats"
+        ],
+        "reintroduction": "systematic after 30-90 days"
+      },
+      "antiInflammatory": {
+        "emphasize": [
+          "omega-3 fatty acids",
+          "colorful vegetables",
+          "berries",
+          "turmeric",
+          "ginger",
+          "green tea",
+          "olive oil"
+        ],
+        "avoid": [
+          "processed foods",
+          "excess omega-6 oils",
+          "refined sugars",
+          "trans fats"
+        ]
+      }
+    },
+    "gallbladder": {
+      "name": "Gallbladder Disease",
+      "conditions": ["gallstones", "cholecystitis", "post-cholecystectomy"],
+      "lowFatGuidelines": {
+        "fatLimit": "25-30% of calories",
+        "avoid": [
+          "fried foods",
+          "fatty meats",
+          "full-fat dairy",
+          "butter and lard",
+          "cream sauces",
+          "chocolate",
+          "ice cream",
+          "processed snacks",
+          "fast food"
+        ],
+        "emphasize": [
+          "lean proteins",
+          "fruits and vegetables",
+          "whole grains",
+          "low-fat dairy",
+          "small frequent meals"
+        ]
+      },
+      "postSurgery": {
+        "initial": "very low fat",
+        "gradual": "slowly increase fat tolerance",
+        "longTerm": "may need digestive enzymes"
+      }
+    },
+    "pancreatitis": {
+      "name": "Pancreatitis",
+      "acute": {
+        "initial": "NPO (nothing by mouth)",
+        "clearLiquids": "gradual introduction",
+        "progression": "low-fat solids"
+      },
+      "chronic": {
+        "fatLimit": "50g/day or less",
+        "avoid": [
+          "alcohol (absolutely)",
+          "fried foods",
+          "high-fat foods",
+          "spicy foods",
+          "caffeine"
+        ],
+        "emphasize": [
+          "lean proteins",
+          "complex carbohydrates",
+          "fruits and vegetables",
+          "MCT oil (if tolerated)",
+          "small frequent meals"
+        ],
+        "supplements": [
+          "pancreatic enzymes",
+          "fat-soluble vitamins",
+          "B12"
+        ]
+      }
+    },
+    "liver": {
+      "name": "Liver Disease",
+      "types": ["fatty liver", "cirrhosis", "hepatitis"],
+      "nafld": {
+        "name": "Non-alcoholic fatty liver disease",
+        "goals": [
+          "weight loss (7-10%)",
+          "reduce liver fat",
+          "improve insulin sensitivity"
+        ],
+        "avoid": [
+          "alcohol",
+          "added sugars",
+          "refined carbohydrates",
+          "saturated fats",
+          "fried foods"
+        ],
+        "emphasize": [
+          "mediterranean diet pattern",
+          "omega-3 fatty acids",
+          "coffee (3-4 cups/day protective)",
+          "whole grains",
+          "lean proteins"
+        ]
+      },
+      "cirrhosis": {
+        "proteinNeeds": "1.2-1.5g/kg",
+        "sodiumLimit": "2000mg/day",
+        "fluidRestriction": "if ascites present",
+        "avoid": [
+          "alcohol",
+          "raw shellfish",
+          "high sodium foods"
+        ]
+      }
+    },
+    "cancer": {
+      "name": "Cancer (During/After Treatment)",
+      "generalGuidelines": {
+        "goals": [
+          "maintain weight and strength",
+          "manage side effects",
+          "support immune system",
+          "reduce recurrence risk"
+        ],
+        "duringTreatment": {
+          "commonIssues": [
+            "nausea",
+            "taste changes",
+            "mouth sores",
+            "decreased appetite",
+            "fatigue"
+          ],
+          "strategies": [
+            "small frequent meals",
+            "high-calorie/high-protein foods",
+            "stay hydrated",
+            "avoid strong smells",
+            "room temperature foods"
+          ]
+        },
+        "prevention": {
+          "emphasize": [
+            "plant-based foods",
+            "whole grains",
+            "colorful vegetables",
+            "limit red meat",
+            "avoid processed meats",
+            "maintain healthy weight",
+            "limit alcohol"
+          ]
+        }
+      }
+    },
+    "epilepsy": {
+      "name": "Epilepsy",
+      "ketogenicDiet": {
+        "macros": {
+          "fat": "70-80%",
+          "protein": "20-25%",
+          "carbs": "5-10%"
+        },
+        "types": [
+          "classic ketogenic",
+          "modified atkins",
+          "MCT diet",
+          "low glycemic index"
+        ],
+        "medical supervision": "required",
+        "avoid": [
+          "grains",
+          "sugars",
+          "most fruits",
+          "starchy vegetables",
+          "legumes"
+        ],
+        "emphasize": [
+          "healthy fats",
+          "non-starchy vegetables",
+          "adequate protein",
+          "specific supplements"
+        ]
+      }
+    },
+    "migraines": {
+      "name": "Migraine Headaches",
+      "commonTriggers": [
+        "aged cheeses",
+        "alcohol (especially red wine)",
+        "caffeine (excess or withdrawal)",
+        "chocolate",
+        "citrus fruits",
+        "msg",
+        "aspartame",
+        "nitrites/nitrates",
+        "onions",
+        "fermented foods",
+        "nuts",
+        "tyramine-containing foods"
+      ],
+      "management": [
+        "regular meal schedule",
+        "stay hydrated",
+        "identify personal triggers",
+        "maintain stable blood sugar",
+        "magnesium-rich foods",
+        "riboflavin (B2) sources"
+      ]
+    },
+    "fibromyalgia": {
+      "name": "Fibromyalgia",
+      "dietaryApproach": [
+        "anti-inflammatory diet",
+        "eliminate potential triggers",
+        "address nutritional deficiencies"
+      ],
+      "avoid": [
+        "msg",
+        "aspartame",
+        "caffeine (for some)",
+        "nightshades (for some)",
+        "gluten (for some)",
+        "dairy (for some)"
+      ],
+      "emphasize": [
+        "omega-3 fatty acids",
+        "antioxidant-rich foods",
+        "magnesium sources",
+        "vitamin D",
+        "whole foods",
+        "adequate protein"
+      ]
+    }
+  },
+  "medicationInteractions": {
+    "warfarin": {
+      "vitaminK": "maintain consistent intake",
+      "foods": "leafy greens, cruciferous vegetables"
+    },
+    "maoi": {
+      "tyramine": "avoid aged foods, fermented foods",
+      "foods": "aged cheese, cured meats, soy sauce"
+    },
+    "lithium": {
+      "sodium": "maintain consistent intake",
+      "caffeine": "limit and keep consistent"
+    },
+    "metformin": {
+      "b12": "may need supplementation",
+      "alcohol": "limit intake"
+    }
+  }
+}

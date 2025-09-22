@@ -821,7 +821,12 @@ export default function EditInventoryItemPage() {
 
           <Box>
             {/* First row: Quantity and Unit */}
-            <Box display="flex" gap={2} mb={2}>
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              mb={2}
+            >
               <TextField
                 label="Quantity"
                 type="number"
@@ -829,9 +834,9 @@ export default function EditInventoryItemPage() {
                 value={item.quantity}
                 onChange={(e) => setItem({ ...item, quantity: parseFloat(e.target.value) || 0 })}
                 inputProps={{ step: 0.01, min: 0 }}
-                sx={{ flex: 1 }}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
               />
-              <FormControl fullWidth sx={{ flex: 1 }}>
+              <FormControl fullWidth sx={{ flex: { xs: '1 1 100%', sm: 1 } }}>
                 <InputLabel>Unit</InputLabel>
                 <Select
                   value={item.unit}
@@ -848,7 +853,12 @@ export default function EditInventoryItemPage() {
             </Box>
 
             {/* Row 2: Dates side by side */}
-            <Box display="flex" gap={2} mb={2}>
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              mb={2}
+            >
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Purchase Date"
@@ -944,7 +954,12 @@ export default function EditInventoryItemPage() {
             </Box>
 
             {/* Fourth row: Total Cost and Cost per unit */}
-            <Box display="flex" gap={2} mb={2}>
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              mb={2}
+            >
               <TextField
                 label="Total Cost"
                 type="number"
@@ -953,9 +968,9 @@ export default function EditInventoryItemPage() {
                 onChange={(e) => setItem({ ...item, cost: parseFloat(e.target.value) || undefined })}
                 inputProps={{ step: 0.01, min: 0 }}
                 helperText="Total cost for this quantity"
-                sx={{ flex: 1 }}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
               />
-              <Box sx={{ flex: 1 }}>
+              <Box sx={{ flex: { xs: '1 1 100%', sm: 1 } }}>
                 <Typography variant="body2" color="textSecondary" gutterBottom>
                   Cost per unit:
                 </Typography>

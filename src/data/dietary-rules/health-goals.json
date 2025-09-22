@@ -1,0 +1,721 @@
+{
+  "version": "1.0.0",
+  "category": "Goal-Oriented Dietary Plans",
+  "goals": {
+    "weightLoss": {
+      "name": "Weight Loss",
+      "description": "Sustainable fat loss while preserving muscle",
+      "principles": {
+        "calorieDeficit": {
+          "moderate": "500-750 calories/day deficit",
+          "target": "1-2 pounds per week loss",
+          "minimum": "1200 calories women, 1500 men"
+        },
+        "macros": {
+          "protein": "0.8-1g per pound body weight",
+          "fat": "20-35% of calories",
+          "carbs": "Remainder of calories"
+        },
+        "strategies": {
+          "volumetrics": "High-volume, low-calorie foods",
+          "proteinFirst": "Prioritize protein at meals",
+          "fiberRich": "25-35g fiber daily",
+          "hydration": "64+ oz water daily",
+          "mealTiming": "Regular meals, avoid late eating"
+        }
+      },
+      "emphasize": [
+        "lean proteins",
+        "non-starchy vegetables",
+        "whole grains",
+        "fruits",
+        "legumes",
+        "water-rich foods"
+      ],
+      "limit": [
+        "liquid calories",
+        "processed foods",
+        "refined sugars",
+        "excessive fats",
+        "alcohol",
+        "portion sizes"
+      ],
+      "mealStructure": {
+        "breakfast": "Protein + fiber",
+        "lunch": "Balanced macros",
+        "dinner": "Light, early",
+        "snacks": "Protein-based, planned"
+      },
+      "commonMistakes": [
+        "too aggressive deficit",
+        "eliminating food groups",
+        "not tracking accurately",
+        "ignoring liquid calories",
+        "weekend overindulgence",
+        "all-or-nothing mentality"
+      ]
+    },
+    "muscleGain": {
+      "name": "Muscle Building",
+      "description": "Optimize muscle protein synthesis",
+      "principles": {
+        "caloriesurplus": {
+          "lean bulk": "200-500 calories surplus",
+          "aggressive": "500-1000 calories surplus"
+        },
+        "protein": {
+          "target": "0.8-1.2g per pound",
+          "timing": "Every 3-4 hours",
+          "quality": "Complete proteins",
+          "leucine": "2.5g per meal"
+        },
+        "carbohydrates": {
+          "amount": "2-3g per pound",
+          "timing": "Around workouts",
+          "types": "Complex + simple mix"
+        },
+        "fat": {
+          "amount": "0.3-0.4g per pound",
+          "types": "Balanced omega fatty acids"
+        }
+      },
+      "mealTiming": {
+        "preWorkout": {
+          "timing": "1-3 hours before",
+          "composition": "Carbs + moderate protein",
+          "examples": ["oatmeal with protein", "banana with peanut butter"]
+        },
+        "postWorkout": {
+          "timing": "Within 2 hours",
+          "composition": "Protein + carbs",
+          "ratio": "3:1 or 4:1 carbs:protein",
+          "examples": ["protein shake with fruit", "chicken and rice"]
+        },
+        "daily": {
+          "meals": "4-6 per day",
+          "protein": "20-40g per meal",
+          "hydration": "1 gallon minimum"
+        }
+      },
+      "foods": {
+        "proteins": [
+          "chicken breast",
+          "lean beef",
+          "fish",
+          "eggs",
+          "greek yogurt",
+          "cottage cheese",
+          "whey protein"
+        ],
+        "carbs": [
+          "oats",
+          "rice",
+          "sweet potatoes",
+          "quinoa",
+          "fruits",
+          "whole grain pasta"
+        ],
+        "fats": [
+          "nuts",
+          "avocados",
+          "olive oil",
+          "fatty fish",
+          "nut butters"
+        ]
+      }
+    },
+    "athleticPerformance": {
+      "name": "Athletic Performance",
+      "description": "Fuel for optimal performance and recovery",
+      "sportSpecific": {
+        "endurance": {
+          "carbs": "5-10g per kg body weight",
+          "protein": "1.2-1.4g per kg",
+          "hydration": "Critical focus",
+          "timing": "Carb loading protocols"
+        },
+        "strength": {
+          "protein": "1.6-2.2g per kg",
+          "carbs": "4-7g per kg",
+          "creatine": "5g daily",
+          "timing": "Around training"
+        },
+        "teamSports": {
+          "balanced": "All macros important",
+          "hydration": "With electrolytes",
+          "recovery": "Focus between games"
+        }
+      },
+      "periodization": {
+        "offSeason": {
+          "focus": "Build and recover",
+          "calories": "Slight surplus",
+          "variety": "Wider food choices"
+        },
+        "preSeason": {
+          "focus": "Performance readiness",
+          "calories": "Maintenance",
+          "quality": "Nutrient density"
+        },
+        "inSeason": {
+          "focus": "Maintain and recover",
+          "calories": "Match expenditure",
+          "timing": "Critical for games"
+        }
+      },
+      "hydration": {
+        "daily": "0.5-1 oz per pound body weight",
+        "training": "16-24 oz per hour",
+        "electrolytes": "For sessions >60 minutes",
+        "recovery": "150% of fluid lost"
+      },
+      "supplements": {
+        "evidenceBased": [
+          "creatine monohydrate",
+          "caffeine",
+          "beta-alanine",
+          "citrulline malate",
+          "omega-3 fatty acids"
+        ]
+      }
+    },
+    "energyBoost": {
+      "name": "Sustained Energy",
+      "description": "Stable energy throughout the day",
+      "principles": {
+        "bloodSugar": {
+          "stable": "Avoid spikes and crashes",
+          "combining": "Protein + carbs + fat",
+          "glycemicIndex": "Choose low-moderate GI"
+        },
+        "mealFrequency": {
+          "regular": "Every 3-4 hours",
+          "balanced": "All macros present",
+          "portions": "Moderate sizes"
+        },
+        "nutrients": {
+          "bVitamins": "Energy metabolism",
+          "iron": "Oxygen transport",
+          "magnesium": "ATP production",
+          "coQ10": "Cellular energy"
+        }
+      },
+      "energizingFoods": [
+        "complex carbohydrates",
+        "lean proteins",
+        "nuts and seeds",
+        "green tea",
+        "dark chocolate",
+        "berries",
+        "whole grains",
+        "bananas",
+        "sweet potatoes"
+      ],
+      "avoidFatigue": {
+        "limit": [
+          "refined sugars",
+          "processed foods",
+          "excessive caffeine",
+          "alcohol",
+          "heavy meals"
+        ],
+        "timing": [
+          "no skipping meals",
+          "light dinner",
+          "strategic caffeine use"
+        ]
+      },
+      "sampleDay": {
+        "breakfast": "Oatmeal with nuts and berries",
+        "snack": "Apple with almond butter",
+        "lunch": "Quinoa bowl with chicken and vegetables",
+        "snack": "Greek yogurt with seeds",
+        "dinner": "Salmon with sweet potato and greens"
+      }
+    },
+    "brainHealth": {
+      "name": "Cognitive Enhancement",
+      "description": "Optimize brain function and mental clarity",
+      "nutrients": {
+        "omega3": {
+          "dha": "Brain structure",
+          "epa": "Mood regulation",
+          "sources": ["fatty fish", "walnuts", "flax seeds"]
+        },
+        "antioxidants": {
+          "types": ["vitamin E", "vitamin C", "polyphenols"],
+          "sources": ["berries", "dark chocolate", "green tea"]
+        },
+        "bVitamins": {
+          "importance": "Neurotransmitter production",
+          "sources": ["whole grains", "leafy greens", "eggs"]
+        }
+      },
+      "mindDiet": {
+        "combination": "Mediterranean + DASH",
+        "emphasize": [
+          "leafy greens daily",
+          "berries 2x week",
+          "nuts daily",
+          "fatty fish weekly",
+          "whole grains 3x daily"
+        ],
+        "limit": [
+          "red meat",
+          "butter",
+          "cheese",
+          "sweets",
+          "fried foods"
+        ]
+      },
+      "foods": {
+        "superfoods": [
+          "blueberries",
+          "salmon",
+          "walnuts",
+          "dark chocolate",
+          "avocados",
+          "eggs",
+          "green tea",
+          "turmeric"
+        ],
+        "avoid": [
+          "trans fats",
+          "excessive sugar",
+          "highly processed foods",
+          "excessive alcohol"
+        ]
+      }
+    },
+    "gutHealth": {
+      "name": "Digestive Wellness",
+      "description": "Optimize gut microbiome and digestion",
+      "principles": {
+        "diversity": "30+ different plants weekly",
+        "prebiotics": "Feed beneficial bacteria",
+        "probiotics": "Add beneficial bacteria",
+        "reduce": "Inflammatory foods"
+      },
+      "prebioticFoods": [
+        "garlic",
+        "onions",
+        "leeks",
+        "asparagus",
+        "bananas",
+        "oats",
+        "apples",
+        "flaxseeds",
+        "Jerusalem artichokes",
+        "chicory root"
+      ],
+      "probioticFoods": [
+        "yogurt",
+        "kefir",
+        "sauerkraut",
+        "kimchi",
+        "miso",
+        "tempeh",
+        "kombucha",
+        "pickles (fermented)"
+      ],
+      "protocol": {
+        "elimination": "Identify triggers",
+        "reintroduction": "Systematic testing",
+        "maintenance": "Long-term balance"
+      },
+      "avoid": [
+        "artificial sweeteners",
+        "excessive alcohol",
+        "processed foods",
+        "excessive antibiotics",
+        "chronic stress eating"
+      ]
+    },
+    "hormoneBalance": {
+      "name": "Hormonal Optimization",
+      "description": "Support endocrine system balance",
+      "women": {
+        "menstrual": {
+          "follicular": {
+            "days": "1-14",
+            "focus": "Light, fresh foods",
+            "increase": "Iron, B vitamins"
+          },
+          "luteal": {
+            "days": "15-28",
+            "focus": "Complex carbs, magnesium",
+            "manage": "PMS symptoms"
+          }
+        },
+        "menopause": {
+          "phytoestrogens": ["soy", "flax", "sesame"],
+          "calcium": "1200mg daily",
+          "vitaminD": "800-1000 IU"
+        },
+        "pcos": {
+          "lowGlycemic": "Manage insulin",
+          "antiInflammatory": "Reduce symptoms",
+          "inositol": "Supplement consideration"
+        }
+      },
+      "men": {
+        "testosterone": {
+          "support": [
+            "zinc",
+            "vitamin D",
+            "healthy fats",
+            "adequate calories"
+          ],
+          "avoid": [
+            "excessive alcohol",
+            "trans fats",
+            "excessive sugar"
+          ]
+        }
+      },
+      "thyroid": {
+        "support": [
+          "iodine",
+          "selenium",
+          "zinc",
+          "tyrosine"
+        ],
+        "caution": "Goitrogens if hypothyroid"
+      },
+      "cortisol": {
+        "lower": [
+          "ashwagandha",
+          "rhodiola",
+          "phosphatidylserine",
+          "magnesium"
+        ],
+        "lifestyle": [
+          "regular meals",
+          "adequate sleep",
+          "stress management"
+        ]
+      }
+    },
+    "longevity": {
+      "name": "Healthy Aging",
+      "description": "Promote longevity and vitality",
+      "blueZones": {
+        "principles": [
+          "plant-forward diet",
+          "beans daily",
+          "nuts handful daily",
+          "moderate calories",
+          "wine in moderation",
+          "family meals"
+        ]
+      },
+      "antiAging": {
+        "nutrients": {
+          "antioxidants": "Combat oxidative stress",
+          "omega3": "Reduce inflammation",
+          "polyphenols": "Cellular protection",
+          "fiber": "Gut and metabolic health"
+        },
+        "practices": {
+          "caloricRestriction": "10-30% reduction",
+          "intermittentFasting": "Autophagy promotion",
+          "proteinCycling": "mTOR regulation"
+        }
+      },
+      "foods": [
+        "colorful vegetables",
+        "berries",
+        "fatty fish",
+        "nuts and seeds",
+        "olive oil",
+        "green tea",
+        "dark chocolate",
+        "red wine (moderate)",
+        "legumes",
+        "whole grains"
+      ],
+      "avoid": [
+        "processed meats",
+        "excessive sugar",
+        "trans fats",
+        "excessive calories",
+        "charred foods"
+      ]
+    },
+    "immuneSupport": {
+      "name": "Immune System Boost",
+      "description": "Strengthen immune function",
+      "nutrients": {
+        "vitaminC": {
+          "dose": "500-1000mg daily",
+          "sources": ["citrus", "peppers", "broccoli", "strawberries"]
+        },
+        "vitaminD": {
+          "dose": "1000-4000 IU",
+          "sources": ["sunlight", "fatty fish", "fortified foods"]
+        },
+        "zinc": {
+          "dose": "8-11mg daily",
+          "sources": ["oysters", "beef", "pumpkin seeds"]
+        },
+        "selenium": {
+          "dose": "55mcg daily",
+          "sources": ["brazil nuts", "seafood", "eggs"]
+        }
+      },
+      "foods": {
+        "powerhouses": [
+          "garlic",
+          "ginger",
+          "turmeric",
+          "green tea",
+          "mushrooms",
+          "elderberry",
+          "echinacea",
+          "citrus fruits",
+          "bell peppers",
+          "spinach"
+        ],
+        "probiotics": "70% immune system in gut"
+      },
+      "lifestyle": {
+        "sleep": "7-9 hours",
+        "stress": "Management crucial",
+        "exercise": "Moderate regular",
+        "hygiene": "Proper food safety"
+      }
+    },
+    "detoxification": {
+      "name": "Natural Detox Support",
+      "description": "Support body's natural detox systems",
+      "organs": {
+        "liver": {
+          "phase1": ["B vitamins", "antioxidants"],
+          "phase2": ["sulfur compounds", "amino acids"],
+          "support": ["milk thistle", "turmeric", "green tea"]
+        },
+        "kidneys": {
+          "hydration": "Primary support",
+          "reduce": "Sodium, protein excess",
+          "support": ["cranberries", "parsley", "watermelon"]
+        },
+        "colon": {
+          "fiber": "25-35g daily",
+          "probiotics": "Healthy bacteria",
+          "hydration": "Prevent constipation"
+        },
+        "skin": {
+          "sweat": "Exercise regularly",
+          "hydration": "Flush toxins",
+          "antioxidants": "Protect cells"
+        }
+      },
+      "foods": {
+        "cleansing": [
+          "cruciferous vegetables",
+          "beets",
+          "artichokes",
+          "garlic",
+          "green tea",
+          "cilantro",
+          "chlorella",
+          "spirulina",
+          "lemon water",
+          "apple cider vinegar"
+        ],
+        "avoid": [
+          "alcohol",
+          "processed foods",
+          "excess sugar",
+          "artificial additives",
+          "excessive caffeine"
+        ]
+      },
+      "protocols": {
+        "gentle": "Whole foods focus",
+        "juice": "Short-term vegetable juices",
+        "elimination": "Remove then reintroduce"
+      }
+    },
+    "pregnancy": {
+      "name": "Prenatal Nutrition",
+      "description": "Optimal nutrition for pregnancy",
+      "keyNutrients": {
+        "folate": {
+          "dose": "600-800mcg daily",
+          "critical": "Neural tube development"
+        },
+        "iron": {
+          "dose": "27mg daily",
+          "importance": "Blood volume increase"
+        },
+        "calcium": {
+          "dose": "1000mg daily",
+          "role": "Bone development"
+        },
+        "dha": {
+          "dose": "200-300mg daily",
+          "role": "Brain development"
+        },
+        "choline": {
+          "dose": "450mg daily",
+          "role": "Brain and spinal cord"
+        }
+      },
+      "trimesters": {
+        "first": {
+          "calories": "No increase needed",
+          "focus": "Folate, B6 for nausea",
+          "avoid": "Raw fish, high mercury fish"
+        },
+        "second": {
+          "calories": "+340 per day",
+          "focus": "Protein, calcium, iron",
+          "growth": "Rapid fetal growth"
+        },
+        "third": {
+          "calories": "+450 per day",
+          "focus": "Omega-3s, protein",
+          "prepare": "Breastfeeding nutrition"
+        }
+      },
+      "avoid": [
+        "alcohol",
+        "raw/undercooked meat",
+        "raw eggs",
+        "unpasteurized dairy",
+        "high-mercury fish",
+        "raw sprouts",
+        "excessive caffeine",
+        "unwashed produce"
+      ]
+    },
+    "skinHealth": {
+      "name": "Clear, Healthy Skin",
+      "description": "Nutrition for skin appearance and health",
+      "nutrients": {
+        "vitaminA": {
+          "role": "Cell turnover",
+          "sources": ["sweet potatoes", "carrots", "spinach"]
+        },
+        "vitaminC": {
+          "role": "Collagen production",
+          "sources": ["citrus", "berries", "peppers"]
+        },
+        "vitaminE": {
+          "role": "Antioxidant protection",
+          "sources": ["nuts", "seeds", "avocados"]
+        },
+        "omega3": {
+          "role": "Reduce inflammation",
+          "sources": ["fatty fish", "walnuts", "flax"]
+        },
+        "zinc": {
+          "role": "Wound healing, oil control",
+          "sources": ["oysters", "beef", "pumpkin seeds"]
+        }
+      },
+      "hydration": {
+        "water": "8-10 glasses daily",
+        "foods": "Water-rich fruits and vegetables"
+      },
+      "problematicFoods": {
+        "acne": [
+          "high-glycemic foods",
+          "dairy (for some)",
+          "excessive omega-6 oils"
+        ],
+        "inflammation": [
+          "sugar",
+          "processed foods",
+          "trans fats"
+        ]
+      },
+      "supportive": [
+        "green tea",
+        "tomatoes",
+        "dark chocolate",
+        "red grapes",
+        "fatty fish",
+        "bell peppers",
+        "broccoli",
+        "bone broth"
+      ]
+    },
+    "stressManagement": {
+      "name": "Stress Reduction Diet",
+      "description": "Foods to manage stress response",
+      "nutrients": {
+        "magnesium": {
+          "role": "Relaxation mineral",
+          "sources": ["dark chocolate", "spinach", "pumpkin seeds"]
+        },
+        "bVitamins": {
+          "role": "Stress response",
+          "sources": ["whole grains", "meat", "eggs"]
+        },
+        "lTheanine": {
+          "role": "Calm alertness",
+          "sources": ["green tea", "black tea"]
+        },
+        "tryptophan": {
+          "role": "Serotonin precursor",
+          "sources": ["turkey", "eggs", "cheese"]
+        }
+      },
+      "adaptogenic": [
+        "ashwagandha",
+        "rhodiola",
+        "holy basil",
+        "ginseng",
+        "maca",
+        "reishi mushrooms"
+      ],
+      "foods": {
+        "calming": [
+          "chamomile tea",
+          "dark chocolate",
+          "warm milk",
+          "oatmeal",
+          "bananas",
+          "fatty fish",
+          "nuts",
+          "seeds"
+        ],
+        "avoid": [
+          "excessive caffeine",
+          "alcohol",
+          "sugar spikes",
+          "processed foods"
+        ]
+      },
+      "timing": {
+        "regular": "Consistent meal times",
+        "breakfast": "Don't skip",
+        "evening": "Light, early dinner"
+      }
+    }
+  },
+  "implementation": {
+    "assessment": {
+      "current": "Evaluate starting point",
+      "goals": "Define specific objectives",
+      "timeline": "Realistic expectations"
+    },
+    "planning": {
+      "gradual": "Small sustainable changes",
+      "tracking": "Food diary or app",
+      "mealPrep": "Plan and prepare ahead"
+    },
+    "monitoring": {
+      "progress": "Regular check-ins",
+      "adjust": "Modify as needed",
+      "biomarkers": "Blood work, measurements"
+    },
+    "support": {
+      "professional": "Dietitian consultation",
+      "community": "Support groups",
+      "education": "Continuous learning"
+    }
+  }
+}

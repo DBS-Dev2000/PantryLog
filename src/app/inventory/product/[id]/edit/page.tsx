@@ -505,15 +505,20 @@ export default function EditProductPage() {
             </Box>
 
             {/* Brand and Category - side by side */}
-            <Box display="flex" gap={2} mb={2}>
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              mb={2}
+            >
               <TextField
                 label="Brand"
                 fullWidth
                 value={product.brand || ''}
                 onChange={(e) => setProduct({ ...product, brand: e.target.value })}
-                sx={{ flex: 0.33 }}
+                sx={{ flex: { xs: '1 1 100%', sm: '0 0 33%' } }}
               />
-              <FormControl fullWidth sx={{ flex: 0.67 }}>
+              <FormControl fullWidth sx={{ flex: { xs: '1 1 100%', sm: '0 0 67%' } }}>
                 <InputLabel>Category</InputLabel>
                 <Select
                   value={product.category || ''}
@@ -531,14 +536,19 @@ export default function EditProductPage() {
             </Box>
 
             {/* UPC and Shelf Life - side by side */}
-            <Box display="flex" gap={2} mb={2}>
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              mb={2}
+            >
               <TextField
                 label="UPC/Barcode"
                 fullWidth
                 value={product.upc || ''}
                 onChange={(e) => setProduct({ ...product, upc: e.target.value })}
                 helperText="Leave empty for custom items"
-                sx={{ flex: 1 }}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
               />
               <TextField
                 label="Default Shelf Life (days)"
@@ -550,12 +560,17 @@ export default function EditProductPage() {
                   default_shelf_life_days: e.target.value ? parseInt(e.target.value) : undefined
                 })}
                 helperText="Default expiration days for new inventory"
-                sx={{ flex: 1 }}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
               />
             </Box>
 
             {/* Weight and Size - side by side */}
-            <Box display="flex" gap={2} mb={2}>
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'row' }}
+              gap={2}
+              mb={2}
+            >
               <TextField
                 label="Weight"
                 fullWidth
@@ -568,7 +583,7 @@ export default function EditProductPage() {
                   }
                 })}
                 placeholder="e.g., 1.00lb, 500g"
-                sx={{ flex: 1 }}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
               />
               <TextField
                 label="Size"
@@ -582,7 +597,7 @@ export default function EditProductPage() {
                   }
                 })}
                 placeholder="e.g., 1 Liter, 12 oz"
-                sx={{ flex: 1 }}
+                sx={{ flex: { xs: '1 1 100%', sm: 1 } }}
               />
             </Box>
 

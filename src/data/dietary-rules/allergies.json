@@ -1,0 +1,934 @@
+{
+  "version": "1.0.0",
+  "category": "Food Allergies and Intolerances",
+  "allergies": {
+    "milk": {
+      "name": "Milk/Dairy Allergy",
+      "severity": "varies",
+      "prevalence": "2-3% children, 0.5-1% adults",
+      "avoid": [
+        "milk (all types: whole, skim, 2%, lactose-free)",
+        "butter",
+        "buttermilk",
+        "cheese (all types)",
+        "cream (heavy, light, half-and-half)",
+        "cottage cheese",
+        "custard",
+        "ghee (clarified butter)",
+        "ice cream",
+        "pudding",
+        "sour cream",
+        "yogurt",
+        "whey",
+        "casein",
+        "lactalbumin",
+        "lactoglobulin",
+        "lactulose",
+        "milk powder",
+        "milk solids",
+        "nougat",
+        "curds"
+      ],
+      "hiddenSources": [
+        "baked goods",
+        "chocolate",
+        "margarine",
+        "processed meats",
+        "salad dressings",
+        "artificial butter flavor",
+        "caramel candies",
+        "lactic acid starter culture",
+        "non-dairy products with casein",
+        "medication fillers",
+        "protein powders",
+        "sherbet"
+      ],
+      "substitutes": [
+        "almond milk",
+        "soy milk",
+        "oat milk",
+        "coconut milk",
+        "rice milk",
+        "hemp milk",
+        "cashew milk",
+        "vegan cheese",
+        "coconut yogurt",
+        "nutritional yeast (for cheese flavor)",
+        "coconut cream",
+        "dairy-free butter alternatives"
+      ],
+      "crossContamination": [
+        "shared fryers",
+        "deli slicers",
+        "grills",
+        "cutting boards"
+      ],
+      "labelTerms": [
+        "contains milk",
+        "may contain milk",
+        "processed in facility with milk",
+        "dairy",
+        "lactose",
+        "milk derivatives"
+      ]
+    },
+    "eggs": {
+      "name": "Egg Allergy",
+      "severity": "varies",
+      "prevalence": "2% children, 0.3% adults",
+      "avoid": [
+        "eggs (all forms)",
+        "egg whites",
+        "egg yolks",
+        "dried eggs",
+        "egg powder",
+        "albumin",
+        "globulin",
+        "lecithin (egg)",
+        "livetin",
+        "lysozyme",
+        "ovalbumin",
+        "ovoglobulin",
+        "ovomucin",
+        "ovomucoid",
+        "ovovitellin",
+        "vitellin",
+        "mayonnaise",
+        "meringue",
+        "surimi"
+      ],
+      "hiddenSources": [
+        "baked goods",
+        "breaded items",
+        "caesar dressing",
+        "cream fillings",
+        "egg noodles",
+        "eggnog",
+        "marshmallows",
+        "marzipan",
+        "pasta",
+        "pretzels",
+        "foam coffee drinks",
+        "wine (egg whites used in processing)",
+        "vaccines (some)",
+        "shiny baked goods (egg wash)"
+      ],
+      "substitutes": [
+        "flax eggs (1 tbsp ground flax + 3 tbsp water)",
+        "chia eggs (1 tbsp chia + 3 tbsp water)",
+        "commercial egg replacers",
+        "applesauce (for moisture)",
+        "mashed banana (for binding)",
+        "silken tofu",
+        "aquafaba (chickpea liquid)",
+        "vinegar + baking soda (for leavening)",
+        "buttermilk substitute",
+        "yogurt (if tolerated)"
+      ],
+      "crossContamination": [
+        "shared equipment in bakeries",
+        "griddles",
+        "fryers",
+        "utensils"
+      ]
+    },
+    "peanuts": {
+      "name": "Peanut Allergy",
+      "severity": "often severe",
+      "prevalence": "1-2% children and adults",
+      "avoid": [
+        "peanuts (all forms)",
+        "peanut butter",
+        "peanut oil (cold-pressed)",
+        "peanut flour",
+        "peanut protein",
+        "mixed nuts",
+        "artificial nuts",
+        "beer nuts",
+        "ground nuts",
+        "monkey nuts",
+        "nut meat",
+        "arachis oil",
+        "mandelonas"
+      ],
+      "hiddenSources": [
+        "african dishes",
+        "asian cuisine",
+        "baked goods",
+        "candy",
+        "chili",
+        "chocolate",
+        "crumb toppings",
+        "egg rolls",
+        "enchilada sauce",
+        "glazes",
+        "marinades",
+        "mole sauce",
+        "nougat",
+        "salad dressings",
+        "pet food",
+        "sunflower seeds (may be processed with peanuts)"
+      ],
+      "substitutes": [
+        "sunflower seed butter",
+        "soy nut butter",
+        "almond butter (if tree nuts tolerated)",
+        "tahini",
+        "wow butter",
+        "pumpkin seed butter",
+        "coconut butter"
+      ],
+      "crossContamination": [
+        "bulk bins",
+        "ice cream shops",
+        "bakeries",
+        "candy factories",
+        "asian restaurants"
+      ],
+      "highRisk": true,
+      "anaphylaxisRisk": "high"
+    },
+    "treeNuts": {
+      "name": "Tree Nut Allergy",
+      "severity": "often severe",
+      "prevalence": "0.5-1.5% population",
+      "nuts": [
+        "almonds",
+        "brazil nuts",
+        "cashews",
+        "chestnuts",
+        "hazelnuts (filberts)",
+        "hickory nuts",
+        "macadamia nuts",
+        "pecans",
+        "pine nuts (pignoli)",
+        "pistachios",
+        "walnuts",
+        "coconut (FDA classifies as tree nut)",
+        "shea nuts",
+        "beechnuts",
+        "gingko nuts",
+        "lychee nuts"
+      ],
+      "avoid": [
+        "nut butters",
+        "nut oils",
+        "nut extracts",
+        "nut flours",
+        "nut milks",
+        "marzipan",
+        "nougat",
+        "gianduja",
+        "pralines",
+        "nut liqueurs (amaretto, frangelico)",
+        "mortadella",
+        "natural extracts"
+      ],
+      "hiddenSources": [
+        "barbecue sauces",
+        "cereals",
+        "crackers",
+        "energy bars",
+        "flavored coffee",
+        "frozen desserts",
+        "marinades",
+        "salad dressings",
+        "vegetarian dishes",
+        "pesto",
+        "honey (may contain nut pollen)"
+      ],
+      "crossReactivity": "50% react to multiple tree nuts",
+      "peanutCrossReactivity": "25-40% also allergic to peanuts"
+    },
+    "wheat": {
+      "name": "Wheat Allergy",
+      "severity": "varies",
+      "prevalence": "0.4% children, 0.5% adults",
+      "avoid": [
+        "wheat (all varieties)",
+        "bread",
+        "flour (all-purpose, bread, cake, pastry)",
+        "pasta",
+        "couscous",
+        "crackers",
+        "bulgur",
+        "durum",
+        "einkorn",
+        "emmer",
+        "farro",
+        "kamut",
+        "semolina",
+        "spelt",
+        "triticale",
+        "wheat bran",
+        "wheat germ",
+        "wheat starch",
+        "bran",
+        "cereal extract",
+        "gluten",
+        "graham",
+        "malt",
+        "matzo",
+        "seitan",
+        "vital wheat gluten"
+      ],
+      "hiddenSources": [
+        "beer",
+        "bread crumbs",
+        "candy",
+        "french fries (coating)",
+        "gravies",
+        "hot dogs",
+        "ice cream",
+        "imitation crab",
+        "play dough",
+        "processed meats",
+        "salad dressings",
+        "sauces",
+        "seasonings",
+        "soups",
+        "soy sauce",
+        "surimi"
+      ],
+      "substitutes": [
+        "rice flour",
+        "corn flour",
+        "potato starch",
+        "tapioca flour",
+        "almond flour",
+        "coconut flour",
+        "quinoa flour",
+        "oat flour (if certified wheat-free)",
+        "sorghum flour",
+        "chickpea flour",
+        "amaranth",
+        "buckwheat (despite name, wheat-free)",
+        "millet",
+        "teff"
+      ],
+      "differenceFromCeliac": "Wheat allergy is immune response to wheat proteins, celiac is autoimmune response to gluten"
+    },
+    "soy": {
+      "name": "Soy Allergy",
+      "severity": "usually mild to moderate",
+      "prevalence": "0.4% children, 0.3% adults",
+      "avoid": [
+        "soybeans",
+        "soy sauce",
+        "soy milk",
+        "soy flour",
+        "soy protein",
+        "tofu",
+        "tempeh",
+        "miso",
+        "natto",
+        "edamame",
+        "soy lecithin",
+        "soybean oil (if allergic to protein)",
+        "tamari",
+        "textured vegetable protein (TVP)",
+        "hydrolyzed soy protein",
+        "soy albumin",
+        "soy fiber",
+        "soy grits",
+        "soy nuts",
+        "soy sprouts",
+        "shoyu"
+      ],
+      "hiddenSources": [
+        "asian cuisine",
+        "baked goods",
+        "canned broths",
+        "canned tuna",
+        "cereals",
+        "cookies",
+        "crackers",
+        "energy bars",
+        "infant formulas",
+        "low-fat peanut butter",
+        "processed meats",
+        "sauces",
+        "soups",
+        "vegetable oil",
+        "vitamins"
+      ],
+      "substitutes": [
+        "rice milk",
+        "almond milk",
+        "oat milk",
+        "coconut aminos (for soy sauce)",
+        "chickpea miso",
+        "coconut milk yogurt",
+        "hemp protein",
+        "pea protein"
+      ],
+      "note": "Highly refined soybean oil usually safe for most soy-allergic individuals"
+    },
+    "fish": {
+      "name": "Fish Allergy",
+      "severity": "can be severe",
+      "prevalence": "0.5% children, 0.2% adults",
+      "commonTriggers": [
+        "salmon",
+        "tuna",
+        "halibut",
+        "cod",
+        "mackerel",
+        "sea bass",
+        "swordfish",
+        "sole",
+        "snapper",
+        "tilapia",
+        "trout",
+        "haddock",
+        "anchovies",
+        "sardines",
+        "catfish",
+        "mahi mahi",
+        "grouper",
+        "perch",
+        "pike",
+        "pollock"
+      ],
+      "avoid": [
+        "fish sauce",
+        "fish oil",
+        "fish gelatin",
+        "fish stock",
+        "caviar",
+        "roe",
+        "surimi",
+        "worcestershire sauce",
+        "caesar dressing",
+        "bouillabaisse",
+        "imitation fish",
+        "omega-3 supplements (fish-based)"
+      ],
+      "hiddenSources": [
+        "barbecue sauce",
+        "salad dressings",
+        "worcestershire sauce",
+        "pizza (anchovies)",
+        "gelatin",
+        "kosher gelatin",
+        "marshmallows",
+        "nutritional supplements"
+      ],
+      "crossReactivity": "50% allergic to multiple fish species",
+      "shellfishRelation": "Being allergic to fish doesn't mean shellfish allergy"
+    },
+    "shellfish": {
+      "name": "Shellfish Allergy",
+      "severity": "often severe",
+      "prevalence": "2% adults, 0.5% children",
+      "crustaceans": [
+        "crab",
+        "lobster",
+        "shrimp",
+        "prawns",
+        "crayfish",
+        "langostino",
+        "barnacles",
+        "krill"
+      ],
+      "mollusks": [
+        "clams",
+        "mussels",
+        "oysters",
+        "scallops",
+        "squid (calamari)",
+        "octopus",
+        "snails (escargot)",
+        "abalone",
+        "cockles",
+        "cuttlefish",
+        "limpets",
+        "periwinkles",
+        "sea cucumber",
+        "sea urchin",
+        "whelks"
+      ],
+      "avoid": [
+        "fish sauce (may contain shellfish)",
+        "surimi",
+        "bouillabaisse",
+        "cioppino",
+        "paella",
+        "jambalaya",
+        "gumbo",
+        "bisques",
+        "glucosamine",
+        "chitin",
+        "chitosan"
+      ],
+      "hiddenSources": [
+        "asian dishes",
+        "cajun/creole dishes",
+        "worcestershire sauce",
+        "salad dressings",
+        "sushi restaurants",
+        "seafood flavoring",
+        "supplements",
+        "pet food"
+      ],
+      "crossContamination": "High risk in seafood restaurants",
+      "mostCommon": "Most common adult-onset food allergy"
+    },
+    "sesame": {
+      "name": "Sesame Allergy",
+      "severity": "can be severe",
+      "prevalence": "0.1-0.2% population",
+      "avoid": [
+        "sesame seeds",
+        "sesame oil",
+        "tahini",
+        "sesame flour",
+        "sesame paste",
+        "sesame salt (gomashio)",
+        "halvah",
+        "hummus",
+        "baba ganoush"
+      ],
+      "hiddenSources": [
+        "bread (seeds, flour)",
+        "bagels",
+        "crackers",
+        "breadsticks",
+        "hamburger buns",
+        "asian dishes",
+        "middle eastern foods",
+        "protein bars",
+        "sushi",
+        "tempeh",
+        "turkish bread",
+        "some cosmetics"
+      ],
+      "labelingNote": "9th major allergen in US (as of 2021)",
+      "substitutes": [
+        "sunflower seeds",
+        "pumpkin seeds",
+        "sunflower seed butter"
+      ]
+    },
+    "lactose": {
+      "name": "Lactose Intolerance",
+      "type": "intolerance not allergy",
+      "severity": "digestive discomfort",
+      "prevalence": "65% global population",
+      "mechanism": "Lack of lactase enzyme",
+      "avoid": [
+        "milk",
+        "ice cream",
+        "soft cheeses",
+        "cream",
+        "butter (small amounts usually ok)",
+        "milk chocolate",
+        "cream soups",
+        "cream sauces"
+      ],
+      "betterTolerated": [
+        "hard aged cheeses (cheddar, parmesan)",
+        "yogurt with live cultures",
+        "kefir",
+        "lactose-free dairy products",
+        "ghee"
+      ],
+      "management": [
+        "lactase enzyme supplements",
+        "gradual introduction",
+        "consume with other foods",
+        "smaller portions"
+      ],
+      "ethnic Prevalence": {
+        "eastAsian": "90-95%",
+        "african": "65-75%",
+        "hispanic": "50-65%",
+        "caucasian": "10-15%"
+      }
+    },
+    "gluten": {
+      "name": "Celiac Disease / Gluten Sensitivity",
+      "types": {
+        "celiac": "Autoimmune disorder",
+        "nonCeliacSensitivity": "Immune response without autoimmune",
+        "wheatAllergy": "True allergic response"
+      },
+      "prevalence": "1% celiac, 6% sensitivity",
+      "avoid": [
+        "wheat",
+        "barley",
+        "rye",
+        "triticale",
+        "malt",
+        "brewers yeast",
+        "wheat starch",
+        "modified food starch (if from wheat)",
+        "maltodextrin (if from wheat)"
+      ],
+      "hiddenSources": [
+        "communion wafers",
+        "cosmetics",
+        "envelope glue",
+        "medications",
+        "play dough",
+        "soy sauce",
+        "salad dressings",
+        "soup bases",
+        "beer",
+        "ale",
+        "processed meats",
+        "imitation seafood",
+        "self-basting poultry",
+        "seasoning mixes",
+        "vitamins"
+      ],
+      "oatControversy": "Oats naturally gluten-free but often contaminated",
+      "certifiedGlutenFree": "Less than 20 ppm gluten",
+      "crossContamination": [
+        "toasters",
+        "cutting boards",
+        "colanders",
+        "flour sifters",
+        "deep fryers"
+      ],
+      "complications": [
+        "malnutrition",
+        "osteoporosis",
+        "infertility",
+        "neurological issues",
+        "increased cancer risk"
+      ]
+    },
+    "corn": {
+      "name": "Corn Allergy",
+      "severity": "varies",
+      "prevalence": "rare but increasing",
+      "avoid": [
+        "corn (all forms)",
+        "corn syrup",
+        "high fructose corn syrup",
+        "corn starch",
+        "corn flour",
+        "corn meal",
+        "corn oil",
+        "popcorn",
+        "hominy",
+        "grits",
+        "polenta",
+        "maize",
+        "dextrose",
+        "dextrin",
+        "maltodextrin",
+        "sorbitol",
+        "mannitol"
+      ],
+      "hiddenSources": [
+        "baking powder",
+        "vanilla extract",
+        "confectioners sugar",
+        "medications (fillers)",
+        "adhesives",
+        "paper products",
+        "plastic packaging",
+        "vitamins",
+        "toothpaste",
+        "IV fluids"
+      ],
+      "challengingAspects": "Corn derivatives in most processed foods",
+      "substitutes": [
+        "potato starch",
+        "tapioca starch",
+        "arrowroot",
+        "rice products"
+      ]
+    },
+    "sulfites": {
+      "name": "Sulfite Sensitivity",
+      "type": "chemical sensitivity",
+      "prevalence": "1% population, higher in asthmatics",
+      "symptoms": "respiratory, skin, gastrointestinal",
+      "avoid": [
+        "wine",
+        "dried fruits",
+        "processed potatoes",
+        "grape juice",
+        "bottled lemon/lime juice",
+        "shrimp",
+        "guacamole (commercial)",
+        "maraschino cherries",
+        "pickled foods",
+        "vinegar"
+      ],
+      "labelTerms": [
+        "sulfur dioxide",
+        "sodium sulfite",
+        "sodium bisulfite",
+        "sodium metabisulfite",
+        "potassium bisulfite",
+        "potassium metabisulfite"
+      ],
+      "naturalOccurrence": "All wines contain some natural sulfites",
+      "threshold": "Must be labeled if >10ppm"
+    },
+    "histamine": {
+      "name": "Histamine Intolerance",
+      "type": "enzyme deficiency",
+      "mechanism": "Reduced DAO enzyme activity",
+      "prevalence": "1-3% population",
+      "highHistamineFoods": [
+        "aged cheeses",
+        "fermented foods",
+        "cured meats",
+        "smoked fish",
+        "shellfish",
+        "spinach",
+        "tomatoes",
+        "eggplant",
+        "avocados",
+        "strawberries",
+        "citrus fruits",
+        "chocolate",
+        "wine",
+        "beer",
+        "vinegar"
+      ],
+      "histamineReleasers": [
+        "alcohol",
+        "bananas",
+        "chocolate",
+        "eggs",
+        "fish",
+        "milk",
+        "papayas",
+        "pineapple",
+        "shellfish",
+        "strawberries",
+        "tomatoes"
+      ],
+      "daoBlockers": [
+        "alcohol",
+        "black tea",
+        "energy drinks",
+        "green tea",
+        "mate tea"
+      ],
+      "symptoms": [
+        "headaches",
+        "flushing",
+        "hives",
+        "nasal congestion",
+        "digestive issues"
+      ]
+    },
+    "fodmap": {
+      "name": "FODMAP Intolerance",
+      "type": "carbohydrate malabsorption",
+      "definition": "Fermentable Oligosaccharides, Disaccharides, Monosaccharides, and Polyols",
+      "commonInConditions": ["IBS", "SIBO"],
+      "highFodmapFoods": {
+        "oligosaccharides": [
+          "wheat",
+          "rye",
+          "onions",
+          "garlic",
+          "legumes",
+          "artichokes",
+          "chicory"
+        ],
+        "disaccharides": [
+          "milk",
+          "yogurt",
+          "soft cheese",
+          "ice cream"
+        ],
+        "monosaccharides": [
+          "apples",
+          "pears",
+          "mangoes",
+          "honey",
+          "high fructose corn syrup"
+        ],
+        "polyols": [
+          "stone fruits",
+          "mushrooms",
+          "cauliflower",
+          "sugar-free gum",
+          "artificial sweeteners"
+        ]
+      },
+      "lowFodmapAlternatives": [
+        "rice",
+        "quinoa",
+        "potatoes",
+        "carrots",
+        "spinach",
+        "strawberries",
+        "oranges",
+        "hard cheeses",
+        "lactose-free dairy"
+      ],
+      "protocol": "Elimination followed by systematic reintroduction"
+    },
+    "nightshades": {
+      "name": "Nightshade Sensitivity",
+      "type": "alkaloid sensitivity",
+      "prevalence": "uncommon but notable in autoimmune conditions",
+      "foods": [
+        "tomatoes",
+        "potatoes (not sweet potatoes)",
+        "eggplant",
+        "bell peppers",
+        "hot peppers",
+        "paprika",
+        "cayenne",
+        "chili powder",
+        "goji berries",
+        "ashwagandha",
+        "tobacco"
+      ],
+      "conditions": [
+        "arthritis",
+        "inflammatory bowel disease",
+        "autoimmune conditions"
+      ],
+      "substitutes": [
+        "sweet potatoes",
+        "cauliflower",
+        "mushrooms",
+        "beets",
+        "carrots",
+        "black pepper",
+        "white pepper",
+        "ginger",
+        "turmeric"
+      ]
+    },
+    "alpha-gal": {
+      "name": "Alpha-gal Syndrome",
+      "type": "tick-induced mammalian meat allergy",
+      "trigger": "Lone star tick bite",
+      "uniqueFeature": "Delayed reaction (3-6 hours)",
+      "avoid": [
+        "beef",
+        "pork",
+        "lamb",
+        "venison",
+        "rabbit",
+        "bison",
+        "buffalo",
+        "goat",
+        "whale",
+        "seal",
+        "mammalian organs",
+        "mammalian blood products",
+        "gelatin",
+        "dairy (some cases)",
+        "carrageenan",
+        "mammalian-based broths"
+      ],
+      "safe": [
+        "poultry",
+        "fish",
+        "shellfish",
+        "eggs",
+        "plant-based foods"
+      ],
+      "medications": "Some contain mammalian products",
+      "geographical": "Primarily southeastern United States"
+    },
+    "oral-allergy": {
+      "name": "Oral Allergy Syndrome (Pollen-Food Syndrome)",
+      "mechanism": "Cross-reactivity with pollen proteins",
+      "symptoms": "Itching/swelling of mouth, lips, throat",
+      "birchPollen": {
+        "triggers": [
+          "apples",
+          "pears",
+          "peaches",
+          "plums",
+          "cherries",
+          "apricots",
+          "almonds",
+          "hazelnuts",
+          "carrots",
+          "celery",
+          "potatoes",
+          "kiwi"
+        ]
+      },
+      "grassPollen": {
+        "triggers": [
+          "melons",
+          "oranges",
+          "tomatoes",
+          "potatoes",
+          "peanuts"
+        ]
+      },
+      "ragweedPollen": {
+        "triggers": [
+          "melons",
+          "zucchini",
+          "cucumber",
+          "bananas",
+          "sunflower seeds"
+        ]
+      },
+      "management": [
+        "cooking often denatures proteins",
+        "peeling may help",
+        "processed forms usually safe",
+        "antihistamines for symptoms"
+      ]
+    }
+  },
+  "crossContaminationPrevention": {
+    "kitchen": [
+      "separate cutting boards",
+      "separate cookware for severe allergies",
+      "clean surfaces thoroughly",
+      "wash hands between preparations",
+      "use separate oils for frying",
+      "label allergen-free items clearly",
+      "store allergen-free foods above allergenic foods"
+    ],
+    "shopping": [
+      "read labels every time",
+      "check for formula changes",
+      "avoid bulk bins",
+      "be cautious with deli counters",
+      "ask about preparation methods",
+      "check for advisory labels"
+    ],
+    "dining": [
+      "inform restaurant of allergies",
+      "ask about ingredients and preparation",
+      "avoid buffets",
+      "carry emergency medications",
+      "have allergy card in local language when traveling"
+    ]
+  },
+  "emergencyProtocol": {
+    "mild": [
+      "antihistamines",
+      "monitor symptoms",
+      "avoid further exposure"
+    ],
+    "severe": [
+      "epinephrine auto-injector",
+      "call 911",
+      "second dose after 5-15 minutes if needed",
+      "lie flat with legs elevated",
+      "emergency room follow-up required"
+    ],
+    "anaphylaxisSigns": [
+      "difficulty breathing",
+      "swelling of face/throat",
+      "rapid pulse",
+      "dizziness",
+      "loss of consciousness",
+      "severe whole-body rash",
+      "feeling of impending doom"
+    ]
+  }
+}
