@@ -15,7 +15,8 @@
       "WebFetch(domain:bite.prolongedpantry.com)",
       "Bash(git push:*)",
       "Bash(git add:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(claude mcp)"
     ],
     "deny": [],
     "ask": []

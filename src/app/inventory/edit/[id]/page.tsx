@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Container,
   Typography,
@@ -36,7 +36,9 @@ import {
   Delete as DeleteIcon,
   CheckCircle as CheckCircleIcon,
   MoveUp as MoveIcon,
-  LocationOn as LocationIcon
+  LocationOn as LocationIcon,
+  CameraAlt as CameraIcon,
+  CloudUpload as CloudUploadIcon
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -132,6 +134,13 @@ export default function EditInventoryItemPage() {
   const [customProductName, setCustomProductName] = useState('')
   const [editingProductName, setEditingProductName] = useState(false)
 
+  // Image handling states
+  const [productImageUrl, setProductImageUrl] = useState('')
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imageUrlInput, setImageUrlInput] = useState('')
+  const [showImageOptions, setShowImageOptions] = useState(false)
+  const imageUploadRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -166,6 +175,9 @@ export default function EditInventoryItemPage() {
       setItem(itemData as InventoryItemDetail)
       setOriginalItem(itemData as InventoryItemDetail) // Keep original for comparison
       setCustomProductName(itemData.products?.name || '')
+      setProductImageUrl(itemData.products?.image_url || '')
+      setImageUrlInput(itemData.products?.image_url || '')
+      setShowImageOptions(!itemData.products?.image_url)
       console.log('📦 Loaded item for editing:', itemData.products?.name)
 
       // Load available storage locations for moving
@@ -416,6 +428,121 @@ export default function EditInventoryItemPage() {
     }
   }
 
+  // Handle image upload
+  const handleImageUpload = async (file: File) => {
+    if (!file || !item) return
+
+    setUploadingImage(true)
+    setError(null)
+
+    try {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+      if (!validTypes.includes(file.type)) {
+        throw new Error('Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.')
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('File size must be less than 5MB')
+      }
+
+      const fileExt = file.name.split('.').pop()
+      const fileName = `product-${item.products.id}-${Date.now()}.${fileExt}`
+      const filePath = `product-images/${fileName}`
+
+      console.log('📤 Uploading product image:', filePath)
+
+      // Upload to Supabase storage
+      const { error: uploadError, data } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError)
+        if (uploadError.message?.includes('Bucket not found')) {
+          // Try to create the bucket
+          const { error: bucketError } = await supabase.storage.createBucket('product-images', {
+            public: true
+          })
+
+          if (!bucketError || bucketError.message?.includes('already exists')) {
+            // Retry upload
+            const { error: retryError, data: retryData } = await supabase.storage
+              .from('product-images')
+              .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+              })
+
+            if (retryError) throw retryError
+          } else {
+            throw new Error('Storage bucket not configured. Please contact support.')
+          }
+        } else {
+          throw uploadError
+        }
+      }
+
+      console.log('✅ Upload successful:', data)
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath)
+
+      await updateProductImage(publicUrl)
+
+    } catch (err: any) {
+      console.error('Error uploading image:', err)
+      setError(err.message || 'Failed to upload image')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  // Handle image URL change
+  const handleImageUrlChange = async (url: string) => {
+    setImageUrlInput(url)
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      await updateProductImage(url)
+    }
+  }
+
+  // Update product with new image
+  const updateProductImage = async (imageUrl: string) => {
+    if (!item) return
+
+    try {
+      // Update the product image
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ image_url: imageUrl })
+        .eq('id', item.products.id)
+
+      if (updateError) throw updateError
+
+      // Update local state
+      setProductImageUrl(imageUrl)
+      setItem({
+        ...item,
+        products: {
+          ...item.products,
+          image_url: imageUrl
+        }
+      })
+
+      setShowImageOptions(false)
+      console.log('✅ Product image updated')
+    } catch (err: any) {
+      console.error('Failed to update product image:', err)
+      setError('Failed to update product image')
+    }
+  }
+
   if (!user || loading) {
     return (
       <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center' }}>
@@ -491,12 +618,34 @@ export default function EditInventoryItemPage() {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Box display="flex" alignItems="center" gap={2}>
-            {item.products?.image_url && (
+            {productImageUrl ? (
               <Avatar
-                src={item.products.image_url}
+                src={productImageUrl}
                 sx={{ width: 60, height: 60 }}
                 variant="rounded"
               />
+            ) : (
+              <Box
+                sx={{
+                  width: 60,
+                  height: 60,
+                  border: '2px dashed',
+                  borderColor: 'primary.main',
+                  borderRadius: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  bgcolor: 'action.hover',
+                  '&:hover': {
+                    bgcolor: 'action.selected'
+                  }
+                }}
+                onClick={() => setShowImageOptions(true)}
+                title="Click to add product image"
+              >
+                <CameraIcon color="primary" />
+              </Box>
             )}
             <Box sx={{ flexGrow: 1 }}>
               {editingProductName ? (
@@ -563,7 +712,102 @@ export default function EditInventoryItemPage() {
             >
               Delete Food Item
             </Button>
+            <Button
+              variant="outlined"
+              color="info"
+              size="small"
+              startIcon={<CameraIcon />}
+              onClick={() => setShowImageOptions(!showImageOptions)}
+            >
+              {productImageUrl ? 'Change Image' : 'Add Image'}
+            </Button>
           </Box>
+
+          {/* Image Options Section */}
+          {showImageOptions && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Add Product Image
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<CloudUploadIcon />}
+                    onClick={() => imageUploadRef.current?.click()}
+                    disabled={uploadingImage}
+                    fullWidth
+                  >
+                    {uploadingImage ? 'Uploading...' : 'Upload Image'}
+                  </Button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    ref={imageUploadRef}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleImageUpload(file)
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Or paste image URL"
+                    value={imageUrlInput}
+                    onChange={(e) => setImageUrlInput(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    size="small"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleImageUrlChange(imageUrlInput)
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Box display="flex" gap={1}>
+                    <Button
+                      size="small"
+                      onClick={() => handleImageUrlChange(imageUrlInput)}
+                      disabled={!imageUrlInput || uploadingImage}
+                    >
+                      Save URL
+                    </Button>
+                    <Button
+                      size="small"
+                      color="secondary"
+                      onClick={() => {
+                        setShowImageOptions(false)
+                        setImageUrlInput(productImageUrl)
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+
+          {/* Image Preview if just added */}
+          {productImageUrl && showImageOptions && (
+            <Box sx={{ mt: 1, textAlign: 'center' }}>
+              <img
+                src={productImageUrl}
+                alt="Product"
+                style={{
+                  maxWidth: '200px',
+                  maxHeight: '200px',
+                  borderRadius: '8px'
+                }}
+              />
+              <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                Image added successfully!
+              </Typography>
+            </Box>
+          )}
         </CardContent>
       </Card>
 

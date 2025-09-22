@@ -102,8 +102,6 @@ export default function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('')
-  const [editingProduct, setEditingProduct] = useState(false)
-  const [editedProduct, setEditedProduct] = useState<ProductDetail | null>(null)
   const [productHistory, setProductHistory] = useState<any[]>([])
   const [expandedAccordions, setExpandedAccordions] = useState<{
     details: boolean
@@ -371,14 +369,8 @@ export default function ProductDetailPage() {
             variant="outlined"
             startIcon={<EditIcon />}
             onClick={() => {
-              console.log('🔧 Edit Product clicked, current product:', product)
-              if (product) {
-                setEditedProduct({ ...product })
-                setEditingProduct(true)
-                console.log('📝 Editing mode enabled')
-              } else {
-                console.error('❌ No product data available for editing')
-              }
+              console.log('🔧 Edit Product clicked, navigating to edit page')
+              router.push(`/inventory/product/${productId}/edit`)
             }}
             color="secondary"
             size={isMobile ? "small" : "medium"}
