@@ -55,6 +55,7 @@ import {
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { checkRecipeAvailability } from '@/utils/ingredientMatcher'
 import RecipePhotoScanner from '@/components/RecipePhotoScanner'
 import FeatureGuard from '@/components/FeatureGuard'
 
@@ -148,23 +149,65 @@ export default function RecipesPage() {
 
       if (recipesError) throw recipesError
 
-      // For each recipe, check ingredient availability
+      // Get inventory items for availability checking
+      const { data: inventoryItems } = await supabase
+        .from('inventory_items')
+        .select(`
+          id,
+          quantity,
+          unit,
+          products (
+            name,
+            category,
+            brand
+          )
+        `)
+        .eq('household_id', userId)
+        .gt('quantity', 0)
+
+      // Transform inventory for matching
+      const inventoryForMatching = inventoryItems?.map(item => ({
+        id: item.id,
+        name: item.products?.name || '',
+        products: item.products,
+        quantity: item.quantity,
+        unit: item.unit
+      })) || []
+
+      // For each recipe, check ingredient availability using our intelligent matcher
       const recipesWithAvailability = await Promise.all(
         (recipesData || []).map(async (recipe) => {
           try {
-            const { data: availability } = await supabase
-              .rpc('check_recipe_availability', {
-                p_recipe_id: recipe.id,
-                p_household_id: userId
-              })
+            // Get recipe ingredients
+            const { data: ingredients } = await supabase
+              .from('recipe_ingredients')
+              .select('ingredient_name, quantity, unit')
+              .eq('recipe_id', recipe.id)
 
-            const availableCount = availability?.filter((ing: any) => ing.availability_status === 'available').length || 0
-            const totalCount = availability?.length || 0
+            if (!ingredients || ingredients.length === 0) {
+              return {
+                ...recipe,
+                category_name: recipe.recipe_categories?.name,
+                availability_status: 'missing_ingredients' as const,
+                available_ingredients: 0,
+                total_ingredients: 0
+              }
+            }
+
+            // Check availability using our intelligent matcher
+            const availabilityCheck = checkRecipeAvailability(
+              ingredients.map(ing => ({
+                name: ing.ingredient_name,
+                quantity: ing.quantity,
+                unit: ing.unit
+              })),
+              inventoryForMatching
+            )
 
             let status: 'can_make' | 'partial' | 'missing_ingredients' = 'missing_ingredients'
-            if (availableCount === totalCount && totalCount > 0) {
+            if (availabilityCheck.canMake) {
               status = 'can_make'
-            } else if (availableCount > 0) {
+            } else if (availabilityCheck.availability > 0) {
               status = 'partial'
             }
 
@@ -172,8 +215,8 @@ export default function RecipesPage() {
               ...recipe,
               category_name: recipe.recipe_categories?.name,
               availability_status: status,
-              available_ingredients: availableCount,
-              total_ingredients: totalCount
+              available_ingredients: availabilityCheck.availableIngredients.length,
+              total_ingredients: ingredients.length
             }
           } catch (err) {
             console.warn('Error checking availability for recipe:', recipe.title, err)

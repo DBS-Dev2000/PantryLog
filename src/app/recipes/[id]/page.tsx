@@ -59,6 +59,7 @@ import {
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
+import { findIngredientMatches, checkRecipeAvailability } from '@/utils/ingredientMatcher'
 
 interface RecipeDetail {
   id: string
@@ -266,55 +267,78 @@ export default function RecipeDetailPage() {
       console.log('🥕 Loaded recipe ingredients:', ingredientsData?.length || 0)
 
       if (ingredientsData && ingredientsData.length > 0) {
-        // Try smart availability check first, then fall back to basic check
-        try {
-          const { data: smartAvailability, error: smartError } = await supabase
-            .rpc('check_recipe_availability_smart', {
-              p_recipe_id: recipeId,
-              p_household_id: userId
-            })
+        // Get inventory items for matching
+        const { data: inventoryItems, error: inventoryError } = await supabase
+          .from('inventory_items')
+          .select(`
+            id,
+            quantity,
+            unit,
+            products (
+              name,
+              category,
+              brand
+            )
+          `)
+          .eq('household_id', userId)
+          .gt('quantity', 0)
 
-          if (smartError) {
-            console.log('Smart availability check not available, trying basic check:', smartError)
-
-            // Fall back to basic availability check
-            const { data: basicAvailability, error: basicError } = await supabase
-              .rpc('check_recipe_availability', {
-                p_recipe_id: recipeId,
-                p_household_id: userId
-              })
-
-            if (basicError) {
-              console.warn('Basic availability check also failed:', basicError)
-              // Use ingredients without availability check
-              setIngredients(ingredientsData.map(ing => ({
-                ...ing,
-                availability_status: 'missing'
-              })))
-            } else {
-              console.log('✅ Basic availability check complete:', basicAvailability?.length || 0)
-              setIngredients(basicAvailability || [])
-            }
-          } else {
-            console.log('✅ Smart ingredient matching complete:', smartAvailability?.length || 0)
-            console.log('🧠 Ingredient matches found:', smartAvailability?.filter((ing: any) => ing.match_type !== null).length || 0)
-
-            // Log some example matches for debugging
-            smartAvailability?.slice(0, 3).forEach((ing: any) => {
-              if (ing.matched_product_name) {
-                console.log(`🔍 "${ing.ingredient_name}" → "${ing.matched_product_name}" (${ing.match_type}, ${ing.match_strength})`)
-              }
-            })
-
-            setIngredients(smartAvailability || [])
-          }
-        } catch (rpcError) {
-          console.warn('All availability checks failed, using basic ingredients:', rpcError)
-          // Fallback: Mark all ingredients as missing so shopping list works
+        if (inventoryError) {
+          console.error('Error loading inventory:', inventoryError)
+          // Use ingredients without availability check
           setIngredients(ingredientsData.map(ing => ({
             ...ing,
             availability_status: 'missing'
           })))
+        } else {
+          console.log('📦 Loaded inventory items:', inventoryItems?.length || 0)
+
+          // Transform inventory items for matching
+          const inventoryForMatching = inventoryItems?.map(item => ({
+            id: item.id,
+            name: item.products?.name || '',
+            products: item.products,
+            quantity: item.quantity,
+            unit: item.unit
+          })) || []
+
+          // Use our new intelligent matching for each ingredient
+          const ingredientsWithAvailability = ingredientsData.map(ing => {
+            const matches = findIngredientMatches(ing.ingredient_name, inventoryForMatching)
+
+            let availabilityStatus = 'missing'
+            let matchedProduct = null
+            let availableQuantity = 0
+
+            if (matches.length > 0) {
+              const bestMatch = matches[0]
+              matchedProduct = bestMatch.inventoryItem.products?.name || bestMatch.inventoryItem.name
+              availableQuantity = bestMatch.inventoryItem.quantity
+
+              // Determine availability status based on quantity
+              if (ing.quantity && availableQuantity < ing.quantity) {
+                availabilityStatus = 'partial'
+              } else {
+                availabilityStatus = 'available'
+              }
+
+              console.log(`🔍 "${ing.ingredient_name}" → "${matchedProduct}" (${bestMatch.matchType}, ${Math.round(bestMatch.confidence * 100)}% confidence)`)
+            }
+
+            return {
+              ...ing,
+              availability_status: availabilityStatus,
+              available_quantity: availableQuantity,
+              matched_product_name: matchedProduct,
+              match_type: matches[0]?.matchType || null,
+              match_strength: matches[0]?.confidence ? `${Math.round(matches[0].confidence * 100)}%` : null
+            }
+          })
+
+          console.log('✅ Intelligent ingredient matching complete')
+          console.log('🧠 Ingredients matched:', ingredientsWithAvailability.filter(ing => ing.match_type !== null).length, '/', ingredientsData.length)
+
+          setIngredients(ingredientsWithAvailability)
         }
       } else {
         console.warn('❌ No ingredients found for recipe')
