@@ -49,7 +49,6 @@ import {
   Psychology as PromptIcon,
   Code as CodeIcon
 } from '@mui/icons-material'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 interface UserData {
