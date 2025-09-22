@@ -167,10 +167,22 @@ export default function MealPlannerPage() {
         return
       }
 
+      // Get the user's household through the user_profiles table
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('household_id')
+        .eq('id', user.id)
+        .single()
+
+      if (!userProfile?.household_id) {
+        router.push('/meal-planner/setup')
+        return
+      }
+
       const { data: household } = await supabase
         .from('households')
         .select('id')
-        .eq('id', user.id)
+        .eq('id', userProfile.household_id)
         .single()
 
       if (!household) {
