@@ -71,6 +71,25 @@ interface ProductData {
   description?: string
   image_url?: string
   upc: string
+  // New comprehensive UPC fields
+  ean?: string
+  title?: string
+  model?: string
+  color?: string
+  size?: string
+  weight?: string
+  dimension?: any
+  lowest_recorded_price?: number
+  highest_recorded_price?: number
+  currency?: string
+  additional_images?: string[]
+  offers?: any[]
+  asin?: string
+  elid?: string
+  manufacturer?: string
+  ingredients?: string
+  nutrition?: any
+  raw_api_response?: any
 }
 
 interface StorageLocationData {
@@ -283,14 +302,43 @@ function QuickAddPageContent() {
 
         if (apiResponse?.items?.length > 0) {
           const item = apiResponse.items[0]
+
+          // Capture ALL available data from the API
           setProductData({
             name: item.title || item.description || 'Unknown Product',
             brand: item.brand || undefined,
             category: item.category || undefined,
             description: item.description || undefined,
             image_url: item.images?.[0] || undefined,
-            upc: barcode
+            upc: barcode,
+            // New comprehensive fields
+            ean: item.ean || undefined,
+            title: item.title || undefined,
+            model: item.model || undefined,
+            color: item.color || undefined,
+            size: item.size || undefined,
+            weight: item.weight || undefined,
+            dimension: item.dimension || undefined,
+            lowest_recorded_price: item.lowest_recorded_price || undefined,
+            highest_recorded_price: item.highest_recorded_price || undefined,
+            currency: item.currency || undefined,
+            additional_images: item.images?.slice(1) || undefined, // All images except the first
+            offers: item.offers || undefined,
+            asin: item.asin || undefined,
+            elid: item.elid || undefined,
+            manufacturer: item.manufacturer || undefined,
+            ingredients: item.ingredients || undefined,
+            nutrition: item.nutrition || undefined,
+            raw_api_response: apiResponse // Store the entire response
           })
+
+          console.log('📦 Captured UPC data:', {
+            basic: { name: item.title, brand: item.brand, upc: barcode },
+            additional: { size: item.size, weight: item.weight, model: item.model },
+            pricing: { low: item.lowest_recorded_price, high: item.highest_recorded_price },
+            offers: item.offers?.length || 0
+          })
+
           setActiveStep(1)
         } else {
           setError('Product not found. Please use the regular Add Item page for manual entry.')
@@ -417,7 +465,27 @@ function QuickAddPageContent() {
             upc: productData.upc,
             image_url: productData.image_url || null,
             default_shelf_life_days: defaultShelfLifeDays,
-            created_by: user.id
+            created_by: user.id,
+            // Comprehensive UPC data fields
+            ean: productData.ean || null,
+            title: productData.title || null,
+            model: productData.model || null,
+            color: productData.color || null,
+            size: productData.size || null,
+            weight: productData.weight || null,
+            dimension: productData.dimension || null,
+            lowest_recorded_price: productData.lowest_recorded_price || null,
+            highest_recorded_price: productData.highest_recorded_price || null,
+            currency: productData.currency || null,
+            additional_images: productData.additional_images || null,
+            offers: productData.offers || null,
+            asin: productData.asin || null,
+            elid: productData.elid || null,
+            manufacturer: productData.manufacturer || null,
+            ingredients: productData.ingredients || null,
+            nutrition: productData.nutrition || null,
+            raw_api_response: productData.raw_api_response || null,
+            api_last_updated: new Date().toISOString()
           }])
           .select('id')
           .single()

@@ -63,6 +63,26 @@ interface InventoryItemDetail {
     brand?: string
     image_url?: string
     upc?: string
+    // Comprehensive UPC data fields
+    ean?: string
+    title?: string
+    model?: string
+    color?: string
+    size?: string
+    weight?: string
+    dimension?: any
+    lowest_recorded_price?: number
+    highest_recorded_price?: number
+    currency?: string
+    additional_images?: any
+    offers?: any
+    asin?: string
+    elid?: string
+    manufacturer?: string
+    ingredients?: string
+    nutrition?: any
+    raw_api_response?: any
+    api_last_updated?: string
   }
   storage_locations: {
     id: string
@@ -1063,6 +1083,201 @@ export default function EditInventoryItemPage() {
           </Box>
         </CardContent>
       </Card>
+
+      {/* Comprehensive Product Information */}
+      {(item.products?.size || item.products?.weight || item.products?.ingredients ||
+        item.products?.manufacturer || item.products?.nutrition || item.products?.offers) && (
+        <Card sx={{ mt: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              📦 Product Details
+            </Typography>
+
+            <Grid container spacing={2}>
+              {/* Basic Product Info */}
+              {(item.products?.size || item.products?.weight) && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                    Package Information
+                  </Typography>
+                  {item.products.size && (
+                    <Typography variant="body2">
+                      <strong>Size:</strong> {item.products.size}
+                    </Typography>
+                  )}
+                  {item.products.weight && (
+                    <Typography variant="body2">
+                      <strong>Weight:</strong> {item.products.weight}
+                    </Typography>
+                  )}
+                  {item.products.dimension && (
+                    <Typography variant="body2">
+                      <strong>Dimensions:</strong> {
+                        typeof item.products.dimension === 'object'
+                          ? `${item.products.dimension.length || '-'} x ${item.products.dimension.width || '-'} x ${item.products.dimension.height || '-'}`
+                          : item.products.dimension
+                      }
+                    </Typography>
+                  )}
+                </Grid>
+              )}
+
+              {/* Manufacturing Info */}
+              {(item.products?.manufacturer || item.products?.model || item.products?.color) && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                    Manufacturing
+                  </Typography>
+                  {item.products.manufacturer && (
+                    <Typography variant="body2">
+                      <strong>Manufacturer:</strong> {item.products.manufacturer}
+                    </Typography>
+                  )}
+                  {item.products.model && (
+                    <Typography variant="body2">
+                      <strong>Model:</strong> {item.products.model}
+                    </Typography>
+                  )}
+                  {item.products.color && (
+                    <Typography variant="body2">
+                      <strong>Color:</strong> {item.products.color}
+                    </Typography>
+                  )}
+                </Grid>
+              )}
+
+              {/* Ingredients */}
+              {item.products?.ingredients && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                    Ingredients
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                    {item.products.ingredients}
+                  </Typography>
+                </Grid>
+              )}
+
+              {/* Nutrition Information */}
+              {item.products?.nutrition && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                    Nutrition Facts
+                  </Typography>
+                  <Box sx={{ bgcolor: 'grey.50', p: 1.5, borderRadius: 1 }}>
+                    {typeof item.products.nutrition === 'object' ? (
+                      <Grid container spacing={1}>
+                        {Object.entries(item.products.nutrition).map(([key, value]: [string, any]) => (
+                          <Grid item xs={6} sm={4} key={key}>
+                            <Typography variant="caption" color="textSecondary">
+                              {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </Typography>
+                            <Typography variant="body2" fontWeight="medium">
+                              {typeof value === 'object' ? value.value || value.amount || JSON.stringify(value) : value}
+                            </Typography>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    ) : (
+                      <Typography variant="body2">{item.products.nutrition}</Typography>
+                    )}
+                  </Box>
+                </Grid>
+              )}
+
+              {/* Price Information */}
+              {(item.products?.lowest_recorded_price || item.products?.highest_recorded_price || item.products?.offers) && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                    Price Information
+                  </Typography>
+                  <Box display="flex" gap={2} flexWrap="wrap">
+                    {item.products.lowest_recorded_price && (
+                      <Chip
+                        label={`Low: $${item.products.lowest_recorded_price}`}
+                        color="success"
+                        variant="outlined"
+                        size="small"
+                      />
+                    )}
+                    {item.products.highest_recorded_price && (
+                      <Chip
+                        label={`High: $${item.products.highest_recorded_price}`}
+                        color="error"
+                        variant="outlined"
+                        size="small"
+                      />
+                    )}
+                    {item.products.currency && (
+                      <Chip
+                        label={item.products.currency}
+                        variant="outlined"
+                        size="small"
+                      />
+                    )}
+                  </Box>
+
+                  {/* Active Offers */}
+                  {item.products.offers && Array.isArray(item.products.offers) && item.products.offers.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="caption" color="textSecondary">
+                        Available Offers:
+                      </Typography>
+                      <Box display="flex" gap={1} flexWrap="wrap" mt={1}>
+                        {item.products.offers.slice(0, 3).map((offer: any, index: number) => (
+                          <Chip
+                            key={index}
+                            label={`${offer.merchant}: $${offer.price}`}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        ))}
+                        {item.products.offers.length > 3 && (
+                          <Chip
+                            label={`+${item.products.offers.length - 3} more`}
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                      </Box>
+                    </Box>
+                  )}
+                </Grid>
+              )}
+
+              {/* External IDs */}
+              {(item.products?.ean || item.products?.asin || item.products?.elid) && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                    Product Identifiers
+                  </Typography>
+                  <Box display="flex" gap={1} flexWrap="wrap">
+                    {item.products.ean && (
+                      <Chip label={`EAN: ${item.products.ean}`} size="small" variant="outlined" />
+                    )}
+                    {item.products.asin && (
+                      <Chip label={`Amazon: ${item.products.asin}`} size="small" variant="outlined" />
+                    )}
+                    {item.products.elid && (
+                      <Chip label={`eBay: ${item.products.elid}`} size="small" variant="outlined" />
+                    )}
+                  </Box>
+                </Grid>
+              )}
+
+              {/* API Update Info */}
+              {item.products?.api_last_updated && (
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="textSecondary">
+                    Product data last updated: {new Date(item.products.api_last_updated).toLocaleString()}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Audit Trail Preview */}
       <Card sx={{ mt: 3 }}>
