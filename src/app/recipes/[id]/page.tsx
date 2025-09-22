@@ -166,6 +166,7 @@ export default function RecipeDetailPage() {
   const [loadingSubstitutions, setLoadingSubstitutions] = useState<{[key: string]: boolean}>({})
   const [shoppingListDialog, setShoppingListDialog] = useState(false)
   const [ingredientQuantity, setIngredientQuantity] = useState(1)
+  const [itemsInShoppingList, setItemsInShoppingList] = useState<string[]>([])
 
   // Substitution modal state
   const [substitutionDialog, setSubstitutionDialog] = useState(false)
@@ -635,6 +636,9 @@ export default function RecipeDetailPage() {
       const listName = shoppingLists.find(l => l.id === selectedShoppingList)?.name || 'shopping list'
       setSuccess(`Added ${ingredientQuantity} ${ingredient.ingredient_name} to ${listName}!`)
 
+      // Update the state to show this item as added
+      setItemsInShoppingList(prev => [...prev, ingredient.ingredient_name])
+
     } catch (err: any) {
       setError(err.message)
     }
@@ -924,8 +928,8 @@ export default function RecipeDetailPage() {
           <List>
             {ingredients.map((ingredient, index) => (
               <ListItem key={index} sx={{ py: 1, alignItems: 'flex-start' }}>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Box display="flex" alignItems="center" gap={1} sx={{ mb: 1 }}>
+                <Box sx={{ flexGrow: 1, width: '100%' }}>
+                  <Box display="flex" alignItems="center" gap={1} justifyContent="space-between" flexWrap="wrap">
                     {/* Stock indicator dot */}
                     <Box
                       sx={{
@@ -939,43 +943,50 @@ export default function RecipeDetailPage() {
                         flexShrink: 0
                       }}
                     />
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        textDecoration: omittedIngredients.includes(ingredient.ingredient_name) ? 'line-through' : 'none',
-                        color: omittedIngredients.includes(ingredient.ingredient_name) ? 'text.secondary' : 'text.primary',
-                        fontWeight: ingredient.availability_status === 'available' ? 500 : 400
-                      }}
-                    >
-                      {ingredient.quantity} {ingredient.unit} {ingredient.ingredient_name}
-                    </Typography>
-                    {ingredient.preparation && (
-                      <Typography variant="caption" color="textSecondary">
-                        ({ingredient.preparation})
+                    <Box display="flex" alignItems="center" gap={1} flexGrow={1}>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          textDecoration: omittedIngredients.includes(ingredient.ingredient_name) ? 'line-through' : 'none',
+                          color: omittedIngredients.includes(ingredient.ingredient_name) ? 'text.secondary' : 'text.primary',
+                          fontWeight: ingredient.availability_status === 'available' ? 500 : 400
+                        }}
+                      >
+                        {ingredient.quantity} {ingredient.unit} {ingredient.ingredient_name}
                       </Typography>
-                    )}
-                  </Box>
+                      {ingredient.preparation && (
+                        <Typography variant="caption" color="textSecondary">
+                          ({ingredient.preparation})
+                        </Typography>
+                      )}
+                    </Box>
 
-                  {/* Ingredient Controls */}
-                  <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
-                    {/* Add to Shopping List Button */}
+                    {/* Shopping List Button - Inline */}
                     <Button
                       size="small"
-                      variant={ingredient.availability_status === 'available' ? 'outlined' : 'contained'}
+                      variant={itemsInShoppingList.includes(ingredient.ingredient_name) ? 'contained' :
+                               ingredient.availability_status === 'available' ? 'outlined' : 'contained'}
                       onClick={() => {
-                        // Add this ingredient to the selected list and open dialog
-                        setSelectedIngredients([ingredient.ingredient_name])
-                        loadShoppingLists()
-                        setShoppingListDialog(true)
+                        if (itemsInShoppingList.includes(ingredient.ingredient_name)) {
+                          // Remove from shopping list
+                          setItemsInShoppingList(prev => prev.filter(item => item !== ingredient.ingredient_name))
+                          // TODO: Actually remove from database
+                        } else {
+                          // Add this ingredient to the selected list and open dialog
+                          setSelectedIngredients([ingredient.ingredient_name])
+                          loadShoppingLists()
+                          setShoppingListDialog(true)
+                        }
                       }}
-                      startIcon={<ShoppingIcon />}
+                      startIcon={itemsInShoppingList.includes(ingredient.ingredient_name) ? <CheckIcon /> : <ShoppingIcon />}
                       color={
-                        ingredient.availability_status === 'available' ? 'success' :
+                        itemsInShoppingList.includes(ingredient.ingredient_name) ? 'success' :
+                        ingredient.availability_status === 'available' ? 'inherit' :
                         ingredient.availability_status === 'partial' ? 'warning' :
-                        'primary'  // Changed from 'error' to 'primary' for softer color
+                        'primary'
                       }
                       sx={{
-                        minWidth: 140,
+                        minWidth: 120,
                         '&.MuiButton-outlinedSuccess': {
                           borderColor: 'success.main',
                           color: 'success.main',
@@ -999,10 +1010,12 @@ export default function RecipeDetailPage() {
                         }
                       }}
                     >
-                      {ingredient.availability_status === 'available' ? 'In Stock' :
+                      {itemsInShoppingList.includes(ingredient.ingredient_name) ? 'Added' :
+                       ingredient.availability_status === 'available' ? 'In Stock' :
                        ingredient.availability_status === 'partial' ? 'Low Stock' :
                        'Add to List'}
                     </Button>
+                  </Box>
 
                     {/* AI-Powered Substitution Dropdown - Hidden for now */}
                     {false && !omittedIngredients.includes(ingredient.ingredient_name) && (
@@ -1076,35 +1089,7 @@ export default function RecipeDetailPage() {
                       </Button>
                     )}
 
-                    {/* Omit Ingredient Button - More visible */}
-                    <Button
-                      size="small"
-                      variant={omittedIngredients.includes(ingredient.ingredient_name) ? 'contained' : 'outlined'}
-                      onClick={() => {
-                        if (omittedIngredients.includes(ingredient.ingredient_name)) {
-                          setOmittedIngredients(prev => prev.filter(name => name !== ingredient.ingredient_name))
-                        } else {
-                          setOmittedIngredients(prev => [...prev, ingredient.ingredient_name])
-                        }
-                      }}
-                      color={omittedIngredients.includes(ingredient.ingredient_name) ? 'success' : 'warning'}
-                      sx={{
-                        fontWeight: 'medium',
-                        '&.MuiButton-containedSuccess': {
-                          backgroundColor: 'success.main',
-                          color: 'white'
-                        },
-                        '&.MuiButton-outlinedWarning': {
-                          borderWidth: 2,
-                          '&:hover': {
-                            borderWidth: 2
-                          }
-                        }
-                      }}
-                    >
-                      {omittedIngredients.includes(ingredient.ingredient_name) ? 'Include' : 'Skip'}
-                    </Button>
-                  </Box>
+                  {/* Skip button removed - Hidden for now */}
 
                   {/* Status and Match Info */}
                   <Box sx={{ mt: 1 }}>
