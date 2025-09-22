@@ -142,10 +142,22 @@ function QuickAddPageContent() {
 
   const loadStorageLocations = async (userId: string) => {
     try {
+      // First get the user's household ID
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('household_id')
+        .eq('id', userId)
+        .single()
+
+      if (!userProfile?.household_id) {
+        console.warn('No household found for user')
+        return
+      }
+
       const { data: locations, error } = await supabase
         .from('storage_locations')
         .select('*')
-        .eq('household_id', userId)
+        .eq('household_id', userProfile.household_id)
         .eq('is_active', true)
         .order('level')
         .order('sort_order')
@@ -179,9 +191,42 @@ function QuickAddPageContent() {
 
   const loadAvailableProducts = async (userId: string) => {
     try {
+      // First get the user's household ID
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('household_id')
+        .eq('id', userId)
+        .single()
+
+      if (!userProfile?.household_id) {
+        console.warn('No household found for user')
+        return
+      }
+
+      // Get products that this household has previously added to inventory
+      // This ensures privacy - only showing products this household has used
+      const { data: inventoryItems, error: invError } = await supabase
+        .from('inventory_items')
+        .select('product_id')
+        .eq('household_id', userProfile.household_id)
+
+      if (invError) throw invError
+
+      // Get unique product IDs
+      const productIds = [...new Set((inventoryItems || []).map(item => item.product_id))]
+
+      if (productIds.length === 0) {
+        // No products yet for this household
+        setAvailableProducts([])
+        console.log('📦 Stock Up: No products found for this household yet')
+        return
+      }
+
+      // Now get the product details for only these products
       const { data: products, error } = await supabase
         .from('products')
         .select('id, name, brand, upc, category, image_url')
+        .in('id', productIds)
         .order('name')
 
       if (error) throw error
@@ -193,7 +238,7 @@ function QuickAddPageContent() {
       }))
 
       setAvailableProducts(productsWithDisplay)
-      console.log('📦 Stock Up: Loaded products:', productsWithDisplay.length)
+      console.log('📦 Stock Up: Loaded household products:', productsWithDisplay.length)
     } catch (err: any) {
       console.error('Error loading products in Stock Up:', err)
     }
