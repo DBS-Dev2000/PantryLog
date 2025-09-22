@@ -286,7 +286,7 @@ export default function RecipesPage() {
 
   return (
     <FeatureGuard feature="recipes_enabled">
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4, px: { xs: 2, sm: 3 } }}>
+      <Container maxWidth={isMobile ? "sm" : "lg"} sx={{ mt: 4, px: isMobile ? 2 : 3 }}>
         <Box sx={{ mb: 3 }}>
         <Box display="flex" alignItems="center" mb={2}>
           <RecipeIcon sx={{ mr: 2, fontSize: isMobile ? 28 : 32, color: 'primary.main' }} />
@@ -458,7 +458,7 @@ export default function RecipesPage() {
       ) : (
         <Grid container spacing={3}>
           {filteredRecipes.map((recipe) => (
-            <Grid item xs={12} sm={6} md={4} key={recipe.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={recipe.id}>
               <Card
                 sx={{
                   height: '100%',
