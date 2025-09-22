@@ -185,6 +185,9 @@ export default function RecipeDetailPage() {
   const [selectedCorrectItem, setSelectedCorrectItem] = useState<string | null>(null)
   const [markAsNotAvailable, setMarkAsNotAvailable] = useState(false)
 
+  // Inventory for feedback dialog
+  const [inventoryItems, setInventoryItems] = useState<any[]>([])
+
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -305,6 +308,9 @@ export default function RecipeDetailPage() {
           console.log('📦 Loaded inventory items:', inventoryItems?.length || 0)
 
           // Transform inventory items for matching
+          // Store inventory items for use in dialogs
+          setInventoryItems(inventoryItems || [])
+
           const inventoryForMatching = inventoryItems?.map(item => ({
             id: item.id,
             name: item.products?.name || '',
@@ -1718,7 +1724,7 @@ export default function RecipeDetailPage() {
               label="I don't have this ingredient"
             />
 
-            {!markAsNotAvailable && inventory && (
+            {!markAsNotAvailable && inventoryItems.length > 0 && (
               <FormControl fullWidth sx={{ mt: 2 }}>
                 <InputLabel>Select correct item from inventory</InputLabel>
                 <Select
@@ -1727,7 +1733,7 @@ export default function RecipeDetailPage() {
                   label="Select correct item from inventory"
                 >
                   <MenuItem value="">None</MenuItem>
-                  {inventory
+                  {inventoryItems
                     .filter(item => {
                       const itemName = item.products?.name?.toLowerCase() || item.name?.toLowerCase() || ''
                       const searchTerm = feedbackIngredient.toLowerCase()

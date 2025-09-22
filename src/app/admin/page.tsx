@@ -48,7 +48,10 @@ import {
   Dashboard as DashboardIcon,
   Psychology as PromptIcon,
   Code as CodeIcon,
-  Storage as DataIcon
+  Storage as DataIcon,
+  ThumbUp as ThumbUpIcon,
+  ThumbDown as ThumbDownIcon,
+  Feedback as FeedbackIcon
 } from '@mui/icons-material'
 import { supabase } from '@/lib/supabase'
 import AdminNav from '@/components/AdminNav'
@@ -136,6 +139,16 @@ export default function AdminPage() {
   const [pendingSuggestions, setPendingSuggestions] = useState(0)
   const [userFeedback, setUserFeedback] = useState(0)
   const [matchAccuracy, setMatchAccuracy] = useState(0)
+
+  // ML Feedback data
+  const [mlFeedbackData, setMlFeedbackData] = useState<any[]>([])
+  const [mlFeedbackStats, setMlFeedbackStats] = useState({
+    totalFeedback: 0,
+    correctMatches: 0,
+    incorrectMatches: 0,
+    accuracy: 0,
+    topMismatches: [] as any[]
+  })
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -284,11 +297,63 @@ export default function AdminPage() {
         setUsageStats([])
       }
 
+      // Load ML feedback data
+      await loadMLFeedback()
+
       console.log('✅ Admin data loading complete')
 
     } catch (err: any) {
       console.error('Error loading admin data:', err)
       setError(err.message)
+    }
+  }
+
+  const loadMLFeedback = async () => {
+    try {
+      // Load ML feedback data
+      const { data: feedback, error: feedbackError } = await supabase
+        .from('ml_ingredient_feedback')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100)
+
+      if (!feedbackError && feedback) {
+        setMlFeedbackData(feedback)
+
+        // Calculate statistics
+        const totalFeedback = feedback.length
+        const correctMatches = feedback.filter(f => f.is_correct).length
+        const incorrectMatches = feedback.filter(f => !f.is_correct).length
+        const accuracy = totalFeedback > 0 ? Math.round((correctMatches / totalFeedback) * 100) : 0
+
+        // Find top mismatches
+        const mismatchCounts = feedback
+          .filter(f => !f.is_correct)
+          .reduce((acc: any, item) => {
+            const key = `${item.recipe_ingredient} → ${item.matched_product}`
+            acc[key] = (acc[key] || 0) + 1
+            return acc
+          }, {})
+
+        const topMismatches = Object.entries(mismatchCounts)
+          .map(([match, count]) => ({ match, count }))
+          .sort((a: any, b: any) => b.count - a.count)
+          .slice(0, 10)
+
+        setMlFeedbackStats({
+          totalFeedback,
+          correctMatches,
+          incorrectMatches,
+          accuracy,
+          topMismatches
+        })
+
+        console.log('✅ ML feedback data loaded:', totalFeedback, 'entries')
+      } else if (feedbackError) {
+        console.error('Error loading ML feedback:', feedbackError)
+      }
+    } catch (err: any) {
+      console.error('Error loading ML feedback:', err)
     }
   }
 
@@ -582,6 +647,11 @@ export default function AdminPage() {
           <Tab
             icon={<PromptIcon />}
             label="AI Prompts"
+            sx={{ minHeight: 'auto' }}
+          />
+          <Tab
+            icon={<FeedbackIcon />}
+            label="ML Feedback"
             sx={{ minHeight: 'auto' }}
           />
           <Tab
@@ -1313,6 +1383,188 @@ export default function AdminPage() {
       )}
 
       {activeTab === 4 && (
+        <>
+          {/* ML Feedback Viewer */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {/* Statistics Cards */}
+            <Grid item xs={12} sm={3}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <FeedbackIcon sx={{ mr: 1, color: 'primary.main' }} />
+                    <Typography variant="h6">{mlFeedbackStats.totalFeedback}</Typography>
+                  </Box>
+                  <Typography variant="body2" color="textSecondary">
+                    Total Feedback
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <ThumbUpIcon sx={{ mr: 1, color: 'success.main' }} />
+                    <Typography variant="h6" color="success.main">
+                      {mlFeedbackStats.correctMatches}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="textSecondary">
+                    Correct Matches
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <ThumbDownIcon sx={{ mr: 1, color: 'error.main' }} />
+                    <Typography variant="h6" color="error.main">
+                      {mlFeedbackStats.incorrectMatches}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="textSecondary">
+                    Incorrect Matches
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <Card>
+                <CardContent>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <Typography variant="h6">{mlFeedbackStats.accuracy}%</Typography>
+                  </Box>
+                  <Typography variant="body2" color="textSecondary">
+                    Matching Accuracy
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+
+          {/* Top Mismatches */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                🔍 Top Mismatches
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                Most common incorrect matches that need algorithm improvements
+              </Typography>
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Recipe Ingredient</TableCell>
+                      <TableCell>Incorrect Match</TableCell>
+                      <TableCell>Occurrences</TableCell>
+                      <TableCell>Action</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {mlFeedbackStats.topMismatches.map((mismatch: any, index) => {
+                      const [ingredient, product] = mismatch.match.split(' → ')
+                      return (
+                        <TableRow key={index}>
+                          <TableCell>{ingredient}</TableCell>
+                          <TableCell>
+                            <Chip label={product} color="error" variant="outlined" size="small" />
+                          </TableCell>
+                          <TableCell>{mismatch.count}</TableCell>
+                          <TableCell>
+                            <Button size="small" variant="text">
+                              Add Rule
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                    {mlFeedbackStats.topMismatches.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">
+                          <Typography variant="body2" color="textSecondary">
+                            No mismatches recorded yet
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+
+          {/* Recent Feedback */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                📝 Recent Feedback
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                Latest user corrections and confirmations
+              </Typography>
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Recipe Ingredient</TableCell>
+                      <TableCell>Matched Product</TableCell>
+                      <TableCell>Feedback</TableCell>
+                      <TableCell>Correct Product</TableCell>
+                      <TableCell>Reason</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {mlFeedbackData.slice(0, 20).map((feedback: any) => (
+                      <TableRow key={feedback.id}>
+                        <TableCell>
+                          {new Date(feedback.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>{feedback.recipe_ingredient}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={feedback.matched_product}
+                            color={feedback.is_correct ? 'success' : 'error'}
+                            variant="outlined"
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {feedback.is_correct ? (
+                            <ThumbUpIcon color="success" fontSize="small" />
+                          ) : (
+                            <ThumbDownIcon color="error" fontSize="small" />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {feedback.correct_product_name || '-'}
+                        </TableCell>
+                        <TableCell>
+                          {feedback.feedback_reason || '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {mlFeedbackData.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center">
+                          <Typography variant="body2" color="textSecondary">
+                            No feedback data available yet
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {activeTab === 5 && (
         <>
           {/* System Settings */}
           <Card sx={{ mb: 4 }}>

@@ -354,7 +354,24 @@ export function findIngredientMatches(
     return typeOrder[a.matchType] - typeOrder[b.matchType]
   })
 
-  return matches
+  // Apply ML feedback boost to confirmed good matches
+  const boostedMatches = matches.map(match => {
+    const productName = match.inventoryItem.products?.name || match.inventoryItem.name
+    const confirmKey = `confirmed:${normIngredient}:${normalizeIngredient(productName)}`
+
+    if (mlCorrectionsCache.get(confirmKey) === 'CONFIRMED') {
+      // Boost confidence for ML-confirmed matches
+      return {
+        ...match,
+        confidence: Math.min(1.0, match.confidence * 1.2),
+        notes: (match.notes || '') + ' (ML confirmed)'
+      }
+    }
+    return match
+  })
+
+  // Sort matches by confidence (highest first)
+  return boostedMatches.sort((a, b) => b.confidence - a.confidence)
 }
 
 /**
@@ -463,4 +480,33 @@ export function canUseForIngredient(
 
   // Check substitution
   return canSubstitute(recipeIngredient, inventoryItemName, null, inventoryItemCategory)
+}
+
+/**
+ * Apply ML feedback to improve matching
+ * Called when loading feedback from database
+ */
+export function applyMLFeedback(
+  ingredient: string,
+  incorrectProduct: string,
+  correctProduct: string | null
+) {
+  const blockKey = `${normalizeIngredient(ingredient)}:${normalizeIngredient(incorrectProduct)}`
+  mlBlockedMatches.add(blockKey)
+
+  if (correctProduct) {
+    const correctionKey = `${normalizeIngredient(ingredient)}:${normalizeIngredient(incorrectProduct)}`
+    mlCorrectionsCache.set(correctionKey, correctProduct)
+  }
+}
+
+/**
+ * Apply positive ML feedback
+ */
+export function confirmMLMatch(
+  ingredient: string,
+  product: string
+) {
+  const confirmKey = `confirmed:${normalizeIngredient(ingredient)}:${normalizeIngredient(product)}`
+  mlCorrectionsCache.set(confirmKey, 'CONFIRMED')
 }
