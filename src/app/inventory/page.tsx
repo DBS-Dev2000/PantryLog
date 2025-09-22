@@ -35,7 +35,12 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Collapse
+  Collapse,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Avatar
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -49,7 +54,8 @@ import {
   FilterList as FilterIcon,
   Clear as ClearIcon,
   ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon
+  ExpandLess as ExpandLessIcon,
+  RemoveCircleOutline as UseIcon
 } from '@mui/icons-material'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from '@/hooks/redux'
@@ -86,6 +92,11 @@ function InventoryPageContent() {
   const [showFilters, setShowFilters] = useState(false)
   const [categories, setCategories] = useState<string[]>([])
   const [locations, setLocations] = useState<any[]>([])
+
+  // Use item dialog states
+  const [useDialogOpen, setUseDialogOpen] = useState(false)
+  const [useItem, setUseItem] = useState<any>(null)
+  const [useQuantity, setUseQuantity] = useState<number>(1)
 
   // Build full breadcrumb path for a storage location
   const buildLocationPath = async (locationId: string, allLocations: any[]): Promise<string> => {
@@ -291,6 +302,70 @@ function InventoryPageContent() {
     if (days <= 3) return 'warning'
     if (days <= 7) return 'info'
     return 'success'
+  }
+
+  // Handle use item click
+  const handleUseItemClick = (item: any) => {
+    setUseItem(item)
+    setUseQuantity(1)
+    setUseDialogOpen(true)
+  }
+
+  // Handle use item confirmation
+  const handleUseItemConfirm = async () => {
+    if (!useItem || !user) return
+
+    try {
+      const quantityToUse = useItem.quantity <= 1 ? useItem.quantity : useQuantity
+      const newQuantity = useItem.quantity - quantityToUse
+
+      if (newQuantity <= 0) {
+        // Mark item as consumed
+        const { error } = await supabase
+          .from('inventory_items')
+          .update({
+            quantity: 0,
+            is_consumed: true,
+            consumed_date: new Date().toISOString(),
+            modified_at: new Date().toISOString()
+          })
+          .eq('id', useItem.id)
+
+        if (error) throw error
+      } else {
+        // Update quantity
+        const { error } = await supabase
+          .from('inventory_items')
+          .update({
+            quantity: newQuantity,
+            modified_at: new Date().toISOString()
+          })
+          .eq('id', useItem.id)
+
+        if (error) throw error
+      }
+
+      // Log usage in inventory_usage_log (if table exists)
+      await supabase
+        .from('inventory_usage_log')
+        .insert({
+          inventory_item_id: useItem.id,
+          product_id: useItem.product_id,
+          household_id: user.id,
+          quantity_used: quantityToUse,
+          unit: useItem.unit,
+          used_date: new Date().toISOString(),
+          remaining_quantity: newQuantity
+        })
+        .single()
+
+      // Reload inventory
+      await loadInventoryItems(user.id)
+      setUseDialogOpen(false)
+      setUseItem(null)
+    } catch (error) {
+      console.error('Error using item:', error)
+    }
   }
 
   if (!user) {
@@ -601,29 +676,40 @@ function InventoryPageContent() {
           {filteredItems.map((item) => (
             <Card key={item.id} variant="outlined">
               <CardContent sx={{ pb: 1 }}>
-                {/* Product Name and Brand */}
-                <Box mb={1}>
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight="bold"
-                    onClick={() => {
-                      if (item.products?.id) {
-                        router.push(`/inventory/product/${item.products.id}`)
-                      }
-                    }}
-                    sx={{
-                      color: item.products?.id ? 'primary.main' : 'text.primary',
-                      textDecoration: 'none',
-                      '&:active': { opacity: 0.8 }
-                    }}
-                  >
-                    {item.products?.name || 'Unknown Product'}
-                  </Typography>
-                  {item.products?.brand && (
-                    <Typography variant="caption" color="textSecondary" display="block">
-                      {item.products.brand}
-                    </Typography>
+                {/* Product with Thumbnail */}
+                <Box display="flex" mb={1} gap={1.5}>
+                  {/* Thumbnail */}
+                  {item.products?.image_url && (
+                    <Avatar
+                      src={item.products.image_url}
+                      variant="rounded"
+                      sx={{ width: 48, height: 48 }}
+                    />
                   )}
+                  {/* Product Name and Brand */}
+                  <Box flex={1}>
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight="bold"
+                      onClick={() => {
+                        if (item.products?.id) {
+                          router.push(`/inventory/product/${item.products.id}`)
+                        }
+                      }}
+                      sx={{
+                        color: item.products?.id ? 'primary.main' : 'text.primary',
+                        textDecoration: 'none',
+                        '&:active': { opacity: 0.8 }
+                      }}
+                    >
+                      {item.products?.name || 'Unknown Product'}
+                    </Typography>
+                    {item.products?.brand && (
+                      <Typography variant="caption" color="textSecondary" display="block">
+                        {item.products.brand}
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
 
                 {/* Quantity and Location Row */}
@@ -677,14 +763,23 @@ function InventoryPageContent() {
                       color={getExpirationColor(item.expiration_date)}
                     />
                   )}
-                  <Button
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={() => router.push(`/inventory/edit/${item.id}`)}
-                    sx={{ ml: 'auto' }}
-                  >
-                    Edit
-                  </Button>
+                  <Box display="flex" gap={1} sx={{ ml: 'auto' }}>
+                    <Button
+                      size="small"
+                      startIcon={<UseIcon />}
+                      onClick={() => handleUseItemClick(item)}
+                      color="secondary"
+                    >
+                      Use
+                    </Button>
+                    <IconButton
+                      size="small"
+                      onClick={() => router.push(`/inventory/edit/${item.id}`)}
+                      title="Edit"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Box>
                 </Box>
               </CardContent>
             </Card>
@@ -710,6 +805,9 @@ function InventoryPageContent() {
                 <TableRow key={item.id}>
                   <TableCell>
                     <Box
+                      display="flex"
+                      alignItems="center"
+                      gap={2}
                       onClick={() => {
                         if (item.products?.id) {
                           router.push(`/inventory/product/${item.products.id}`)
@@ -725,22 +823,32 @@ function InventoryPageContent() {
                         } : {}
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        fontWeight="medium"
-                        sx={{
-                          color: item.products?.id ? 'primary.main' : 'text.primary',
-                          textDecoration: item.products?.id ? 'underline' : 'none',
-                          '&:hover': item.products?.id ? { color: 'primary.dark' } : {}
-                        }}
-                      >
-                        {item.products?.name || 'Unknown Product'}
-                      </Typography>
-                      {item.products?.brand && (
-                        <Typography variant="caption" color="textSecondary">
-                          {item.products.brand}
-                        </Typography>
+                      {/* Product Thumbnail */}
+                      {item.products?.image_url && (
+                        <Avatar
+                          src={item.products.image_url}
+                          variant="rounded"
+                          sx={{ width: 40, height: 40 }}
+                        />
                       )}
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          fontWeight="medium"
+                          sx={{
+                            color: item.products?.id ? 'primary.main' : 'text.primary',
+                            textDecoration: item.products?.id ? 'underline' : 'none',
+                            '&:hover': item.products?.id ? { color: 'primary.dark' } : {}
+                          }}
+                        >
+                          {item.products?.name || 'Unknown Product'}
+                        </Typography>
+                        {item.products?.brand && (
+                          <Typography variant="caption" color="textSecondary">
+                            {item.products.brand}
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
                   </TableCell>
                   <TableCell>
@@ -807,13 +915,24 @@ function InventoryPageContent() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <IconButton
-                      size="small"
-                      onClick={() => router.push(`/inventory/edit/${item.id}`)}
-                      title="Edit item details"
-                    >
-                      <EditIcon />
-                    </IconButton>
+                    <Box display="flex" gap={1}>
+                      <Button
+                        size="small"
+                        startIcon={<UseIcon />}
+                        onClick={() => handleUseItemClick(item)}
+                        color="secondary"
+                        variant="outlined"
+                      >
+                        Use
+                      </Button>
+                      <IconButton
+                        size="small"
+                        onClick={() => router.push(`/inventory/edit/${item.id}`)}
+                        title="Edit item details"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
@@ -847,6 +966,78 @@ function InventoryPageContent() {
           )}
         </SpeedDial>
       )}
+
+      {/* Use Item Dialog */}
+      <Dialog open={useDialogOpen} onClose={() => setUseDialogOpen(false)}>
+        <DialogTitle>Use Item</DialogTitle>
+        <DialogContent>
+          {useItem && (
+            <>
+              <Box display="flex" alignItems="center" gap={2} mb={2}>
+                {useItem.products?.image_url && (
+                  <Avatar
+                    src={useItem.products.image_url}
+                    variant="rounded"
+                    sx={{ width: 60, height: 60 }}
+                  />
+                )}
+                <Box>
+                  <Typography variant="h6">
+                    {useItem.products?.name || 'Unknown Product'}
+                  </Typography>
+                  {useItem.products?.brand && (
+                    <Typography variant="body2" color="textSecondary">
+                      {useItem.products.brand}
+                    </Typography>
+                  )}
+                  <Typography variant="body2" color="textSecondary">
+                    Current quantity: {useItem.quantity} {useItem.unit}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {useItem.quantity > 1 && (
+                <>
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    How many {useItem.unit} would you like to use?
+                  </Typography>
+                  <TextField
+                    type="number"
+                    label="Quantity to use"
+                    value={useQuantity}
+                    onChange={(e) => setUseQuantity(Math.min(Number(e.target.value), useItem.quantity))}
+                    InputProps={{
+                      inputProps: {
+                        min: 1,
+                        max: useItem.quantity
+                      }
+                    }}
+                    fullWidth
+                    autoFocus
+                  />
+                </>
+              )}
+
+              {useItem.quantity <= 1 && (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  This will mark the item as completely used.
+                </Alert>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUseDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleUseItemConfirm}
+            variant="contained"
+            color="secondary"
+            disabled={!useItem || (useItem.quantity > 1 && (!useQuantity || useQuantity <= 0))}
+          >
+            Confirm Use
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Voice Assistant Dialog */}
       {user && voiceAssistantType === 'whisper' ? (
