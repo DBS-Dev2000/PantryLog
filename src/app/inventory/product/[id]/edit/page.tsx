@@ -19,7 +19,14 @@ import {
   Select,
   MenuItem,
   IconButton,
-  Divider
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -29,7 +36,9 @@ import {
   CloudUpload as CloudUploadIcon,
   Inventory as InventoryIcon,
   Category as CategoryIcon,
-  Label as LabelIcon
+  Label as LabelIcon,
+  Refresh as RefreshIcon,
+  Update as UpdateIcon
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -91,6 +100,21 @@ export default function EditProductPage() {
   // Product name editing
   const [customProductName, setCustomProductName] = useState('')
   const [editingProductName, setEditingProductName] = useState(false)
+
+  // Update Information modal states
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
+  const [updateOptions, setUpdateOptions] = useState({
+    size: true,
+    weight: true,
+    ingredients: true,
+    nutrition: true,
+    price: true,
+    manufacturer: true,
+    description: true,
+    images: false
+  })
+  const [updating, setUpdating] = useState(false)
+  const [updateData, setUpdateData] = useState<any>(null)
 
   const categories = [
     'Pantry Staples',
@@ -293,6 +317,103 @@ export default function EditProductPage() {
     }
   }
 
+  // Fetch updated product data from UPC API
+  const fetchUpdatedProductData = async () => {
+    if (!product?.upc) {
+      setError('No UPC code available for this product')
+      return
+    }
+
+    setUpdating(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/barcode/lookup?upc=${product.upc}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch product data')
+      }
+
+      const data = await response.json()
+
+      if (data.items && data.items.length > 0) {
+        setUpdateData(data.items[0])
+        console.log('Fetched updated product data:', data.items[0])
+      } else {
+        setError('No product data found for this UPC')
+      }
+    } catch (err: any) {
+      console.error('Error fetching product data:', err)
+      setError(err.message || 'Failed to fetch product data')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  // Apply selected updates to the product
+  const applyUpdates = () => {
+    if (!updateData || !product) return
+
+    const updatedProduct = { ...product }
+
+    if (updateOptions.size && updateData.size) {
+      updatedProduct.size = updateData.size
+    }
+    if (updateOptions.weight && updateData.weight) {
+      updatedProduct.weight = updateData.weight
+    }
+    if (updateOptions.ingredients && updateData.ingredients) {
+      updatedProduct.ingredients = updateData.ingredients
+    }
+    if (updateOptions.nutrition && updateData.nutrition) {
+      updatedProduct.nutrition = updateData.nutrition
+    }
+    if (updateOptions.price) {
+      if (updateData.lowest_recorded_price) {
+        updatedProduct.lowest_recorded_price = updateData.lowest_recorded_price
+      }
+      if (updateData.highest_recorded_price) {
+        updatedProduct.highest_recorded_price = updateData.highest_recorded_price
+      }
+      if (updateData.offers) {
+        updatedProduct.offers = updateData.offers
+      }
+    }
+    if (updateOptions.manufacturer && updateData.brand) {
+      updatedProduct.manufacturer = updateData.brand
+    }
+    if (updateOptions.description) {
+      if (updateData.title) {
+        updatedProduct.title = updateData.title
+      }
+      if (updateData.model) {
+        updatedProduct.model = updateData.model
+      }
+    }
+    if (updateOptions.images && updateData.images && updateData.images.length > 0) {
+      updatedProduct.image_url = updateData.images[0]
+      setProductImageUrl(updateData.images[0])
+      if (updateData.images.length > 1) {
+        updatedProduct.additional_images = updateData.images
+      }
+    }
+
+    // Update other comprehensive fields
+    if (updateData.ean) updatedProduct.ean = updateData.ean
+    if (updateData.asin) updatedProduct.asin = updateData.asin
+    if (updateData.elid) updatedProduct.elid = updateData.elid
+    if (updateData.dimension) updatedProduct.dimension = updateData.dimension
+    if (updateData.currency) updatedProduct.currency = updateData.currency
+    if (updateData.color) updatedProduct.color = updateData.color
+
+    // Store raw API response
+    updatedProduct.raw_api_response = updateData
+    updatedProduct.api_last_updated = new Date().toISOString()
+
+    setProduct(updatedProduct)
+    setShowUpdateModal(false)
+    setUpdateData(null)
+  }
+
   if (!user || loading) {
     return (
       <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center' }}>
@@ -444,7 +565,7 @@ export default function EditProductPage() {
             </Box>
           </Box>
 
-          {/* Image Options Button */}
+          {/* Action Buttons */}
           <Box display="flex" gap={1} mt={2}>
             <Button
               variant="outlined"
@@ -454,6 +575,21 @@ export default function EditProductPage() {
               onClick={() => setShowImageOptions(!showImageOptions)}
             >
               {productImageUrl ? 'Change Image' : 'Add Image'}
+            </Button>
+            <Button
+              variant="outlined"
+              color="info"
+              size="small"
+              startIcon={<UpdateIcon />}
+              onClick={() => {
+                setShowUpdateModal(true)
+                if (!updateData) {
+                  fetchUpdatedProductData()
+                }
+              }}
+              disabled={!product.upc}
+            >
+              Update Information
             </Button>
           </Box>
 
@@ -874,6 +1010,173 @@ export default function EditProductPage() {
           </Box>
         </CardContent>
       </Card>
+
+      {/* Update Information Modal */}
+      <Dialog
+        open={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <UpdateIcon />
+            Update Product Information
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {product?.upc ? (
+            <>
+              <DialogContentText sx={{ mb: 2 }}>
+                Select which fields to update from the barcode database.
+                {product.upc && (
+                  <Box sx={{ mt: 1 }}>
+                    <Chip label={`UPC: ${product.upc}`} size="small" />
+                  </Box>
+                )}
+              </DialogContentText>
+
+              {updating ? (
+                <Box textAlign="center" py={3}>
+                  <CircularProgress size={30} />
+                  <Typography variant="body2" sx={{ mt: 2 }}>
+                    Fetching product data...
+                  </Typography>
+                </Box>
+              ) : updateData ? (
+                <>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Available Updates:
+                  </Typography>
+                  <Box sx={{ pl: 2 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={updateOptions.size}
+                          onChange={(e) => setUpdateOptions({ ...updateOptions, size: e.target.checked })}
+                        />
+                      }
+                      label={`Size: ${updateData.size || 'Not available'}`}
+                      disabled={!updateData.size}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={updateOptions.weight}
+                          onChange={(e) => setUpdateOptions({ ...updateOptions, weight: e.target.checked })}
+                        />
+                      }
+                      label={`Weight: ${updateData.weight || 'Not available'}`}
+                      disabled={!updateData.weight}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={updateOptions.ingredients}
+                          onChange={(e) => setUpdateOptions({ ...updateOptions, ingredients: e.target.checked })}
+                        />
+                      }
+                      label={`Ingredients: ${updateData.ingredients ? 'Available' : 'Not available'}`}
+                      disabled={!updateData.ingredients}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={updateOptions.nutrition}
+                          onChange={(e) => setUpdateOptions({ ...updateOptions, nutrition: e.target.checked })}
+                        />
+                      }
+                      label={`Nutrition Facts: ${updateData.nutrition ? 'Available' : 'Not available'}`}
+                      disabled={!updateData.nutrition}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={updateOptions.price}
+                          onChange={(e) => setUpdateOptions({ ...updateOptions, price: e.target.checked })}
+                        />
+                      }
+                      label={`Price Info: $${updateData.lowest_recorded_price || '?'} - $${updateData.highest_recorded_price || '?'}`}
+                      disabled={!updateData.lowest_recorded_price && !updateData.highest_recorded_price}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={updateOptions.manufacturer}
+                          onChange={(e) => setUpdateOptions({ ...updateOptions, manufacturer: e.target.checked })}
+                        />
+                      }
+                      label={`Manufacturer: ${updateData.brand || 'Not available'}`}
+                      disabled={!updateData.brand}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={updateOptions.description}
+                          onChange={(e) => setUpdateOptions({ ...updateOptions, description: e.target.checked })}
+                        />
+                      }
+                      label={`Description/Title: ${updateData.title ? 'Available' : 'Not available'}`}
+                      disabled={!updateData.title}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={updateOptions.images}
+                          onChange={(e) => setUpdateOptions({ ...updateOptions, images: e.target.checked })}
+                        />
+                      }
+                      label={`Product Images: ${updateData.images ? `${updateData.images.length} available` : 'Not available'}`}
+                      disabled={!updateData.images || updateData.images.length === 0}
+                    />
+                  </Box>
+
+                  {updateData.offers && updateData.offers.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="caption" color="textSecondary">
+                        Current offers from {updateData.offers.length} merchant(s)
+                      </Typography>
+                    </Box>
+                  )}
+                </>
+              ) : (
+                error && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {error}
+                  </Alert>
+                )
+              )}
+            </>
+          ) : (
+            <DialogContentText>
+              This product doesn't have a UPC code. Only products with UPC codes can be updated from the barcode database.
+            </DialogContentText>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowUpdateModal(false)}>
+            Cancel
+          </Button>
+          {!updating && !updateData && product?.upc && (
+            <Button
+              onClick={fetchUpdatedProductData}
+              variant="contained"
+              startIcon={<RefreshIcon />}
+            >
+              Fetch Data
+            </Button>
+          )}
+          {updateData && (
+            <Button
+              onClick={applyUpdates}
+              variant="contained"
+              color="primary"
+            >
+              Apply Selected Updates
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Container>
   )
 }
