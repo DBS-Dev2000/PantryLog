@@ -1,0 +1,390 @@
+{
+  "version": "1.0.0",
+  "category": "Meal Planning AI Generation Strategies",
+  "description": "Comprehensive rules for AI meal plan generation with different strategies and dietary handling",
+  "generationModes": {
+    "smartAutoGenerate": {
+      "name": "Smart Auto Generate",
+      "description": "Balanced approach combining multiple sources",
+      "distribution": {
+        "staples": {
+          "percentage": "20-25%",
+          "description": "Regular rotation meals the family enjoys",
+          "examples": ["spaghetti night", "taco tuesday", "pizza friday"],
+          "frequency": "Weekly or bi-weekly favorites"
+        },
+        "dietaryCompliant": {
+          "percentage": "100% for restrictions, 30% for goals",
+          "description": "Meals meeting dietary requirements",
+          "priority": "Allergies > Medical > Religious > Lifestyle > Goals"
+        },
+        "pantryBased": {
+          "percentage": "30-40%",
+          "description": "Utilize existing inventory",
+          "priority": "Expiring soon > Overstocked > Regular stock",
+          "strategy": "FIFO principle, reduce waste"
+        },
+        "existingRecipes": {
+          "percentage": "20-30%",
+          "description": "From saved recipe collection",
+          "selection": "Recently added > Highly rated > Not made recently"
+        },
+        "newDiscovery": {
+          "percentage": "10-15%",
+          "description": "New recipes to try",
+          "criteria": "Similar to liked recipes but different",
+          "variety": "Different cuisines, cooking methods"
+        }
+      },
+      "balancing": {
+        "proteins": "Rotate between chicken, beef, pork, fish, vegetarian",
+        "cuisines": "Max 2 same cuisine per week",
+        "cookingMethods": "Vary between grilled, baked, stovetop, slow cooker",
+        "effort": "Mix quick meals with elaborate ones",
+        "leftovers": "Plan for lunch or next day usage"
+      }
+    },
+    "usePantryItems": {
+      "name": "Use Pantry Items",
+      "description": "Maximum utilization of existing inventory",
+      "strategy": {
+        "priority1": {
+          "focus": "Expiring within plan period",
+          "usage": "Must use 100%",
+          "creative": "Find multiple uses for same ingredient"
+        },
+        "priority2": {
+          "focus": "Perishables",
+          "usage": "Use 80-90%",
+          "planning": "Early in week for freshness"
+        },
+        "priority3": {
+          "focus": "Overstocked items",
+          "usage": "Reduce inventory levels",
+          "distribution": "Spread across multiple meals"
+        }
+      },
+      "insufficientInventory": {
+        "action1": "Generate what's possible with available items",
+        "action2": "Prompt: 'Current inventory can create X meals. Shopping needed for complete plan?'",
+        "ifNoShopping": {
+          "creativeMode": true,
+          "strategies": [
+            "Breakfast for dinner",
+            "Deconstructed meals (bowl versions)",
+            "One-pot meals with available items",
+            "Stretch proteins with beans/grains",
+            "Transform leftovers creatively",
+            "Use condiments as flavor bases",
+            "Make homemade versions (bread, pasta)"
+          ],
+          "substitutions": {
+            "aggressive": true,
+            "examples": [
+              "Breadcrumbs from stale bread",
+              "Yogurt for sour cream",
+              "Applesauce for eggs in baking",
+              "Cauliflower rice for grain"
+            ]
+          }
+        },
+        "communication": "List exactly what's missing for each incomplete meal"
+      },
+      "mealGeneration": {
+        "method": "Ingredient-first planning",
+        "process": [
+          "List all expiring items",
+          "Group compatible ingredients",
+          "Search recipes using those groups",
+          "Fill gaps with pantry staples",
+          "Minimize required purchases"
+        ]
+      }
+    },
+    "myRecipeCollection": {
+      "name": "My Recipe Collection",
+      "description": "Only use saved personal recipes",
+      "selection": {
+        "primary": "100% from saved recipes",
+        "noExternalRecipes": true,
+        "rotation": {
+          "favorite": "30% highly rated (4-5 stars)",
+          "regular": "50% standard rotation",
+          "forgotten": "20% haven't made in 30+ days"
+        }
+      },
+      "variety": {
+        "ensureDiversity": true,
+        "rules": [
+          "No same recipe twice in planning period",
+          "Vary protein sources",
+          "Mix difficulty levels",
+          "Consider seasonality"
+        ]
+      },
+      "fallback": {
+        "ifInsufficientRecipes": "Suggest adding more recipes to collection",
+        "minimumRequired": "At least 14 recipes for weekly planning"
+      }
+    },
+    "discoverNewRecipes": {
+      "name": "Discover New Recipes",
+      "description": "Explore completely new meals",
+      "requirements": {
+        "newRecipePercentage": "90% minimum",
+        "definition": "Never in meal plans, not in saved recipes, never marked as cooked",
+        "remaining10": "Can be variations of familiar dishes"
+      },
+      "discoveryStrategy": {
+        "basedOn": {
+          "preferences": "Analyze liked recipes for patterns",
+          "avoidances": "Respect dietary restrictions absolutely",
+          "skillLevel": "Match cooking complexity to user ability"
+        },
+        "variety": {
+          "cuisines": "Introduce 2-3 new cuisines",
+          "techniques": "Include 1-2 new cooking methods",
+          "ingredients": "Introduce 3-5 new ingredients gradually"
+        },
+        "safety": {
+          "similarityScore": "Keep 40% similarity to known preferences",
+          "gradualIntroduction": "Start with familiar base, add new elements",
+          "fallbackOptions": "Provide alternative if too adventurous"
+        }
+      },
+      "sources": {
+        "trending": "Current food trends matching preferences",
+        "seasonal": "New recipes using seasonal ingredients",
+        "cultural": "Authentic recipes from different cultures",
+        "fusion": "Creative combinations of familiar cuisines",
+        "healthy": "New healthy alternatives to favorites"
+      }
+    }
+  },
+  "creativeMode": {
+    "name": "Get Creative Toggle",
+    "description": "Deep thinking mode for maximum variety and optimization",
+    "activation": "User toggles 'Get Creative' option",
+    "features": {
+      "deepAnalysis": {
+        "time": "Extended processing time",
+        "consideration": [
+          "Nutritional balance across week",
+          "Ingredient cross-utilization",
+          "Skill building progression",
+          "Flavor journey planning",
+          "Texture variety",
+          "Color diversity on plate"
+        ]
+      },
+      "advancedStrategies": {
+        "batchCooking": {
+          "identify": "Meals that share prep work",
+          "example": "Dice onions for 3 meals at once",
+          "efficiency": "Group similar cooking methods same day"
+        },
+        "ingredientTransformation": {
+          "example": "Roast chicken → chicken salad → chicken soup",
+          "planning": "Intentional leftover progression"
+        },
+        "flavorBridging": {
+          "description": "Connect unfamiliar to familiar",
+          "example": "Korean BBQ with familiar beef cuts"
+        },
+        "seasonalMaximization": {
+          "description": "Heavy use of peak season ingredients",
+          "benefits": "Better flavor, lower cost"
+        }
+      },
+      "creativeSubstitutions": {
+        "standard": "Basic compatible swaps",
+        "creative": [
+          "Vegetable noodles for pasta",
+          "Cauliflower for rice/pizza crust",
+          "Aquafaba for egg whites",
+          "Banana for binding in baking",
+          "Mushrooms for meat umami"
+        ]
+      },
+      "presentationSuggestions": {
+        "plating": "Ideas for attractive presentation",
+        "garnishes": "Simple elevation techniques",
+        "familyStyle": "Make ordinary special"
+      }
+    },
+    "costBenefit": {
+      "note": "Higher AI processing cost",
+      "value": "More sophisticated meal planning",
+      "userControl": "Optional toggle for premium experience"
+    }
+  },
+  "dietaryHandling": {
+    "mixedDietary": {
+      "name": "Mixed Dietary Requirements",
+      "description": "Smart handling when household has different dietary needs",
+      "strategies": {
+        "baseRecipeAdaptation": {
+          "concept": "Same base, different preparations",
+          "examples": [
+            {
+              "base": "Hamburger night",
+              "standard": "Regular bun, all toppings",
+              "keto": "Lettuce wrap or portobello bun",
+              "glutenFree": "GF bun",
+              "vegetarian": "Black bean patty"
+            },
+            {
+              "base": "Pasta dinner",
+              "standard": "Regular spaghetti",
+              "glutenFree": "GF pasta",
+              "keto": "Zucchini noodles",
+              "dairyFree": "Marinara instead of alfredo"
+            },
+            {
+              "base": "Taco night",
+              "standard": "Flour tortillas",
+              "keto": "Lettuce cups",
+              "glutenFree": "Corn tortillas",
+              "vegetarian": "Bean and veggie filling"
+            }
+          ]
+        },
+        "componentMeals": {
+          "description": "Build-your-own style meals",
+          "examples": [
+            "Buddha bowls with various proteins",
+            "Salad bars with multiple options",
+            "Pizza with different crust/topping zones",
+            "Stir-fry with separated components"
+          ],
+          "benefits": "Everyone customizes to their needs"
+        },
+        "parallelCooking": {
+          "description": "Similar dishes cooked simultaneously",
+          "efficiency": "Shared prep, different final dishes",
+          "examples": [
+            "Grill chicken and fish together",
+            "Make regular and cauliflower rice",
+            "Prepare two sauce options"
+          ]
+        },
+        "smartShopping": {
+          "description": "Identify common ingredients",
+          "example": "Buy chicken for multiple preparations",
+          "savings": "Bulk purchasing, less waste"
+        }
+      },
+      "communication": {
+        "mealLabels": "Clear marking of dietary compliance",
+        "legends": "V=Vegetarian, GF=Gluten-Free, K=Keto, etc.",
+        "warnings": "Highlight potential cross-contamination"
+      }
+    },
+    "prioritySystem": {
+      "level1": {
+        "name": "Life-threatening",
+        "examples": ["Severe allergies", "Celiac disease"],
+        "handling": "Zero tolerance, no exceptions"
+      },
+      "level2": {
+        "name": "Medical requirements",
+        "examples": ["Diabetes", "Kidney disease"],
+        "handling": "Strict adherence required"
+      },
+      "level3": {
+        "name": "Religious/Ethical",
+        "examples": ["Kosher", "Halal", "Vegan"],
+        "handling": "Complete respect, no compromises"
+      },
+      "level4": {
+        "name": "Lifestyle choices",
+        "examples": ["Paleo", "Keto"],
+        "handling": "Best effort, some flexibility"
+      },
+      "level5": {
+        "name": "Preferences",
+        "examples": ["Low-carb", "High-protein"],
+        "handling": "Accommodate when possible"
+      }
+    }
+  },
+  "aiProcessing": {
+    "standardMode": {
+      "depth": "Quick analysis",
+      "time": "5-10 seconds",
+      "cost": "Standard API calls",
+      "output": "Good meal plan"
+    },
+    "creativeMode": {
+      "depth": "Deep analysis with multiple iterations",
+      "time": "20-30 seconds",
+      "cost": "Premium API calls (3-5x standard)",
+      "output": "Optimized, creative meal plan",
+      "features": [
+        "Cross-meal ingredient optimization",
+        "Nutritional balance checking",
+        "Cost optimization",
+        "Skill progression planning",
+        "Seasonal alignment",
+        "Cultural authenticity verification"
+      ]
+    },
+    "reasoning": {
+      "showReasoning": "Optional explanation of choices",
+      "transparency": [
+        "Why each meal was selected",
+        "How dietary needs were met",
+        "Ingredient optimization logic",
+        "Substitution rationale"
+      ]
+    }
+  },
+  "qualityMetrics": {
+    "variety": {
+      "proteins": "No same protein 3 days in row",
+      "cuisines": "At least 3 different per week",
+      "colors": "Rainbow of vegetables weekly",
+      "textures": "Mix of crunchy, soft, chewy"
+    },
+    "nutrition": {
+      "balance": "Protein, carbs, fats, fiber daily",
+      "vegetables": "Minimum 5 servings daily",
+      "processed": "Limit to 20% of meals"
+    },
+    "practical": {
+      "prepTime": "Mix of quick and slow meals",
+      "difficulty": "Match user skill level",
+      "cost": "Within budget constraints",
+      "waste": "Minimize food waste"
+    }
+  },
+  "userFeedback": {
+    "learning": {
+      "liked": "Increase similar meals",
+      "disliked": "Avoid patterns",
+      "modifications": "Learn preferred adaptations"
+    },
+    "improvement": {
+      "continuous": "Each plan better than last",
+      "seasonal": "Adapt to time of year",
+      "lifecycle": "Adjust to family changes"
+    }
+  },
+  "specialScenarios": {
+    "holidays": {
+      "traditional": "Include cultural foods",
+      "dietary": "Adapt traditions for restrictions",
+      "planning": "Account for leftovers"
+    },
+    "events": {
+      "parties": "Crowd-pleasing options",
+      "potlucks": "Transportable dishes",
+      "dateNights": "Special but manageable"
+    },
+    "challenges": {
+      "powerOutage": "No-cook meal options",
+      "minimal": "One-pot/sheet pan meals",
+      "budget": "Cost-effective options"
+    }
+  }
+}

@@ -1,0 +1,212 @@
+{
+  "version": "1.0.0",
+  "category": "AI Meal Planning Prompt Engineering Guide",
+  "description": "Structured prompts and instructions for AI meal plan generation",
+  "systemPrompts": {
+    "base": {
+      "role": "You are an expert meal planner and nutritionist with deep knowledge of diverse cuisines, dietary restrictions, and creative cooking techniques.",
+      "capabilities": [
+        "Generate personalized meal plans based on dietary requirements",
+        "Optimize ingredient usage to minimize waste",
+        "Balance nutrition across meals and weeks",
+        "Adapt recipes for mixed dietary households",
+        "Suggest creative substitutions and variations"
+      ],
+      "knowledge": [
+        "All major cuisines and cooking techniques",
+        "Food safety and storage guidelines",
+        "Nutritional science and balanced eating",
+        "Budget-conscious shopping strategies",
+        "Seasonal ingredient availability"
+      ]
+    },
+    "contextAwareness": {
+      "mustConsider": [
+        "User's pantry inventory with expiration dates",
+        "Household dietary restrictions and preferences",
+        "Previous meal history to avoid repetition",
+        "Local seasonality and availability",
+        "Budget constraints if specified",
+        "Time constraints for meal preparation",
+        "Skill level of the cook"
+      ]
+    }
+  },
+  "generationPrompts": {
+    "smartAutoGenerate": {
+      "prompt": "Generate a {duration} meal plan that balances variety, nutrition, and practicality. Include 20-25% family staples, 30-40% meals using pantry inventory (prioritizing expiring items), 20-30% from saved recipes, and 10-15% new discoveries. Ensure all dietary restrictions are met: {restrictions}. Available pantry items: {inventory}. Previous meals to avoid repeating: {recent_meals}.",
+      "constraints": [
+        "No protein repeated more than 2 days in a row",
+        "Maximum 2 meals from same cuisine per week",
+        "Include at least 3 quick meals (under 30 minutes)",
+        "Balance cooking methods throughout the week"
+      ]
+    },
+    "usePantryItems": {
+      "prompt": "Create a {duration} meal plan maximizing use of current pantry inventory. Priority items expiring soon: {expiring_items}. Overstocked items to reduce: {overstocked}. Must use 100% of expiring items and 80% of perishables. If unable to create complete plan, identify missing ingredients and suggest creative alternatives using available items. Be innovative with substitutions.",
+      "creativeFallback": "Inventory is limited. Generate creative meals using only: {available_items}. Consider: breakfast for dinner, deconstructed versions of classic dishes, one-pot meals, stretching proteins with legumes/grains, homemade versions of typically store-bought items.",
+      "shoppingQuery": "Current inventory can generate {meal_count} complete meals. Would you like to: 1) See a shopping list for a complete week, 2) Continue with creative meals using only available items, or 3) Get a hybrid plan with minimal shopping?"
+    },
+    "myRecipeCollection": {
+      "prompt": "Generate a {duration} meal plan using ONLY recipes from the saved collection: {saved_recipes}. Include 30% highly-rated favorites, 50% regular rotation, and 20% recipes not made in 30+ days. Ensure variety in proteins, cuisines, and difficulty levels. No recipe should appear twice.",
+      "insufficientRecipes": "Your collection has {recipe_count} recipes. For optimal variety, a {duration} plan needs at least {minimum_needed} recipes. Would you like to: 1) Proceed with some repetition, 2) Add new recipes to your collection first, or 3) Switch to Smart Auto Generate mode?"
+    },
+    "discoverNewRecipes": {
+      "prompt": "Generate a {duration} meal plan with 90% completely new recipes never cooked or planned before. Base suggestions on these preferences: {liked_recipes_patterns}. Introduce 2-3 new cuisines gradually, include 1-2 new cooking techniques, and 3-5 new ingredients. Maintain 40% similarity to known preferences for comfort. Respect all dietary restrictions: {restrictions}.",
+      "exploration": [
+        "Start with familiar bases and add new twists",
+        "Include trending recipes matching user preferences",
+        "Add seasonal specialties they haven't tried",
+        "Suggest easier versions of restaurant favorites",
+        "Include one 'adventure' meal with coaching"
+      ]
+    }
+  },
+  "creativeMode": {
+    "activation": "When 'Get Creative' is enabled, take 3x longer to deeply analyze:",
+    "deepThinking": {
+      "prompt": "DEEP ANALYSIS MODE: Generate an optimized {duration} meal plan considering:",
+      "multiLayerOptimization": [
+        "Nutritional balance: Ensure macro/micro nutrients are balanced daily and weekly",
+        "Ingredient efficiency: Map shared ingredients across meals for prep efficiency",
+        "Skill progression: Order meals to build techniques throughout the week",
+        "Flavor journey: Create complementary flavor profiles that don't fatigue the palate",
+        "Visual variety: Ensure colorful, appealing plates throughout",
+        "Texture diversity: Balance crunchy, creamy, chewy across meals",
+        "Seasonal optimization: Maximum use of peak-season ingredients",
+        "Cost efficiency: Bulk buying opportunities and waste reduction",
+        "Time management: Batch cooking opportunities and prep overlap"
+      ],
+      "advancedStrategies": [
+        "Identify meals that can share prep work (dice onions for 3 meals at once)",
+        "Plan intentional leftover transformations (roast chicken → chicken salad → soup)",
+        "Create flavor bridges between unfamiliar and familiar dishes",
+        "Suggest make-ahead components that work across multiple meals",
+        "Optimize shopping list for bulk purchases and minimum waste"
+      ]
+    },
+    "outputEnhancement": {
+      "include": [
+        "Prep timeline showing when to do advance work",
+        "Ingredient cross-reference showing multi-meal usage",
+        "Substitution matrix for dietary variations",
+        "Plating suggestions for special presentations",
+        "Wine/beverage pairing suggestions if requested",
+        "Leftover transformation ideas",
+        "Batch cooking schedule"
+      ]
+    }
+  },
+  "dietaryAdaptation": {
+    "mixedHousehold": {
+      "prompt": "Household has mixed dietary needs: {dietary_map}. For each meal, identify a base recipe that can be adapted. Provide specific modifications for each dietary requirement. Example: 'Taco Night - Base: seasoned ground beef. Keto: lettuce cups. Vegetarian: black bean filling. Gluten-free: corn tortillas.'",
+      "strategies": [
+        "Identify common base ingredients",
+        "Suggest component-style meals",
+        "Provide parallel cooking instructions",
+        "Mark which parts are shareable",
+        "Note cross-contamination warnings"
+      ]
+    },
+    "adaptationExamples": {
+      "prompt": "For each meal, provide adaptations like:",
+      "format": {
+        "base": "Main recipe as typically prepared",
+        "adaptations": {
+          "keto": "Specific low-carb modifications",
+          "glutenFree": "Safe substitutions",
+          "dairyFree": "Alternative ingredients",
+          "vegetarian": "Plant-based version",
+          "allergyFree": "Safe preparation method"
+        },
+        "sharedPrep": "Steps everyone's version shares",
+        "divergence": "Point where preparations split"
+      }
+    }
+  },
+  "responseFormat": {
+    "structured": {
+      "dayFormat": {
+        "date": "Day and date",
+        "breakfast": {
+          "name": "Meal name",
+          "time": "Estimated prep + cook time",
+          "source": "Pantry/Recipe/New",
+          "dietary": "Dietary compliance markers",
+          "mainIngredients": "Key ingredients used"
+        },
+        "lunch": "Similar structure",
+        "dinner": "Similar structure",
+        "notes": "Special instructions, prep ahead, or leftovers"
+      }
+    },
+    "metadata": {
+      "summary": {
+        "totalMeals": "Number of meals planned",
+        "pantryUtilization": "Percentage of inventory used",
+        "expiringItemsCovered": "All expiring items addressed",
+        "dietaryCompliance": "All restrictions met",
+        "nutritionalBalance": "Basic assessment",
+        "estimatedCost": "If budget was a factor",
+        "shoppingNeeded": "Items to purchase"
+      },
+      "insights": {
+        "variety": "Protein, cuisine, cooking method diversity",
+        "efficiency": "Prep overlap opportunities",
+        "learning": "New techniques or ingredients introduced"
+      }
+    }
+  },
+  "errorHandling": {
+    "impossibleRequests": {
+      "conflicting": "The dietary restrictions {list} conflict. Prioritizing medical requirements: {resolution}",
+      "insufficient": "Cannot create {duration} plan with only {item_count} items. Here's what's possible: {partial_plan}",
+      "noCompliant": "No recipes in database meet all requirements: {restrictions}. Suggesting closest matches with notes on modifications."
+    },
+    "degradationStrategy": {
+      "steps": [
+        "Try to meet all requirements",
+        "If impossible, prioritize medical/allergy requirements",
+        "Suggest modifications to make non-compliant recipes work",
+        "Offer partial plan with shopping list",
+        "Provide creative alternatives"
+      ]
+    }
+  },
+  "learningLoop": {
+    "feedback": {
+      "capture": [
+        "Meals marked as loved/liked/disliked",
+        "Actual vs planned cooking",
+        "Substitutions made",
+        "Time accuracy",
+        "Leftover success"
+      ],
+      "application": [
+        "Increase frequency of loved meals",
+        "Avoid patterns from disliked meals",
+        "Adjust time estimates based on history",
+        "Improve substitution suggestions",
+        "Better leftover planning"
+      ]
+    }
+  },
+  "costOptimization": {
+    "standard": {
+      "apiCalls": 1,
+      "processingTime": "5-10 seconds",
+      "depth": "Good practical plan"
+    },
+    "creative": {
+      "apiCalls": "3-5",
+      "processingTime": "20-30 seconds",
+      "depth": "Deeply optimized, creative plan",
+      "userValue": "Better variety, efficiency, and satisfaction"
+    }
+  },
+  "examples": {
+    "smartAutoSample": "Monday: Breakfast - Overnight oats with berries (Pantry, V, GF-adaptable, 5min). Lunch - Leftover Sunday roast chicken salad (Recipe #23, 10min). Dinner - New Recipe: Korean Beef Bowls with quick-pickled vegetables (New, DF-option, 30min). Uses expiring: carrots, cucumber. Notes: Pickle vegetables while cooking rice.",
+    "pantryCreative": "Limited ingredients available. Monday Dinner: 'Deconstructed Lasagna Bowls' - Use remaining pasta, transform jarred sauce with available spices, stretch ground beef with lentils, top with last of the cheese. Creative substitution: Using crackers crushed as 'breadcrumb' topping since no bread available.",
+    "mixedDietary": "Taco Tuesday - Base prep: Season 2lbs ground beef and 1lb black beans with same spices. Standard family: Flour tortillas with all toppings. Keto dad: Lettuce cup shells, extra cheese, avocado. Gluten-free child: Corn tortillas. Vegetarian teen: Black bean filling with cashew 'queso'. Shared: All can enjoy salsa, guacamole, lettuce, tomatoes."
+  }
+}

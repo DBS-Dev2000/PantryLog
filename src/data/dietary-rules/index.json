@@ -26,6 +26,14 @@
     "therapeutic-diets": {
       "file": "therapeutic-diets.json",
       "description": "Medical and therapeutic dietary protocols"
+    },
+    "meal-planning-strategies": {
+      "file": "meal-planning-strategies.json",
+      "description": "AI meal generation strategies and rules for different planning modes"
+    },
+    "ai-prompting-guide": {
+      "file": "ai-prompting-guide.json",
+      "description": "Structured prompts and instructions for AI meal plan generation"
     }
   },
   "usage": {
