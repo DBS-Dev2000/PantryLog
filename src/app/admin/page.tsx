@@ -47,7 +47,8 @@ import {
   Save as SaveIcon,
   Dashboard as DashboardIcon,
   Psychology as PromptIcon,
-  Code as CodeIcon
+  Code as CodeIcon,
+  Storage as DataIcon
 } from '@mui/icons-material'
 import { supabase } from '@/lib/supabase'
 
@@ -1083,8 +1084,17 @@ export default function AdminPage() {
                   color="primary"
                   startIcon={<EditIcon />}
                   onClick={() => router.push('/admin/ingredient-rules')}
+                  sx={{ mr: 2 }}
                 >
                   Manage Rules
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<DataIcon />}
+                  onClick={() => router.push('/admin/data-management')}
+                >
+                  Manage JSON Data
                 </Button>
               </Box>
 
