@@ -52,9 +52,11 @@ const ingredientEquivalencies: Record<string, string[]> = {
   'green onions': ['scallions', 'spring onions', 'salad onions', 'green onion'],
 
   // Garlic variations
-  'garlic': ['fresh garlic', 'garlic cloves', 'garlic bulb'],
-  'garlic clove': ['garlic', 'clove of garlic', 'garlic cloves'],
-  'garlic powder': ['powdered garlic', 'garlic seasoning', 'dried garlic'],
+  'garlic': ['fresh garlic', 'garlic cloves', 'garlic bulb', 'minced garlic', 'chopped garlic'],
+  'garlic clove': ['garlic', 'clove of garlic', 'garlic cloves', 'fresh garlic'],
+  'garlic cloves': ['garlic', 'clove of garlic', 'garlic clove', 'fresh garlic'],
+  'garlic powder': ['powdered garlic', 'garlic seasoning', 'dried garlic', 'granulated garlic'],
+  'minced garlic': ['garlic', 'chopped garlic', 'crushed garlic'],
 
   // Pepper variations
   'pepper': ['black pepper', 'ground pepper', 'black peppercorns', 'peppercorns'],
@@ -210,12 +212,26 @@ export function findIngredientMatches(
 
     // Check for partial match (ingredient is part of product name or vice versa)
     const normProduct = normalizeIngredient(productName)
-    if (normIngredient.split(' ').some(word => normProduct.includes(word)) ||
-        normProduct.split(' ').some(word => normIngredient.includes(word))) {
+
+    // Only do partial matching if there's meaningful overlap
+    // Avoid matching unrelated items like "garlic" with "mustard"
+    const ingredientWords = normIngredient.split(' ').filter(w => w.length > 2)
+    const productWords = normProduct.split(' ').filter(w => w.length > 2)
+
+    // Check for meaningful word overlap (not just single letters)
+    const hasSignificantOverlap = ingredientWords.some(word =>
+      productWords.some(pWord =>
+        (word === pWord) || // Exact word match
+        (word.length > 3 && pWord.includes(word)) || // Ingredient word is in product word
+        (pWord.length > 3 && word.includes(pWord)) // Product word is in ingredient word
+      )
+    )
+
+    if (hasSignificantOverlap) {
       matches.push({
         inventoryItem: item,
         matchType: 'partial',
-        confidence: 0.7,
+        confidence: 0.5, // Lower confidence for partial matches
         notes: `Partial match: "${productName}" for "${recipeIngredient}"`
       })
       continue

@@ -164,6 +164,8 @@ export default function RecipeDetailPage() {
   const [omittedIngredients, setOmittedIngredients] = useState<string[]>([])
   const [makingRecipe, setMakingRecipe] = useState(false)
   const [loadingSubstitutions, setLoadingSubstitutions] = useState<{[key: string]: boolean}>({})
+  const [shoppingListDialog, setShoppingListDialog] = useState(false)
+  const [ingredientQuantity, setIngredientQuantity] = useState(1)
 
   // Substitution modal state
   const [substitutionDialog, setSubstitutionDialog] = useState(false)
@@ -599,20 +601,18 @@ export default function RecipeDetailPage() {
     if (!selectedShoppingList || selectedIngredients.length === 0) return
 
     try {
-      const missingIngredients = getMissingIngredients()
-      const selectedIngredientData = missingIngredients.filter(ing =>
-        selectedIngredients.includes(ing.ingredient_name)
-      )
+      const ingredient = ingredients.find(ing => ing.ingredient_name === selectedIngredients[0])
+      if (!ingredient) return
 
-      const shoppingItems = selectedIngredientData.map(ingredient => ({
+      const shoppingItems = [{
         shopping_list_id: selectedShoppingList,
         item_name: ingredient.ingredient_name,
-        quantity: ingredient.quantity,
-        unit: ingredient.unit,
+        quantity: ingredientQuantity,
+        unit: ingredient.unit || 'items',
         priority: 3, // Medium priority
         notes: `From recipe: ${recipe?.name || recipe?.title}`,
         added_by: user?.id
-      }))
+      }]
 
       const { error } = await supabase
         .from('shopping_list_items')
@@ -620,14 +620,14 @@ export default function RecipeDetailPage() {
 
       if (error) throw error
 
-      setShoppingDialog(false)
+      setShoppingListDialog(false)
       setSelectedIngredients([])
       setError(null)
-      console.log('✅ Added', selectedIngredientData.length, 'selected ingredients to shopping list')
+      console.log('✅ Added', ingredientQuantity, ingredient.ingredient_name, 'to shopping list')
 
       // Show success message
       const listName = shoppingLists.find(l => l.id === selectedShoppingList)?.name || 'shopping list'
-      setError(`Added ${selectedIngredientData.length} ingredients to ${listName}!`)
+      setSuccess(`Added ${ingredientQuantity} ${ingredient.ingredient_name} to ${listName}!`)
 
     } catch (err: any) {
       setError(err.message)
@@ -917,32 +917,28 @@ export default function RecipeDetailPage() {
 
           <List>
             {ingredients.map((ingredient, index) => (
-              <ListItem key={index} sx={{ py: 1 }}>
-                {/* Availability Icon */}
-                <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
-                  {getAvailabilityIcon(ingredient.availability_status)}
-                </Box>
-
-                <Checkbox
-                  checked={selectedIngredients.includes(ingredient.ingredient_name)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedIngredients(prev => [...prev, ingredient.ingredient_name])
-                    } else {
-                      setSelectedIngredients(prev => prev.filter(name => name !== ingredient.ingredient_name))
-                    }
-                  }}
-                  color="secondary"
-                  disabled={ingredient.availability_status === 'available'}
-                  sx={{ ml: 1 }}
-                />
+              <ListItem key={index} sx={{ py: 1, alignItems: 'flex-start' }}>
                 <Box sx={{ flexGrow: 1 }}>
                   <Box display="flex" alignItems="center" gap={1} sx={{ mb: 1 }}>
+                    {/* Stock indicator dot */}
+                    <Box
+                      sx={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: '50%',
+                        backgroundColor:
+                          ingredient.availability_status === 'available' ? 'success.main' :
+                          ingredient.availability_status === 'partial' ? 'warning.main' :
+                          'error.main',
+                        flexShrink: 0
+                      }}
+                    />
                     <Typography
                       variant="body1"
                       sx={{
-                        textDecoration: ingredient.availability_status === 'available' || omittedIngredients.includes(ingredient.ingredient_name) ? 'line-through' : 'none',
-                        color: ingredient.availability_status === 'available' || omittedIngredients.includes(ingredient.ingredient_name) ? 'text.secondary' : 'text.primary'
+                        textDecoration: omittedIngredients.includes(ingredient.ingredient_name) ? 'line-through' : 'none',
+                        color: omittedIngredients.includes(ingredient.ingredient_name) ? 'text.secondary' : 'text.primary',
+                        fontWeight: ingredient.availability_status === 'available' ? 500 : 400
                       }}
                     >
                       {ingredient.quantity} {ingredient.unit} {ingredient.ingredient_name}
@@ -956,6 +952,55 @@ export default function RecipeDetailPage() {
 
                   {/* Ingredient Controls */}
                   <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+                    {/* Add to Shopping List Button */}
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => {
+                        // For items in stock, don't add to shopping list
+                        if (ingredient.availability_status === 'available') {
+                          return
+                        }
+                        // Add this single ingredient to the selected list and open dialog
+                        setSelectedIngredients([ingredient.ingredient_name])
+                        loadShoppingLists()
+                        setShoppingListDialog(true)
+                      }}
+                      startIcon={<ShoppingIcon />}
+                      disabled={ingredient.availability_status === 'available'}
+                      color={
+                        ingredient.availability_status === 'available' ? 'success' :
+                        ingredient.availability_status === 'partial' ? 'warning' :
+                        'error'
+                      }
+                      sx={{
+                        minWidth: 140,
+                        '&.MuiButton-containedSuccess': {
+                          backgroundColor: 'success.main',
+                          '&:hover': {
+                            backgroundColor: 'success.dark',
+                          }
+                        },
+                        '&.MuiButton-containedWarning': {
+                          backgroundColor: 'warning.main',
+                          color: 'warning.contrastText',
+                          '&:hover': {
+                            backgroundColor: 'warning.dark',
+                          }
+                        },
+                        '&.MuiButton-containedError': {
+                          backgroundColor: 'error.main',
+                          '&:hover': {
+                            backgroundColor: 'error.dark',
+                          }
+                        }
+                      }}
+                    >
+                      {ingredient.availability_status === 'available' ? 'In Stock' :
+                       ingredient.availability_status === 'partial' ? 'Low Stock' :
+                       'Add to List'}
+                    </Button>
+
                     {/* AI-Powered Substitution Dropdown */}
                     {!omittedIngredients.includes(ingredient.ingredient_name) && (
                       <Button
@@ -1055,10 +1100,48 @@ export default function RecipeDetailPage() {
                         }
                       </Typography>
                     )}
-                    {(ingredient as any).matched_product_name && (ingredient as any).match_type !== 'exact' && (
-                      <Typography variant="caption" color="primary.main" sx={{ display: 'block', mt: 0.5 }}>
-                        🔍 Found: {(ingredient as any).matched_product_name} ({(ingredient as any).match_type} match)
-                      </Typography>
+                    {(ingredient as any).matched_product_name && (
+                      <Box display="flex" alignItems="center" gap={1} sx={{ mt: 0.5 }}>
+                        <Typography variant="caption" color="primary.main">
+                          🔍 Found: {(ingredient as any).matched_product_name}
+                          {(ingredient as any).match_strength && ` (${(ingredient as any).match_strength} confidence)`}
+                        </Typography>
+                        {/* Feedback buttons for ML training */}
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            // TODO: Store positive feedback
+                            console.log('👍 Good match:', ingredient.ingredient_name, '→', (ingredient as any).matched_product_name)
+                          }}
+                          sx={{ p: 0.5 }}
+                          title="Good match"
+                        >
+                          <Typography fontSize="small">👍</Typography>
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            // TODO: Store negative feedback and allow correction
+                            console.log('👎 Bad match:', ingredient.ingredient_name, '→', (ingredient as any).matched_product_name)
+                            // Open dialog to correct the match
+                          }}
+                          sx={{ p: 0.5 }}
+                          title="Wrong match"
+                        >
+                          <Typography fontSize="small">👎</Typography>
+                        </IconButton>
+                        <Button
+                          size="small"
+                          variant="text"
+                          onClick={() => {
+                            // TODO: Open dialog to manually select correct item
+                            console.log('🔧 Correct match for:', ingredient.ingredient_name)
+                          }}
+                          sx={{ minWidth: 'auto', p: 0.5, fontSize: '0.75rem' }}
+                        >
+                          Correct
+                        </Button>
+                      </Box>
                     )}
                     {omittedIngredients.includes(ingredient.ingredient_name) && (
                       <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
@@ -1070,23 +1153,6 @@ export default function RecipeDetailPage() {
               </ListItem>
             ))}
           </List>
-
-          {/* Shopping List Actions */}
-          {selectedIngredients.length > 0 && (
-            <Box sx={{ mt: 2, textAlign: 'center' }}>
-              <Button
-                variant="contained"
-                startIcon={<ShoppingIcon />}
-                onClick={() => {
-                  loadShoppingLists()
-                  setShoppingDialog(true)
-                }}
-                color="secondary"
-              >
-                Add {selectedIngredients.length} to Shopping List
-              </Button>
-            </Box>
-          )}
         </CardContent>
       </Card>
 
@@ -1423,15 +1489,30 @@ export default function RecipeDetailPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Simple Shopping List Selection Dialog */}
-      <Dialog open={shoppingDialog} onClose={() => setShoppingDialog(false)} maxWidth="sm" fullWidth>
+      {/* Shopping List Selection Dialog with Quantity */}
+      <Dialog open={shoppingListDialog} onClose={() => {
+        setShoppingListDialog(false)
+        setIngredientQuantity(1)
+      }} maxWidth="sm" fullWidth>
         <DialogTitle>
-          🛒 Choose Shopping List
+          🛒 Add to Shopping List
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-            Add {selectedIngredients.length} selected ingredients to which shopping list?
+            Adding: {selectedIngredients[0]}
           </Typography>
+
+          <TextField
+            label="Quantity"
+            type="number"
+            value={ingredientQuantity}
+            onChange={(e) => setIngredientQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+            fullWidth
+            sx={{ mb: 3 }}
+            InputProps={{
+              inputProps: { min: 1, max: 99 }
+            }}
+          />
 
           <FormControl fullWidth>
             <InputLabel>Shopping List</InputLabel>
@@ -1449,17 +1530,23 @@ export default function RecipeDetailPage() {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShoppingDialog(false)}>
+          <Button onClick={() => {
+            setShoppingListDialog(false)
+            setIngredientQuantity(1)
+          }}>
             Cancel
           </Button>
           <Button
-            onClick={addMissingToShoppingList}
+            onClick={() => {
+              addMissingToShoppingList()
+              setIngredientQuantity(1)
+            }}
             variant="contained"
             disabled={!selectedShoppingList}
             startIcon={<AddIcon />}
             color="secondary"
           >
-            Add to List
+            Add {ingredientQuantity} to List
           </Button>
         </DialogActions>
       </Dialog>
