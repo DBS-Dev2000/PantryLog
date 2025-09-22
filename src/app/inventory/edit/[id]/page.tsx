@@ -819,9 +819,9 @@ export default function EditInventoryItemPage() {
             Food Details
           </Typography>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {/* First row: Quantity and Unit */}
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={6}>
               <TextField
                 label="Quantity"
                 type="number"
@@ -832,7 +832,7 @@ export default function EditInventoryItemPage() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={6}>
               <FormControl fullWidth>
                 <InputLabel>Unit</InputLabel>
                 <Select
@@ -849,8 +849,8 @@ export default function EditInventoryItemPage() {
               </FormControl>
             </Grid>
 
-            {/* Second row: Purchase Date and Expiration Date on same line */}
-            <Grid item xs={12} sm={6}>
+            {/* Row 2: Dates side by side */}
+            <Grid item xs={6}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Purchase Date"
@@ -870,7 +870,7 @@ export default function EditInventoryItemPage() {
               </LocalizationProvider>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={6}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Expiration Date"
@@ -947,7 +947,7 @@ export default function EditInventoryItemPage() {
             </Grid>
 
             {/* Fourth row: Total Cost and Cost per unit */}
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={6}>
               <TextField
                 label="Total Cost"
                 type="number"
@@ -959,7 +959,7 @@ export default function EditInventoryItemPage() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={6}>
               <Box>
                 <Typography variant="body2" color="textSecondary" gutterBottom>
                   Cost per unit:
