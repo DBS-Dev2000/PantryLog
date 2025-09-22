@@ -1,7 +1,7 @@
 # PantryIQ Complete User Guide
 
 **Last Updated:** January 22, 2025
-**Version:** 2.2 (Comprehensive UPC Data Capture)
+**Version:** 2.3 (Update Information Feature)
 
 ## 🧠 Welcome to PantryIQ
 *Where Modern Efficiency Meets Traditional Preparedness*
@@ -128,11 +128,37 @@ Access via "Edit Product" button on food items:
 - **Product Images**: Upload or link product photos
 - **Shelf Life Defaults**: Set standard expiration periods
 
+### **🔄 NEW: Update Information Feature**
+Refresh product data without using free scans:
+- **Update Information Button**: Located next to "Change Image" button
+- **Selective Updates**: Choose which fields to update from barcode database
+- **Available Fields**:
+  - Size & Weight information
+  - Ingredients list
+  - Nutrition facts
+  - Price history and current offers
+  - Manufacturer/Brand details
+  - Product description and title
+  - Product images
+- **Smart Display**: Shows what data is available before applying
+- **Preserves Manual Edits**: Only updates fields you select
+- **No Scan Usage**: Doesn't count against your monthly AI/scan limit
+
 ### **Navigation Flow:**
 1. **My Pantry** → Select item → **Edit Food Item**
 2. From Edit Food Item → **Edit Product** button
 3. Make comprehensive product edits → Save
 4. Navigate back to food item or pantry view
+
+### **Update Information Workflow:**
+1. Open product editor (must have UPC code)
+2. Click **"Update Information"** button
+3. System fetches latest data from barcode database
+4. Review available updates with checkboxes
+5. Select fields you want to update
+6. Click **"Apply Selected Updates"**
+7. Review changes in form fields
+8. Save product to persist updates
 
 All changes are saved to the database and available across your household!
 
@@ -425,6 +451,8 @@ System prevents common false matches:
 - **Barcode Scanning Problems**: Try better lighting or manual entry
 - **Missing UPC Data**: Not all products have complete data; edit manually if needed
 - **Product Details Not Showing**: Rescan barcode to fetch latest data
+- **Update Information Not Working**: Ensure product has a UPC code; check internet connection
+- **Some Fields Not Available**: Not all products have complete data in the barcode database
 - **Household Sharing**: Check invite codes and member permissions
 - **Feature Access**: Verify subscription tier for advanced features
 
