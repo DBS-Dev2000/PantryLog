@@ -176,6 +176,12 @@ export default function RecipeDetailPage() {
   const [cookingMode, setCookingMode] = useState(false)
   const [wakeLock, setWakeLock] = useState<any>(null)
 
+  // Feedback dialog state
+  const [feedbackDialog, setFeedbackDialog] = useState(false)
+  const [feedbackIngredient, setFeedbackIngredient] = useState('')
+  const [feedbackMatch, setFeedbackMatch] = useState('')
+  const [feedbackReason, setFeedbackReason] = useState('')
+
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -955,30 +961,27 @@ export default function RecipeDetailPage() {
                     {/* Add to Shopping List Button */}
                     <Button
                       size="small"
-                      variant="contained"
+                      variant={ingredient.availability_status === 'available' ? 'outlined' : 'contained'}
                       onClick={() => {
-                        // For items in stock, don't add to shopping list
-                        if (ingredient.availability_status === 'available') {
-                          return
-                        }
-                        // Add this single ingredient to the selected list and open dialog
+                        // Add this ingredient to the selected list and open dialog
                         setSelectedIngredients([ingredient.ingredient_name])
                         loadShoppingLists()
                         setShoppingListDialog(true)
                       }}
                       startIcon={<ShoppingIcon />}
-                      disabled={ingredient.availability_status === 'available'}
                       color={
                         ingredient.availability_status === 'available' ? 'success' :
                         ingredient.availability_status === 'partial' ? 'warning' :
-                        'error'
+                        'primary'  // Changed from 'error' to 'primary' for softer color
                       }
                       sx={{
                         minWidth: 140,
-                        '&.MuiButton-containedSuccess': {
-                          backgroundColor: 'success.main',
+                        '&.MuiButton-outlinedSuccess': {
+                          borderColor: 'success.main',
+                          color: 'success.main',
                           '&:hover': {
-                            backgroundColor: 'success.dark',
+                            borderColor: 'success.dark',
+                            backgroundColor: 'success.light',
                           }
                         },
                         '&.MuiButton-containedWarning': {
@@ -988,10 +991,10 @@ export default function RecipeDetailPage() {
                             backgroundColor: 'warning.dark',
                           }
                         },
-                        '&.MuiButton-containedError': {
-                          backgroundColor: 'error.main',
+                        '&.MuiButton-containedPrimary': {
+                          backgroundColor: 'primary.main',
                           '&:hover': {
-                            backgroundColor: 'error.dark',
+                            backgroundColor: 'primary.dark',
                           }
                         }
                       }}
@@ -1001,8 +1004,8 @@ export default function RecipeDetailPage() {
                        'Add to List'}
                     </Button>
 
-                    {/* AI-Powered Substitution Dropdown */}
-                    {!omittedIngredients.includes(ingredient.ingredient_name) && (
+                    {/* AI-Powered Substitution Dropdown - Hidden for now */}
+                    {false && !omittedIngredients.includes(ingredient.ingredient_name) && (
                       <Button
                         size="small"
                         variant="outlined"
@@ -1073,10 +1076,10 @@ export default function RecipeDetailPage() {
                       </Button>
                     )}
 
-                    {/* Omit Ingredient Button */}
+                    {/* Omit Ingredient Button - More visible */}
                     <Button
                       size="small"
-                      variant="outlined"
+                      variant={omittedIngredients.includes(ingredient.ingredient_name) ? 'contained' : 'outlined'}
                       onClick={() => {
                         if (omittedIngredients.includes(ingredient.ingredient_name)) {
                           setOmittedIngredients(prev => prev.filter(name => name !== ingredient.ingredient_name))
@@ -1085,6 +1088,19 @@ export default function RecipeDetailPage() {
                         }
                       }}
                       color={omittedIngredients.includes(ingredient.ingredient_name) ? 'success' : 'warning'}
+                      sx={{
+                        fontWeight: 'medium',
+                        '&.MuiButton-containedSuccess': {
+                          backgroundColor: 'success.main',
+                          color: 'white'
+                        },
+                        '&.MuiButton-outlinedWarning': {
+                          borderWidth: 2,
+                          '&:hover': {
+                            borderWidth: 2
+                          }
+                        }
+                      }}
                     >
                       {omittedIngredients.includes(ingredient.ingredient_name) ? 'Include' : 'Skip'}
                     </Button>
@@ -1121,9 +1137,11 @@ export default function RecipeDetailPage() {
                         <IconButton
                           size="small"
                           onClick={() => {
-                            // TODO: Store negative feedback and allow correction
+                            // Store negative feedback and allow correction
                             console.log('👎 Bad match:', ingredient.ingredient_name, '→', (ingredient as any).matched_product_name)
-                            // Open dialog to correct the match
+                            setFeedbackIngredient(ingredient.ingredient_name)
+                            setFeedbackMatch((ingredient as any).matched_product_name)
+                            setFeedbackDialog(true)
                           }}
                           sx={{ p: 0.5 }}
                           title="Wrong match"
@@ -1658,6 +1676,67 @@ export default function RecipeDetailPage() {
         <DialogActions>
           <Button onClick={() => setSubstitutionDialog(false)}>
             Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Feedback Dialog for incorrect matches */}
+      <Dialog
+        open={feedbackDialog}
+        onClose={() => {
+          setFeedbackDialog(false)
+          setFeedbackReason('')
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Report Incorrect Match
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Help us improve our matching! Please explain why "{feedbackMatch}" is not a good match for "{feedbackIngredient}".
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="What's wrong with this match?"
+            value={feedbackReason}
+            onChange={(e) => setFeedbackReason(e.target.value)}
+            placeholder="e.g., 'This is mustard, not garlic' or 'Chicken soup is not the same as chicken broth'"
+            helperText="Your feedback helps us improve ingredient matching for everyone"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setFeedbackDialog(false)
+            setFeedbackReason('')
+          }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              // TODO: Store the feedback in database
+              console.log('📝 Feedback submitted:', {
+                ingredient: feedbackIngredient,
+                incorrect_match: feedbackMatch,
+                reason: feedbackReason,
+                recipe_id: recipeId,
+                user_id: user?.id
+              })
+
+              // Show success message
+              setSuccess('Thank you for your feedback! We\'ll use this to improve our matching.')
+
+              // Close dialog and reset
+              setFeedbackDialog(false)
+              setFeedbackReason('')
+            }}
+            disabled={!feedbackReason.trim()}
+          >
+            Submit Feedback
           </Button>
         </DialogActions>
       </Dialog>

@@ -95,10 +95,11 @@ const ingredientEquivalencies: Record<string, string[]> = {
   'pasta': ['spaghetti', 'penne', 'rigatoni', 'fusilli', 'macaroni', 'noodles'],
   'spaghetti': ['pasta', 'long pasta', 'thin spaghetti', 'angel hair'],
 
-  // Broth variations
-  'chicken broth': ['chicken stock', 'chicken bouillon', 'chicken base'],
-  'beef broth': ['beef stock', 'beef bouillon', 'beef base'],
+  // Broth variations (explicit - not soups)
+  'chicken broth': ['chicken stock', 'chicken bouillon', 'chicken base', 'chicken bone broth'],
+  'beef broth': ['beef stock', 'beef bouillon', 'beef base', 'beef bone broth'],
   'vegetable broth': ['vegetable stock', 'veggie broth', 'vegetable bouillon'],
+  'chicken stock': ['chicken broth', 'chicken bouillon', 'chicken base', 'chicken bone broth'],
 
   // Herb variations
   'basil': ['fresh basil', 'sweet basil', 'italian basil', 'dried basil'],
@@ -152,6 +153,13 @@ function areIngredientsEquivalent(ingredient1: string, ingredient2: string): boo
 
   // Exact match after normalization
   if (norm1 === norm2) return true
+
+  // Special exclusions - prevent false matches
+  // Chicken soup should not match chicken broth
+  if ((norm1.includes('soup') && norm2.includes('broth')) ||
+      (norm2.includes('soup') && norm1.includes('broth'))) {
+    return false
+  }
 
   // Check if one contains the other
   if (norm1.includes(norm2) || norm2.includes(norm1)) return true
@@ -213,28 +221,36 @@ export function findIngredientMatches(
     // Check for partial match (ingredient is part of product name or vice versa)
     const normProduct = normalizeIngredient(productName)
 
-    // Only do partial matching if there's meaningful overlap
-    // Avoid matching unrelated items like "garlic" with "mustard"
-    const ingredientWords = normIngredient.split(' ').filter(w => w.length > 2)
-    const productWords = normProduct.split(' ').filter(w => w.length > 2)
+    // Special exclusions for partial matching
+    // Prevent soup from matching broth
+    if ((normIngredient.includes('broth') && normProduct.includes('soup')) ||
+        (normIngredient.includes('soup') && normProduct.includes('broth'))) {
+      // Skip this match - soup is not broth
+    } else {
+      // Only do partial matching if there's meaningful overlap
+      // Avoid matching unrelated items like "garlic" with "mustard"
+      const ingredientWords = normIngredient.split(' ').filter(w => w.length > 2)
+      const productWords = normProduct.split(' ').filter(w => w.length > 2)
 
-    // Check for meaningful word overlap (not just single letters)
-    const hasSignificantOverlap = ingredientWords.some(word =>
-      productWords.some(pWord =>
-        (word === pWord) || // Exact word match
-        (word.length > 3 && pWord.includes(word)) || // Ingredient word is in product word
-        (pWord.length > 3 && word.includes(pWord)) // Product word is in ingredient word
+      // Check for meaningful word overlap (not just single letters)
+      // Also require at least one full word match for better accuracy
+      const hasSignificantOverlap = ingredientWords.some(word =>
+        productWords.some(pWord =>
+          (word === pWord) || // Exact word match
+          (word.length > 4 && pWord === word) || // Longer words must match exactly
+          (word.length > 3 && pWord.length > 3 && pWord.includes(word) && word !== 'soup' && word !== 'broth') // Substring match for 3+ char words
+        )
       )
-    )
 
-    if (hasSignificantOverlap) {
-      matches.push({
-        inventoryItem: item,
-        matchType: 'partial',
-        confidence: 0.5, // Lower confidence for partial matches
-        notes: `Partial match: "${productName}" for "${recipeIngredient}"`
-      })
-      continue
+      if (hasSignificantOverlap) {
+        matches.push({
+          inventoryItem: item,
+          matchType: 'partial',
+          confidence: 0.5, // Lower confidence for partial matches
+          notes: `Partial match: "${productName}" for "${recipeIngredient}"`
+        })
+        continue
+      }
     }
 
     // Check taxonomy match
