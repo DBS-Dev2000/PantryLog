@@ -182,6 +182,8 @@ export default function RecipeDetailPage() {
   const [feedbackIngredient, setFeedbackIngredient] = useState('')
   const [feedbackMatch, setFeedbackMatch] = useState('')
   const [feedbackReason, setFeedbackReason] = useState('')
+  const [selectedCorrectItem, setSelectedCorrectItem] = useState<string | null>(null)
+  const [markAsNotAvailable, setMarkAsNotAvailable] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -1110,9 +1112,27 @@ export default function RecipeDetailPage() {
                         {/* Feedback buttons for ML training */}
                         <IconButton
                           size="small"
-                          onClick={() => {
-                            // TODO: Store positive feedback
-                            console.log('👍 Good match:', ingredient.ingredient_name, '→', (ingredient as any).matched_product_name)
+                          onClick={async () => {
+                            // Store positive feedback
+                            const feedbackData = {
+                              household_id: user?.id,
+                              user_id: user?.id,
+                              recipe_id: recipeId,
+                              recipe_ingredient: ingredient.ingredient_name,
+                              matched_product: (ingredient as any).matched_product_name,
+                              is_correct: true,
+                              match_type: (ingredient as any).match_type,
+                              match_confidence: (ingredient as any).match_strength ? parseFloat((ingredient as any).match_strength) / 100 : null
+                            }
+
+                            const { error } = await supabase
+                              .from('ml_ingredient_feedback')
+                              .insert(feedbackData)
+
+                            if (!error) {
+                              console.log('👍 Positive feedback saved:', ingredient.ingredient_name, '→', (ingredient as any).matched_product_name)
+                              setSuccess('Thanks for confirming this match!')
+                            }
                           }}
                           sx={{ p: 0.5 }}
                           title="Good match"
@@ -1676,52 +1696,134 @@ export default function RecipeDetailPage() {
         fullWidth
       >
         <DialogTitle>
-          Report Incorrect Match
+          Correct Ingredient Match
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Help us improve our matching! Please explain why "{feedbackMatch}" is not a good match for "{feedbackIngredient}".
+            "{feedbackMatch}" is not correct for "{feedbackIngredient}".
           </Typography>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>What's the correct item?</Typography>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={markAsNotAvailable}
+                  onChange={(e) => {
+                    setMarkAsNotAvailable(e.target.checked)
+                    if (e.target.checked) setSelectedCorrectItem(null)
+                  }}
+                />
+              }
+              label="I don't have this ingredient"
+            />
+
+            {!markAsNotAvailable && inventory && (
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel>Select correct item from inventory</InputLabel>
+                <Select
+                  value={selectedCorrectItem || ''}
+                  onChange={(e) => setSelectedCorrectItem(e.target.value)}
+                  label="Select correct item from inventory"
+                >
+                  <MenuItem value="">None</MenuItem>
+                  {inventory
+                    .filter(item => {
+                      const itemName = item.products?.name?.toLowerCase() || item.name?.toLowerCase() || ''
+                      const searchTerm = feedbackIngredient.toLowerCase()
+                      // Show pepper-related items for pepper
+                      if (searchTerm.includes('pepper')) {
+                        return itemName.includes('pepper') || itemName.includes('peppercorn')
+                      }
+                      return itemName.includes(searchTerm) || searchTerm.includes(itemName.split(' ')[0])
+                    })
+                    .slice(0, 10)
+                    .map(item => (
+                      <MenuItem key={item.id} value={item.products?.name || item.name}>
+                        {item.products?.name || item.name} ({item.quantity} {item.unit})
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            )}
+          </Box>
+
           <TextField
             fullWidth
             multiline
-            rows={3}
-            label="What's wrong with this match?"
+            rows={2}
+            label="Additional feedback (optional)"
             value={feedbackReason}
             onChange={(e) => setFeedbackReason(e.target.value)}
-            placeholder="e.g., 'This is mustard, not garlic' or 'Chicken soup is not the same as chicken broth'"
-            helperText="Your feedback helps us improve ingredient matching for everyone"
+            placeholder="e.g., 'I meant black pepper, not tomato paste'"
+            variant="outlined"
+            sx={{ mt: 2 }}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => {
             setFeedbackDialog(false)
             setFeedbackReason('')
+            setSelectedCorrectItem(null)
+            setMarkAsNotAvailable(false)
           }}>
             Cancel
           </Button>
           <Button
             variant="contained"
-            onClick={() => {
-              // TODO: Store the feedback in database
-              console.log('📝 Feedback submitted:', {
-                ingredient: feedbackIngredient,
-                incorrect_match: feedbackMatch,
-                reason: feedbackReason,
+            onClick={async () => {
+              // Store the feedback in database
+              const feedbackData = {
+                household_id: user?.id,
+                user_id: user?.id,
                 recipe_id: recipeId,
-                user_id: user?.id
-              })
+                recipe_ingredient: feedbackIngredient,
+                matched_product: feedbackMatch,
+                is_correct: false,
+                feedback_reason: feedbackReason || null,
+                correct_product_name: selectedCorrectItem,
+                match_type: 'user_correction'
+              }
 
-              // Show success message
-              setSuccess('Thank you for your feedback! We\'ll use this to improve our matching.')
+              const { error } = await supabase
+                .from('ml_ingredient_feedback')
+                .insert(feedbackData)
+
+              if (error) {
+                console.error('Error saving feedback:', error)
+                // Continue anyway to update UI
+              } else {
+                console.log('📝 Feedback saved:', feedbackData)
+              }
+
+              setSuccess('Thank you! Your correction has been applied.')
+
+              // Update the UI to reflect the correction
+              if (markAsNotAvailable) {
+                // Update ingredient to show as not available
+                setIngredients(prev => prev.map(ing =>
+                  ing.ingredient_name === feedbackIngredient
+                    ? { ...ing, availability_status: 'missing', matched_product_name: null, match_type: null, match_strength: null }
+                    : ing
+                ))
+              } else if (selectedCorrectItem) {
+                // Update ingredient to show correct match
+                setIngredients(prev => prev.map(ing =>
+                  ing.ingredient_name === feedbackIngredient
+                    ? { ...ing, availability_status: 'available', matched_product_name: selectedCorrectItem, match_strength: '100%' }
+                    : ing
+                ))
+              }
 
               // Close dialog and reset
               setFeedbackDialog(false)
               setFeedbackReason('')
+              setSelectedCorrectItem(null)
+              setMarkAsNotAvailable(false)
             }}
-            disabled={!feedbackReason.trim()}
+            disabled={!markAsNotAvailable && !selectedCorrectItem}
           >
-            Submit Feedback
+            Submit Correction
           </Button>
         </DialogActions>
       </Dialog>

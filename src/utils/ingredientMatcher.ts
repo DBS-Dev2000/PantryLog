@@ -237,6 +237,12 @@ export function findIngredientMatches(
         (normIngredient.includes('soup') && normProduct.includes('broth'))) {
       // Skip this match - soup is not broth
     }
+    // Prevent pepper from matching non-pepper items (like tomato paste)
+    else if (normIngredient === 'pepper' &&
+             !normProduct.includes('pepper') &&
+             !normProduct.includes('peppercorn')) {
+      // Skip this match - pepper should only match pepper products
+    }
     // Prevent butter from matching butter-flavored chips or similar compounds
     else if ((normIngredient === 'butter' && normProduct.includes('chips')) ||
              (normIngredient === 'butter' && normProduct.includes('crackers')) ||
@@ -262,12 +268,19 @@ export function findIngredientMatches(
          normProduct.includes('toffee') || normProduct.includes('popcorn'))
       )
 
+      // For very short ingredients (like "pepper"), require exact word match
+      const requireExactMatch = normIngredient.length <= 6
+
       const hasSignificantOverlap = !isCompoundProduct && ingredientWords.some(word =>
-        productWords.some(pWord =>
-          (word === pWord) || // Exact word match
-          (word.length > 4 && pWord === word) || // Longer words must match exactly
-          (word.length > 3 && pWord.length > 3 && pWord.includes(word) && word !== 'soup' && word !== 'broth') // Substring match for 3+ char words
-        )
+        productWords.some(pWord => {
+          if (requireExactMatch) {
+            // For short ingredients, only allow exact word match
+            return word === pWord
+          }
+          return (word === pWord) || // Exact word match
+                 (word.length > 4 && pWord === word) || // Longer words must match exactly
+                 (word.length > 3 && pWord.length > 3 && pWord.includes(word) && word !== 'soup' && word !== 'broth') // Substring match for 3+ char words
+        })
       )
 
       if (hasSignificantOverlap) {
