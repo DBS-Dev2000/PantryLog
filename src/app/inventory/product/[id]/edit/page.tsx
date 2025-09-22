@@ -503,7 +503,7 @@ export default function EditProductPage() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={5}>
+            <Grid item xs={12} sm={4}>
               <TextField
                 label="Brand"
                 fullWidth
@@ -512,7 +512,7 @@ export default function EditProductPage() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={7}>
+            <Grid item xs={12} sm={8}>
               <FormControl fullWidth>
                 <InputLabel>Category</InputLabel>
                 <Select
@@ -554,6 +554,56 @@ export default function EditProductPage() {
               />
             </Grid>
 
+            {/* Nutritional Info fields from API */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Weight"
+                fullWidth
+                value={product.nutritional_info?.weight || ''}
+                onChange={(e) => setProduct({
+                  ...product,
+                  nutritional_info: {
+                    ...product.nutritional_info,
+                    weight: e.target.value
+                  }
+                })}
+                placeholder="e.g., 1.00lb, 500g"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Size"
+                fullWidth
+                value={product.nutritional_info?.size || ''}
+                onChange={(e) => setProduct({
+                  ...product,
+                  nutritional_info: {
+                    ...product.nutritional_info,
+                    size: e.target.value
+                  }
+                })}
+                placeholder="e.g., 1 Liter, 12 oz"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Color"
+                fullWidth
+                value={product.nutritional_info?.color || ''}
+                onChange={(e) => setProduct({
+                  ...product,
+                  nutritional_info: {
+                    ...product.nutritional_info,
+                    color: e.target.value
+                  }
+                })}
+                placeholder="e.g., Clear, Brown"
+              />
+            </Grid>
+
+            {/* Description on its own line */}
             <Grid item xs={12}>
               <TextField
                 label="Description"
@@ -569,6 +619,25 @@ export default function EditProductPage() {
                   }
                 })}
                 placeholder="Product description, nutritional info, notes about the product..."
+              />
+            </Grid>
+
+            {/* Additional nutritional fields */}
+            <Grid item xs={12}>
+              <TextField
+                label="Ingredients"
+                multiline
+                rows={3}
+                fullWidth
+                value={product.nutritional_info?.ingredients || ''}
+                onChange={(e) => setProduct({
+                  ...product,
+                  nutritional_info: {
+                    ...product.nutritional_info,
+                    ingredients: e.target.value
+                  }
+                })}
+                placeholder="List of ingredients..."
               />
             </Grid>
 
