@@ -58,6 +58,7 @@ import {
 } from '@mui/icons-material'
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
+import AdminNav from '@/components/AdminNav'
 
 interface IngredientRule {
   id: string
@@ -434,6 +435,7 @@ export default function IngredientRulesAdmin() {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+      <AdminNav />
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1">
           Ingredient Rules Management

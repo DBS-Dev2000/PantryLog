@@ -51,6 +51,7 @@ import {
   Storage as DataIcon
 } from '@mui/icons-material'
 import { supabase } from '@/lib/supabase'
+import AdminNav from '@/components/AdminNav'
 
 interface UserData {
   id: string
@@ -530,6 +531,7 @@ export default function AdminPage() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
+      <AdminNav />
       <Box display="flex" alignItems="center" mb={4}>
         <AdminIcon sx={{ mr: 2, fontSize: 32, color: 'primary.main' }} />
         <Box>

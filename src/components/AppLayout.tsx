@@ -41,7 +41,8 @@ import {
   Help as HelpIcon,
   KeyboardArrowDown as ArrowDownIcon,
   Check as CheckIcon,
-  Star as StarIcon
+  Star as StarIcon,
+  AdminPanelSettings as AdminIcon
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -68,6 +69,7 @@ const baseNavigation = [
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<any>(null)
+  const [isSystemAdmin, setIsSystemAdmin] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [featurePermissions, setFeaturePermissions] = useState<FeaturePermissions | null>(null)
   const [upsellDialog, setUpsellDialog] = useState<string | null>(null)
@@ -174,14 +176,38 @@ export default function AppLayout({ children }: AppLayoutProps) {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user)
+
+      // Check if user is a system admin
+      if (session?.user) {
+        const { data: adminData } = await supabase
+          .from('system_admins')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single()
+
+        setIsSystemAdmin(!!adminData)
+      }
     }
 
     getSession()
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user)
+
+      // Check admin status on auth state change
+      if (session?.user) {
+        const { data: adminData } = await supabase
+          .from('system_admins')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single()
+
+        setIsSystemAdmin(!!adminData)
+      } else {
+        setIsSystemAdmin(false)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -308,6 +334,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </Typography>
             )}
           </Box>
+          {isSystemAdmin && (
+            <Button
+              color="inherit"
+              startIcon={<AdminIcon />}
+              onClick={() => router.push('/admin')}
+              sx={{ mr: 1 }}
+            >
+              Admin
+            </Button>
+          )}
           <IconButton
             size="large"
             edge="end"
@@ -344,6 +380,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <SettingsIcon sx={{ mr: 1 }} />
               Settings
             </MenuItem>
+            {isSystemAdmin && (
+              <>
+                <Divider />
+                <MenuItem onClick={() => { handleNavigation('/admin'); handleMenuClose() }}>
+                  <AdminIcon sx={{ mr: 1 }} />
+                  Admin Panel
+                </MenuItem>
+              </>
+            )}
             <Divider />
             <MenuItem onClick={handleSignOut}>
               <LogoutIcon sx={{ mr: 1 }} />

@@ -54,6 +54,7 @@ import {
   LocalDining as DietaryIcon
 } from '@mui/icons-material'
 import { supabase } from '@/lib/supabase'
+import AdminNav from '@/components/AdminNav'
 
 interface User {
   id: string
@@ -666,6 +667,7 @@ export default function DataManagementAdmin() {
   return (
     <Container maxWidth="xl">
       <Box sx={{ mt: 4, mb: 4 }}>
+        <AdminNav />
         <Typography variant="h4" gutterBottom>
           Data Management
         </Typography>
