@@ -112,10 +112,25 @@ export default function JoinHouseholdPage() {
           household_id: invite.household_id,
           user_id: user.id,
           role: 'member',
-          invited_by: invite.invited_by
+          invited_by: invite.invited_by,
+          joined_at: new Date().toISOString()
         }])
 
       if (memberError) throw memberError
+
+      // Update user profile to set primary household
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          id: user.id,
+          household_id: invite.household_id,
+          updated_at: new Date().toISOString()
+        })
+
+      if (profileError) {
+        console.warn('⚠️ Warning: Could not update user profile:', profileError)
+        // Don't fail the join process if profile update fails
+      }
 
       // Note: We don't mark the invite as consumed so it can be reused by other users
       // The household_members table prevents the same user from joining twice
