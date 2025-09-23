@@ -58,6 +58,7 @@ import VisualItemScanner from '@/components/VisualItemScanner'
 import VoiceAssistant from '@/components/VoiceAssistant'
 import WhisperVoiceAssistant from '@/components/WhisperVoiceAssistant'
 import { canUseVoiceAssistant, getVoiceAssistantType } from '@/lib/features'
+import { getUserHouseholdId } from '@/lib/household-utils'
 
 interface ProductData {
   id: string
@@ -144,6 +145,12 @@ function QuickUsePageContent() {
 
   const loadInventoryData = async (userId: string) => {
     try {
+      // Get the user's actual household ID
+      const householdId = await getUserHouseholdId(userId)
+      if (!householdId) {
+        throw new Error('No household found for user')
+      }
+
       // Load products that are currently in inventory
       const { data: inventoryData, error: inventoryError } = await supabase
         .from('inventory_items')
@@ -152,7 +159,7 @@ function QuickUsePageContent() {
           products (id, name, brand, category, upc, image_url),
           storage_locations (id, name, type)
         `)
-        .eq('household_id', userId)
+        .eq('household_id', householdId)
         .eq('is_consumed', false)
 
       if (inventoryError) throw inventoryError
@@ -184,7 +191,7 @@ function QuickUsePageContent() {
       const { data: allLocations, error: locationsError } = await supabase
         .from('storage_locations')
         .select('*')
-        .eq('household_id', userId)
+        .eq('household_id', householdId)
         .eq('is_active', true)
         .order('level')
         .order('sort_order')
@@ -249,10 +256,11 @@ function QuickUsePageContent() {
       if (error) throw error
 
       // Build full path
+      const householdId = await getUserHouseholdId(user?.id || '')
       const { data: allLocations } = await supabase
         .from('storage_locations')
         .select('*')
-        .eq('household_id', user?.id || '')
+        .eq('household_id', householdId || '')
 
       const fullPath = buildLocationPath(locationId, allLocations || [])
 
@@ -283,7 +291,7 @@ function QuickUsePageContent() {
           products (*)
         `)
         .eq('storage_location_id', locationId)
-        .eq('household_id', user?.id || '')
+        .eq('household_id', householdId || '')
         .eq('is_consumed', false)
         .order('purchase_date')
 
@@ -380,6 +388,7 @@ function QuickUsePageContent() {
   // Load all locations where a product is stored
   const loadProductLocations = async (productId: string) => {
     try {
+      const householdId = await getUserHouseholdId(user?.id || '')
       // If productId is empty, search by UPC
       let query = supabase
         .from('inventory_items')
@@ -387,7 +396,7 @@ function QuickUsePageContent() {
           *,
           storage_locations (*)
         `)
-        .eq('household_id', user?.id || '')
+        .eq('household_id', householdId || '')
         .eq('is_consumed', false)
 
       if (productId) {
@@ -547,12 +556,13 @@ function QuickUsePageContent() {
       // Log the removal in audit trail
       const actionType = newQuantity === 0 ? 'consume' : 'remove'
       const productName = (itemToUpdate as any).products?.name || productData?.name || 'Unknown Product'
+      const householdId = await getUserHouseholdId(user.id)
 
       const { error: auditError } = await supabase
         .from('inventory_audit_log')
         .insert([{
           inventory_item_id: selectedItem,
-          household_id: user.id,
+          household_id: householdId,
           user_id: user.id,
           action_type: actionType,
           quantity_before: oldQuantity,

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, Suspense } from 'react'
+import { getUserHouseholdId } from '@/lib/household-utils'
 import {
   Container,
   Typography,
@@ -298,7 +299,12 @@ function AddItemPageContent() {
 
     setLoadingLocations(true)
     try {
-      const householdId = userToUse.id
+      // Get the user's actual household ID
+      const householdId = await getUserHouseholdId(userToUse.id)
+
+      if (!householdId) {
+        throw new Error('No household found for user')
+      }
 
       // Load all storage locations directly
       const { data, error } = await supabase
@@ -602,21 +608,11 @@ function AddItemPageContent() {
         setGeneratedBarcode(newProduct.upc || '') // Save for potential printing
       }
 
-      // Create household if needed (temporary solution)
-      let householdId = user.id
-      const { data: tempHousehold, error: householdError } = await supabase
-        .from('households')
-        .upsert([
-          {
-            id: user.id,
-            name: 'My Household',
-          }
-        ], { onConflict: 'id' })
-        .select('id')
-        .single()
+      // Get the user's actual household ID
+      const householdId = await getUserHouseholdId(user.id)
 
-      if (!householdError && tempHousehold) {
-        householdId = tempHousehold.id
+      if (!householdId) {
+        throw new Error('No household found for user. Please contact support.')
       }
 
       // Handle storage location

@@ -45,6 +45,7 @@ import {
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { getUserHouseholdId } from '@/lib/household-utils'
 
 interface ReceiptItem {
   name: string
@@ -259,6 +260,12 @@ export default function ReceiptScanPage() {
     setError(null)
 
     try {
+      // Get the user's actual household ID
+      const householdId = await getUserHouseholdId(user.id)
+      if (!householdId) {
+        throw new Error('No household found for user')
+      }
+
       const selectedItems = extractedItems.filter(item => item.selected)
       let successCount = 0
 
@@ -299,7 +306,7 @@ export default function ReceiptScanPage() {
             .insert([{
               product_id: productId,
               storage_location_id: item.storage_location_id || defaultLocation,
-              household_id: user.id,
+              household_id: householdId,
               quantity: item.quantity,
               unit: 'pieces',
               purchase_date: receiptDate,
@@ -320,7 +327,7 @@ export default function ReceiptScanPage() {
               .from('inventory_audit_log')
               .insert([{
                 inventory_item_id: inventoryItem.id,
-                household_id: user.id,
+                household_id: householdId,
                 user_id: user.id,
                 action_type: 'add',
                 quantity_before: 0,
