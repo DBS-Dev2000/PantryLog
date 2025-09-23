@@ -55,7 +55,7 @@ import {
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { checkRecipeAvailability } from '@/utils/ingredientMatcher'
+import { checkRecipeAvailability } from '@/utils/ingredientMatcherClient'
 import RecipePhotoScanner from '@/components/RecipePhotoScanner'
 import FeatureGuard from '@/components/FeatureGuard'
 
