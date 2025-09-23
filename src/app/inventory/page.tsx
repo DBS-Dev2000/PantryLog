@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, Suspense, useMemo } from 'react'
-import { getUserHouseholdId } from '@/lib/household-utils'
 import {
   Container,
   Typography,
@@ -118,8 +117,30 @@ function InventoryPageContent() {
     setError(null)
 
     try {
-      // Get the user's actual household ID
-      const householdId = await getUserHouseholdId(userId)
+      // Get the user's actual household ID from household_members table
+      const { data: membership, error: memberError } = await supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', userId)
+        .order('joined_at', { ascending: true })
+        .limit(1)
+        .single()
+
+      let householdId = membership?.household_id
+
+      // Legacy fallback - check if user.id is a household.id (old system)
+      if (!householdId) {
+        const { data: household } = await supabase
+          .from('households')
+          .select('id')
+          .eq('id', userId)
+          .single()
+
+        if (household) {
+          console.warn('⚠️ Using legacy household lookup (user.id = household.id)')
+          householdId = userId
+        }
+      }
 
       if (!householdId) {
         throw new Error('No household found for user. Please contact support.')
