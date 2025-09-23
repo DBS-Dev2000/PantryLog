@@ -24,7 +24,8 @@ import {
   ListItemSecondaryAction,
   InputAdornment,
   Autocomplete,
-  CircularProgress
+  CircularProgress,
+  Divider
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -413,7 +414,7 @@ export default function RecipeEditPage() {
                 Basic Information
               </Typography>
 
-              <Grid container spacing={2}>
+              <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -491,7 +492,13 @@ export default function RecipeEditPage() {
                   </Grid>
                 )}
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Category & Style</Typography>
+                  </Divider>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
                   <FormControl fullWidth>
                     <InputLabel>Category</InputLabel>
                     <Select
@@ -509,7 +516,7 @@ export default function RecipeEditPage() {
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} md={6}>
                   <FormControl fullWidth>
                     <InputLabel>Cuisine</InputLabel>
                     <Select
@@ -527,7 +534,13 @@ export default function RecipeEditPage() {
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Privacy Settings</Typography>
+                  </Divider>
+                </Grid>
+
+                <Grid item xs={12}>
                   <FormControl fullWidth>
                     <InputLabel>Who can see this recipe?</InputLabel>
                     <Select
@@ -566,10 +579,17 @@ export default function RecipeEditPage() {
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={6} sm={3}>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Time & Servings</Typography>
+                  </Divider>
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={3}>
                   <TextField
                     fullWidth
-                    label="Prep Time (min)"
+                    label="Prep Time"
+                    placeholder="Minutes"
                     type="number"
                     value={prepTime}
                     onChange={(e) => setPrepTime(Number(e.target.value))}
@@ -579,10 +599,11 @@ export default function RecipeEditPage() {
                   />
                 </Grid>
 
-                <Grid item xs={6} sm={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <TextField
                     fullWidth
-                    label="Cook Time (min)"
+                    label="Cook Time"
+                    placeholder="Minutes"
                     type="number"
                     value={cookTime}
                     onChange={(e) => setCookTime(Number(e.target.value))}
@@ -592,10 +613,11 @@ export default function RecipeEditPage() {
                   />
                 </Grid>
 
-                <Grid item xs={6} sm={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <TextField
                     fullWidth
                     label="Servings"
+                    placeholder="Number of servings"
                     type="number"
                     value={servings}
                     onChange={(e) => setServings(Number(e.target.value))}
@@ -605,7 +627,7 @@ export default function RecipeEditPage() {
                   />
                 </Grid>
 
-                <Grid item xs={6} sm={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth>
                     <InputLabel>Difficulty</InputLabel>
                     <Select
