@@ -1791,6 +1791,70 @@ export default function AdminPage() {
                   </Grid>
                 )}
 
+                {/* Household Management (only in edit mode) */}
+                {userEditMode && (
+                  <>
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 2 }} />
+                      <Typography variant="h6" gutterBottom color="primary">
+                        🏠 Household Assignment
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                        Reassign this user to a different household
+                      </Typography>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>Assign to Household</InputLabel>
+                        <Select
+                          value={selectedUser.newHouseholdId || ''}
+                          onChange={(e) => setSelectedUser({
+                            ...selectedUser,
+                            newHouseholdId: e.target.value
+                          })}
+                          label="Assign to Household"
+                        >
+                          <MenuItem value="">
+                            <em>Select Household</em>
+                          </MenuItem>
+                          {households?.map((household: any) => (
+                            <MenuItem key={household.id} value={household.id}>
+                              {household.name} ({household.household_members?.length || 0} members)
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        <FormHelperText>
+                          Current: {selectedUser.households?.length > 0
+                            ? selectedUser.households[0]?.household_name
+                            : 'No household assigned'}
+                        </FormHelperText>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>Role in Household</InputLabel>
+                        <Select
+                          value={selectedUser.newRole || 'member'}
+                          onChange={(e) => setSelectedUser({
+                            ...selectedUser,
+                            newRole: e.target.value
+                          })}
+                          label="Role in Household"
+                        >
+                          <MenuItem value="admin">Admin</MenuItem>
+                          <MenuItem value="member">Member</MenuItem>
+                          <MenuItem value="guest">Guest</MenuItem>
+                        </Select>
+                        <FormHelperText>
+                          Set the user's role in the selected household
+                        </FormHelperText>
+                      </FormControl>
+                    </Grid>
+                  </>
+                )}
+
                 {/* User Override Settings (only in edit mode) */}
                 {userEditMode && (
                   <>
@@ -1908,15 +1972,51 @@ export default function AdminPage() {
               </Button>
               <Button
                 variant="contained"
-                onClick={() => {
-                  console.log('💾 Saving user overrides:', selectedUser.overrides)
-                  setSuccess(`User overrides updated for: ${selectedUser.email}`)
-                  setUserDetailsDialog(false)
-                  setUserEditMode(false)
+                onClick={async () => {
+                  try {
+                    // Handle household reassignment if selected
+                    if (selectedUser.newHouseholdId) {
+                      console.log('🏠 Reassigning user to household:', {
+                        userId: selectedUser.id,
+                        householdId: selectedUser.newHouseholdId,
+                        role: selectedUser.newRole || 'member'
+                      })
+
+                      const reassignResponse = await fetch('/api/admin/reassign-household', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          user_id: selectedUser.id,
+                          household_id: selectedUser.newHouseholdId,
+                          role: selectedUser.newRole || 'member'
+                        })
+                      })
+
+                      if (!reassignResponse.ok) {
+                        throw new Error('Failed to reassign household')
+                      }
+
+                      console.log('✅ User successfully reassigned to household')
+                    }
+
+                    // Save user overrides
+                    console.log('💾 Saving user overrides:', selectedUser.overrides)
+
+                    // Refresh admin data to show updated assignments
+                    await loadAdminData()
+
+                    setSuccess(`User settings updated for: ${selectedUser.email}`)
+                    setUserDetailsDialog(false)
+                    setUserEditMode(false)
+                  } catch (err: any) {
+                    setError(`Failed to update user: ${err.message}`)
+                  }
                 }}
                 startIcon={<SaveIcon />}
               >
-                Save Overrides
+                Save Changes
               </Button>
             </>
           ) : (
