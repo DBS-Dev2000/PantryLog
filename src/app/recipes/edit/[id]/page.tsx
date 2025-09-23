@@ -34,8 +34,11 @@ import {
   Image as ImageIcon,
   Category as CategoryIcon,
   Timer as TimerIcon,
-  Group as ServingsIcon,
-  CloudUpload as UploadIcon
+  Restaurant as ServingsIcon,
+  CloudUpload as UploadIcon,
+  Lock as LockIcon,
+  Group as GroupIcon,
+  Public as PublicIcon
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -97,6 +100,7 @@ export default function RecipeEditPage() {
   const [category, setCategory] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
+  const [visibility, setVisibility] = useState<'private' | 'family' | 'public'>('family')
 
   // Available categories
   const [categories, setCategories] = useState<RecipeCategory[]>([])
@@ -135,6 +139,7 @@ export default function RecipeEditPage() {
         setCuisine(recipeData.cuisine || '')
         setCategory(recipeData.category || '')
         setTags(recipeData.tags || [])
+        setVisibility(recipeData.visibility || 'family')
       }
 
       // Load recipe ingredients
@@ -320,6 +325,7 @@ export default function RecipeEditPage() {
           cuisine,
           category,
           tags,
+          visibility,
           updated_at: new Date().toISOString()
         })
         .eq('id', recipeId)
@@ -517,6 +523,45 @@ export default function RecipeEditPage() {
                           {c}
                         </MenuItem>
                       ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Who can see this recipe?</InputLabel>
+                    <Select
+                      value={visibility}
+                      onChange={(e) => setVisibility(e.target.value as 'private' | 'family' | 'public')}
+                      label="Who can see this recipe?"
+                    >
+                      <MenuItem value="private">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <LockIcon fontSize="small" />
+                          <Box>
+                            <Typography variant="body2">Private</Typography>
+                            <Typography variant="caption" color="text.secondary">Only you can see this</Typography>
+                          </Box>
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="family">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <GroupIcon fontSize="small" />
+                          <Box>
+                            <Typography variant="body2">Household</Typography>
+                            <Typography variant="caption" color="text.secondary">Share with your household members</Typography>
+                          </Box>
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="public">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <PublicIcon fontSize="small" />
+                          <Box>
+                            <Typography variant="body2">Public</Typography>
+                            <Typography variant="caption" color="text.secondary">Anyone can see this recipe</Typography>
+                          </Box>
+                        </Box>
+                      </MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
