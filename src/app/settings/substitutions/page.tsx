@@ -93,7 +93,7 @@ export default function SubstitutionsPage() {
     }
     setUser(user)
 
-    // Get household ID
+    // Get household ID - first try user_profiles, then household_members
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('household_id')
@@ -102,6 +102,30 @@ export default function SubstitutionsPage() {
 
     if (profile?.household_id) {
       setHouseholdId(profile.household_id)
+    } else {
+      // Try household_members table
+      const { data: member } = await supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (member?.household_id) {
+        setHouseholdId(member.household_id)
+      } else {
+        // Last resort - check if user.id is a household_id itself (legacy)
+        const { data: household } = await supabase
+          .from('households')
+          .select('id')
+          .eq('id', user.id)
+          .single()
+
+        if (household) {
+          setHouseholdId(user.id)
+        } else {
+          setError('No household found. Please contact support.')
+        }
+      }
     }
   }
 
@@ -136,7 +160,9 @@ export default function SubstitutionsPage() {
       confidence_score: 1.0,
       substitution_ratio: '1:1',
       notes: '',
-      is_bidirectional: true
+      is_bidirectional: true,
+      substitution_mode: 'when_available',
+      is_active: true
     })
     setShowDialog(true)
   }
@@ -166,8 +192,15 @@ export default function SubstitutionsPage() {
   }
 
   const handleSave = async () => {
-    if (!householdId || !formData.ingredient_name || !formData.equivalent_name) {
-      setError('Please fill in all required fields')
+    console.log('Saving substitution:', { householdId, formData, user })
+
+    if (!householdId) {
+      setError('No household found. Please refresh the page or contact support.')
+      return
+    }
+
+    if (!formData.ingredient_name?.trim() || !formData.equivalent_name?.trim()) {
+      setError('Please fill in both ingredient names')
       return
     }
 
@@ -388,7 +421,9 @@ export default function SubstitutionsPage() {
                         substitution_ratio: sub.ratio,
                         notes: sub.notes,
                         confidence_score: 1.0,
-                        is_bidirectional: false
+                        is_bidirectional: false,
+                        substitution_mode: 'when_available',
+                        is_active: true
                       })
                       setEditingItem(null)
                       setShowDialog(true)
