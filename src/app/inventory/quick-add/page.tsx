@@ -29,7 +29,12 @@ import {
   Autocomplete,
   Fab,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Backdrop
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -115,6 +120,8 @@ function QuickAddPageContent() {
   const [productBarcode, setProductBarcode] = useState('')
   const [locationCode, setLocationCode] = useState('')
   const [quantity, setQuantity] = useState(1)
+  const [quantityModalOpen, setQuantityModalOpen] = useState(false)
+  const [tempQuantity, setTempQuantity] = useState('')
   const [lookupLoading, setLookupLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -665,6 +672,31 @@ function QuickAddPageContent() {
     setQuantity(prev => Math.floor(prev / 10))
   }
 
+  const openQuantityModal = () => {
+    setTempQuantity(quantity.toString())
+    setQuantityModalOpen(true)
+  }
+
+  const handleQuantityModalSave = () => {
+    const newQuantity = parseInt(tempQuantity) || 1
+    setQuantity(Math.max(1, Math.min(999, newQuantity)))
+    setQuantityModalOpen(false)
+  }
+
+  const handleQuantityModalCancel = () => {
+    setQuantityModalOpen(false)
+    setTempQuantity('')
+  }
+
+  const handleTempQuantityChange = (value: string) => {
+    // Clear default when user starts typing
+    if (tempQuantity === quantity.toString() && value.length === 1 && value !== quantity.toString()) {
+      setTempQuantity(value)
+    } else {
+      setTempQuantity(value)
+    }
+  }
+
   const handleBarcodeScanned = (barcode: string) => {
     console.log('📱 Camera scanned barcode:', barcode)
     setProductBarcode(barcode)
@@ -1155,61 +1187,31 @@ function QuickAddPageContent() {
                       <Typography variant="h6" gutterBottom>Quantity</Typography>
 
                       <Box sx={{ textAlign: 'center', mb: 2 }}>
-                        <Typography variant="h2" sx={{ fontSize: '3rem', fontWeight: 'bold', color: 'primary.main' }}>
-                          {quantity}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">pieces</Typography>
-                      </Box>
-
-                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 2 }}>
-                        <Button variant="outlined" onClick={() => setQuantity(Math.max(0, quantity - 1))}>
-                          <RemoveIcon />
+                        <Button
+                          variant="outlined"
+                          onClick={openQuantityModal}
+                          sx={{
+                            minHeight: 80,
+                            minWidth: 120,
+                            fontSize: '1.5rem',
+                            fontWeight: 'bold',
+                            borderWidth: 2,
+                            '&:hover': {
+                              borderWidth: 2,
+                              backgroundColor: 'primary.light'
+                            }
+                          }}
+                        >
+                          <Box textAlign="center">
+                            <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
+                              {quantity}
+                            </Typography>
+                            <Typography variant="caption" display="block">
+                              tap to change
+                            </Typography>
+                          </Box>
                         </Button>
-                        <Button variant="outlined" onClick={() => setQuantity(quantity + 1)}>
-                          <AddIcon />
-                        </Button>
                       </Box>
-
-                      <Grid container spacing={1} sx={{ maxWidth: 300, mx: 'auto' }}>
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                          <Grid item xs={4} key={num}>
-                            <Button
-                              variant="outlined"
-                              onClick={() => addToQuantity(num)}
-                              sx={{ width: '100%', height: 50, fontSize: '1.1rem' }}
-                            >
-                              {num}
-                            </Button>
-                          </Grid>
-                        ))}
-                        <Grid item xs={4}>
-                          <Button
-                            variant="outlined"
-                            onClick={removeLastDigit}
-                            sx={{ width: '100%', height: 50, color: 'error.main' }}
-                          >
-                            <BackspaceIcon />
-                          </Button>
-                        </Grid>
-                        <Grid item xs={4}>
-                          <Button
-                            variant="outlined"
-                            onClick={() => addToQuantity(0)}
-                            sx={{ width: '100%', height: 50, fontSize: '1.1rem' }}
-                          >
-                            0
-                          </Button>
-                        </Grid>
-                        <Grid item xs={4}>
-                          <Button
-                            variant="outlined"
-                            onClick={() => setQuantity(1)}
-                            sx={{ width: '100%', height: 50 }}
-                          >
-                            Reset
-                          </Button>
-                        </Grid>
-                      </Grid>
                     </Paper>
 
                     <Box display="flex" gap={2}>
@@ -1322,6 +1324,83 @@ function QuickAddPageContent() {
           }}
         />
       ) : null}
+
+      {/* Quantity Modal */}
+      <Dialog
+        open={quantityModalOpen}
+        onClose={handleQuantityModalCancel}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            mx: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+          Set Quantity
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <TextField
+            autoFocus
+            fullWidth
+            type="number"
+            label="Quantity"
+            value={tempQuantity}
+            onChange={(e) => handleTempQuantityChange(e.target.value)}
+            onFocus={(e) => {
+              // Select all text when focused to make it easy to replace
+              e.target.select()
+            }}
+            inputProps={{
+              min: 1,
+              max: 999,
+              inputMode: 'numeric',
+              pattern: '[0-9]*'
+            }}
+            sx={{
+              '& .MuiInputBase-input': {
+                fontSize: '1.5rem',
+                textAlign: 'center',
+                fontWeight: 'bold'
+              }
+            }}
+          />
+          <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
+            Enter quantity (1-999)
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button onClick={handleQuantityModalCancel} variant="outlined" fullWidth>
+            Cancel
+          </Button>
+          <Button onClick={handleQuantityModalSave} variant="contained" fullWidth>
+            Set Quantity
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Saving Overlay */}
+      <Backdrop
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.modal + 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2
+        }}
+        open={saving}
+      >
+        <CircularProgress color="inherit" size={60} />
+        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          Adding to Inventory...
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.8 }}>
+          {productData?.name && `Adding ${quantity} × ${productData.name}`}
+        </Typography>
+      </Backdrop>
+
     </Container>
   )
 }
