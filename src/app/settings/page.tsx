@@ -30,7 +30,8 @@ import {
   Email as EmailIcon,
   CalendarToday as CalendarIcon,
   Home as HouseholdIcon,
-  SmartToy as AIIcon
+  SmartToy as AIIcon,
+  SwapHoriz as SubstitutionIcon
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -64,6 +65,13 @@ const settingsCategories = [
         icon: StorageIcon,
         href: '/settings/storage',
         color: 'info'
+      },
+      {
+        title: 'Ingredient Substitutions',
+        description: 'Set up ingredient equivalents and substitutions for recipes',
+        icon: SubstitutionIcon,
+        href: '/settings/substitutions',
+        color: 'success'
       }
     ]
   },
