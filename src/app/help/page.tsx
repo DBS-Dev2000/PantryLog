@@ -131,6 +131,10 @@ export default function HelpPage() {
         {
           question: "What are Natural Substitutions?",
           answer: "AI-powered ingredient substitutions that understand context. Get suggestions like ground turkey for ground beef with cooking tips and ratios."
+        },
+        {
+          question: "How do I manage household substitutions?",
+          answer: "Go to Settings → Ingredient Substitutions to create custom substitution rules. Set cooking spray = butter, or any ingredient equivalents your household prefers. Choose 'Always substitute' for hard rules or 'When available' for flexible options. All substitutions work bidirectionally if enabled."
         }
       ]
     },
@@ -214,6 +218,12 @@ export default function HelpPage() {
       description: "Try importing a recipe from YouTube or a recipe website to see inventory integration.",
       action: () => router.push('/recipes'),
       icon: <RecipeIcon />
+    },
+    {
+      title: "Set Up Substitutions",
+      description: "Configure ingredient substitutions like butter for cooking spray to match your cooking preferences.",
+      action: () => router.push('/settings/substitutions'),
+      icon: <NextIcon />
     },
     {
       title: "Create Shopping List",
