@@ -204,7 +204,22 @@ function InventoryPageContent() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      // Always get a fresh session to avoid stale data
+      const { data: { session }, error } = await supabase.auth.refreshSession()
+
+      if (error) {
+        console.error('Session refresh error:', error)
+        // Fallback to current session
+        const { data: { session: currentSession } } = await supabase.auth.getSession()
+        if (currentSession?.user) {
+          setUser(currentSession.user)
+          await loadInventoryItems(currentSession.user.id)
+        } else {
+          router.push('/auth')
+        }
+        return
+      }
+
       if (session?.user) {
         setUser(session.user)
         await loadInventoryItems(session.user.id)
