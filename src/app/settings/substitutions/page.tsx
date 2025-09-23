@@ -86,43 +86,58 @@ export default function SubstitutionsPage() {
   }, [householdId])
 
   const checkAuth = async () => {
+    console.log('🔐 Checking authentication for substitutions page...')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       router.push('/login')
       return
     }
+    console.log('👤 User found:', user.id)
     setUser(user)
 
     // Get household ID - first try user_profiles, then household_members
-    const { data: profile } = await supabase
+    console.log('🏠 Looking for household ID...')
+    const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('household_id')
       .eq('user_id', user.id)
       .single()
 
+    console.log('Profile lookup:', { profile, profileError })
+
     if (profile?.household_id) {
+      console.log('✅ Household found in user_profiles:', profile.household_id)
       setHouseholdId(profile.household_id)
     } else {
       // Try household_members table
-      const { data: member } = await supabase
+      console.log('📋 Trying household_members table...')
+      const { data: member, error: memberError } = await supabase
         .from('household_members')
         .select('household_id')
         .eq('user_id', user.id)
         .single()
 
+      console.log('Member lookup:', { member, memberError })
+
       if (member?.household_id) {
+        console.log('✅ Household found in household_members:', member.household_id)
         setHouseholdId(member.household_id)
       } else {
         // Last resort - check if user.id is a household_id itself (legacy)
-        const { data: household } = await supabase
+        console.log('🔍 Checking legacy household setup...')
+        const { data: household, error: householdError } = await supabase
           .from('households')
           .select('id')
           .eq('id', user.id)
           .single()
 
+        console.log('Household lookup:', { household, householdError })
+
         if (household) {
+          console.log('✅ Using legacy household ID (user.id):', user.id)
           setHouseholdId(user.id)
         } else {
+          console.error('❌ No household found for user')
           setError('No household found. Please contact support.')
         }
       }
