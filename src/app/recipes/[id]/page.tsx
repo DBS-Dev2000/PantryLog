@@ -320,8 +320,8 @@ export default function RecipeDetailPage() {
           })) || []
 
           // Use our new intelligent matching for each ingredient
-          const ingredientsWithAvailability = ingredientsData.map(ing => {
-            const matches = findIngredientMatches(ing.ingredient_name, inventoryForMatching)
+          const ingredientsWithAvailability = await Promise.all(ingredientsData.map(async ing => {
+            const matches = await findIngredientMatches(ing.ingredient_name, inventoryForMatching, userId)
 
             let availabilityStatus = 'missing'
             let matchedProduct = null

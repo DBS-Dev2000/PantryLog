@@ -288,7 +288,7 @@ function areIngredientsEquivalent(ingredient1: string, ingredient2: string, hous
 /**
  * Find matching inventory items for a recipe ingredient
  */
-export async function findIngredientMatches(
+export function findIngredientMatches(
   recipeIngredient: string,
   inventoryItems: Array<{
     id: string
@@ -302,15 +302,34 @@ export async function findIngredientMatches(
     unit?: string | null
   }>,
   householdId?: string
-): Promise<IngredientMatch[]> {
+): IngredientMatch[] | Promise<IngredientMatch[]> {
+  // If no household ID provided, use sync version (backward compatibility)
+  if (!householdId) {
+    return findIngredientMatchesSync(recipeIngredient, inventoryItems)
+  }
+
+  // Otherwise use async version with household data
+  return findIngredientMatchesAsync(recipeIngredient, inventoryItems, householdId)
+}
+
+function findIngredientMatchesSync(
+  recipeIngredient: string,
+  inventoryItems: Array<{
+    id: string
+    name: string
+    products?: {
+      name: string
+      category?: string | null
+      brand?: string | null
+    }
+    quantity: number
+    unit?: string | null
+  }>
+): IngredientMatch[] {
   const matches: IngredientMatch[] = []
   const normIngredient = normalizeIngredient(recipeIngredient)
 
-  // Load household equivalencies if householdId provided
-  let householdEquivalencies: Map<string, any[]> = new Map()
-  if (householdId) {
-    householdEquivalencies = await loadHouseholdEquivalencies(householdId)
-  }
+  // No household equivalencies in sync version (backward compatibility)
 
   for (const item of inventoryItems) {
     // Early exit if we have enough high-confidence matches
@@ -331,22 +350,12 @@ export async function findIngredientMatches(
       continue // Skip this item as it's been marked as incorrect
     }
 
-    // Check for exact or equivalent match (including household equivalencies)
-    if (areIngredientsEquivalent(recipeIngredient, productName, householdEquivalencies)) {
-      // Check if this is a household-specific match for higher confidence
-      let confidence = 1.0
-      let notes = undefined
-
-      if (householdEquivalencies?.has(normIngredient) || householdEquivalencies?.has(normalizeIngredient(productName))) {
-        confidence = 1.0
-        notes = `Household equivalency: "${productName}" for "${recipeIngredient}"`
-      }
-
+    // Check for exact or equivalent match (system defaults only in sync version)
+    if (areIngredientsEquivalent(recipeIngredient, productName)) {
       matches.push({
         inventoryItem: item,
         matchType: 'exact',
-        confidence,
-        notes
+        confidence: 1.0
       })
       continue
     }
@@ -488,6 +497,214 @@ export async function findIngredientMatches(
         ...match,
         confidence: Math.min(1.0, match.confidence * 1.2),
         notes: (match.notes || '') + ' (ML confirmed)'
+      }
+    }
+    return match
+  })
+
+  // Sort matches by confidence (highest first)
+  return boostedMatches.sort((a, b) => b.confidence - a.confidence)
+}
+
+async function findIngredientMatchesAsync(
+  recipeIngredient: string,
+  inventoryItems: Array<{
+    id: string
+    name: string
+    products?: {
+      name: string
+      category?: string | null
+      brand?: string | null
+    }
+    quantity: number
+    unit?: string | null
+  }>,
+  householdId: string
+): Promise<IngredientMatch[]> {
+  const matches: IngredientMatch[] = []
+  const normIngredient = normalizeIngredient(recipeIngredient)
+
+  // Load household equivalencies for async version
+  let householdEquivalencies: Map<string, any[]> = new Map()
+  try {
+    householdEquivalencies = await loadHouseholdEquivalencies(householdId)
+  } catch (error) {
+    console.warn('Failed to load household equivalencies, using system defaults:', error)
+  }
+
+  for (const item of inventoryItems) {
+    // Early exit if we have enough high-confidence matches
+    if (matches.filter(m => m.confidence >= 0.8).length >= 3) {
+      break;
+    }
+
+    // Skip items with no quantity
+    if (item.quantity <= 0) continue
+
+    const productName = item.products?.name || item.name
+    const productCategory = item.products?.category
+    const productBrand = item.products?.brand
+
+    // Check if ML feedback has blocked this match
+    const blockKey = `${normIngredient}:${normalizeIngredient(productName)}`
+    if (mlBlockedMatches.has(blockKey)) {
+      continue // Skip this item as it's been marked as incorrect
+    }
+
+    // Check for exact or equivalent match (including household equivalencies)
+    if (areIngredientsEquivalent(recipeIngredient, productName, householdEquivalencies)) {
+      // Check if this is a household-specific match for higher confidence
+      let confidence = 1.0
+      let notes = undefined
+
+      if (householdEquivalencies?.has(normIngredient) || householdEquivalencies?.has(normalizeIngredient(productName))) {
+        confidence = 1.0
+        notes = `Household equivalency: "${productName}" for "${recipeIngredient}"`
+      }
+
+      matches.push({
+        inventoryItem: item,
+        matchType: 'exact',
+        confidence,
+        notes
+      })
+      continue
+    }
+
+    // Continue with the same logic as sync version for partial matches, taxonomy, etc.
+    // [Rest of the matching logic would go here - for now using the sync logic]
+
+    // Check for partial match (ingredient is part of product name or vice versa)
+    const normProduct = normalizeIngredient(productName)
+
+    // Special exclusions for partial matching
+    // Prevent soup from matching broth
+    if ((normIngredient.includes('broth') && normProduct.includes('soup')) ||
+        (normIngredient.includes('soup') && normProduct.includes('broth'))) {
+      // Skip this match - soup is not broth
+    }
+    // Prevent pepper from matching non-pepper items (like tomato paste)
+    else if (normIngredient === 'pepper' &&
+             !normProduct.includes('pepper') &&
+             !normProduct.includes('peppercorn')) {
+      // Skip this match - pepper should only match pepper products
+    }
+    // Prevent butter from matching butter-flavored chips or similar compounds
+    else if ((normIngredient === 'butter' && normProduct.includes('chips')) ||
+             (normIngredient === 'butter' && normProduct.includes('crackers')) ||
+             (normIngredient === 'butter' && normProduct.includes('cookies')) ||
+             (normIngredient === 'butter' && normProduct.includes('popcorn'))) {
+      // Skip this match - butter chips/crackers/cookies are not butter
+    } else {
+      // Only do partial matching if there's meaningful overlap
+      // Avoid matching unrelated items like "garlic" with "mustard"
+      const ingredientWords = normIngredient.split(' ').filter(w => w.length > 2)
+      const productWords = normProduct.split(' ').filter(w => w.length > 2)
+
+      // Skip partial matching for complex compound products like snacks
+      const isCompoundProduct = (
+        normProduct.includes('chips') || normProduct.includes('crackers') ||
+        normProduct.includes('cookies') || normProduct.includes('candy') ||
+        normProduct.includes('toffee') || normProduct.includes('popcorn')
+      )
+
+      // For very short ingredients (like "pepper"), require exact word match
+      const requireExactMatch = normIngredient.length <= 6
+
+      const hasSignificantOverlap = !isCompoundProduct && ingredientWords.some(word =>
+        productWords.some(pWord => {
+          if (requireExactMatch) {
+            // For short ingredients, only allow exact word match
+            return word === pWord
+          }
+          return (word === pWord) || // Exact word match
+                 (word.length > 4 && pWord === word) || // Longer words must match exactly
+                 (word.length > 3 && pWord.length > 3 && pWord.includes(word) && word !== 'soup' && word !== 'broth') // Substring match for 3+ char words
+        })
+      )
+
+      if (hasSignificantOverlap) {
+        matches.push({
+          inventoryItem: item,
+          matchType: 'partial',
+          confidence: 0.5, // Lower confidence for partial matches
+          notes: `Partial match: "${productName}" for "${recipeIngredient}"`
+        })
+        continue
+      }
+    }
+
+    // Check taxonomy match with caching
+    const ingredientCacheKey = `ing:${recipeIngredient}`
+    let ingredientTaxonomy = taxonomyCache.get(ingredientCacheKey)
+    if (ingredientTaxonomy === undefined) {
+      ingredientTaxonomy = matchFoodTaxonomy(recipeIngredient)
+      taxonomyCache.set(ingredientCacheKey, ingredientTaxonomy)
+    }
+
+    const productCacheKey = `prod:${productName}:${productCategory}:${productBrand}`
+    let productTaxonomy = taxonomyCache.get(productCacheKey)
+    if (productTaxonomy === undefined) {
+      productTaxonomy = matchFoodTaxonomy(productName, productCategory, productBrand)
+      taxonomyCache.set(productCacheKey, productTaxonomy)
+    }
+
+    if (ingredientTaxonomy && productTaxonomy) {
+      // Same category and subcategory
+      if (ingredientTaxonomy.category === productTaxonomy.category) {
+        if (ingredientTaxonomy.subcategory === productTaxonomy.subcategory) {
+          matches.push({
+            inventoryItem: item,
+            matchType: 'category',
+            confidence: 0.8,
+            notes: `Category match: Both are ${ingredientTaxonomy.category}/${ingredientTaxonomy.subcategory}`
+          })
+          continue
+        } else {
+          // Same category but different subcategory
+          matches.push({
+            inventoryItem: item,
+            matchType: 'category',
+            confidence: 0.5,
+            notes: `Category match: Both are ${ingredientTaxonomy.category}`
+          })
+          continue
+        }
+      }
+    }
+
+    // Check if items can substitute for each other (skip if we already have good matches)
+    if (matches.length < 3 && canSubstitute(recipeIngredient, productName, null, productCategory)) {
+      matches.push({
+        inventoryItem: item,
+        matchType: 'substitute',
+        confidence: 0.4,
+        notes: `Substitute: "${productName}" can replace "${recipeIngredient}"`
+      })
+    }
+  }
+
+  // Sort by confidence and match type
+  matches.sort((a, b) => {
+    if (a.confidence !== b.confidence) {
+      return b.confidence - a.confidence
+    }
+    // Prefer exact > partial > category > substitute
+    const typeOrder = { 'exact': 0, 'partial': 1, 'category': 2, 'substitute': 3 }
+    return typeOrder[a.matchType] - typeOrder[b.matchType]
+  })
+
+  // Apply ML feedback boost to confirmed good matches
+  const boostedMatches = matches.map(match => {
+    const productName = match.inventoryItem.products?.name || match.inventoryItem.name
+    const confirmKey = `confirmed:${normIngredient}:${normalizeIngredient(productName)}`
+
+    if (mlCorrectionsCache.get(confirmKey) === 'CONFIRMED') {
+      // Boost confidence for ML-confirmed matches
+      return {
+        ...match,
+        confidence: Math.min(1.0, match.confidence * 1.2),
+        notes: match.notes ? `${match.notes} (ML confirmed)` : 'ML confirmed match'
       }
     }
     return match
