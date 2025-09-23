@@ -350,7 +350,7 @@ export default function RecipeDetailPage() {
               match_type: matches[0]?.matchType || null,
               match_strength: matches[0]?.confidence ? `${Math.round(matches[0].confidence * 100)}%` : null
             }
-          })
+          }))
 
           console.log('✅ Intelligent ingredient matching complete')
           console.log('🧠 Ingredients matched:', ingredientsWithAvailability.filter(ing => ing.match_type !== null).length, '/', ingredientsData.length)
