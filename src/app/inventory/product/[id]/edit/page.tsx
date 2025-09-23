@@ -386,6 +386,13 @@ export default function EditProductPage() {
       if (updateData.title) {
         updatedProduct.title = updateData.title
       }
+      if (updateData.description) {
+        // Map UPC description to the product description field
+        updatedProduct.nutritional_info = {
+          ...updatedProduct.nutritional_info,
+          description: updateData.description
+        }
+      }
       if (updateData.model) {
         updatedProduct.model = updateData.model
       }
@@ -1129,8 +1136,8 @@ export default function EditProductPage() {
                           onChange={(e) => setUpdateOptions({ ...updateOptions, description: e.target.checked })}
                         />
                       }
-                      label={`Description/Title: ${updateData.title ? 'Available' : 'Not available'}`}
-                      disabled={!updateData.title}
+                      label={`Description/Title: ${updateData.title || updateData.description ? 'Available' : 'Not available'}`}
+                      disabled={!updateData.title && !updateData.description}
                     />
                     <FormControlLabel
                       control={
