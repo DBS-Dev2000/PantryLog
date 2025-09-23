@@ -1,9 +1,15 @@
 import { matchFoodTaxonomy, canSubstitute } from './foodTaxonomyMatcher'
+import { supabase } from '@/lib/supabase'
 
 // Cache for taxonomy matches to improve performance
 const taxonomyCache = new Map<string, any>()
 // Clear cache every 5 minutes to prevent memory leak
 setInterval(() => taxonomyCache.clear(), 5 * 60 * 1000)
+
+// Cache for household equivalencies
+const householdEquivalenciesCache = new Map<string, Map<string, any[]>>()
+// Clear household cache every 10 minutes
+setInterval(() => householdEquivalenciesCache.clear(), 10 * 60 * 1000)
 
 // Cache for ML feedback-based corrections
 const mlCorrectionsCache = new Map<string, string | null>()
@@ -147,6 +153,68 @@ const ingredientEquivalencies: Record<string, string[]> = {
 }
 
 /**
+ * Load household equivalencies from database
+ */
+async function loadHouseholdEquivalencies(householdId: string): Promise<Map<string, any[]>> {
+  const cacheKey = householdId
+
+  if (householdEquivalenciesCache.has(cacheKey)) {
+    return householdEquivalenciesCache.get(cacheKey)!
+  }
+
+  try {
+    const { data: equivalencies, error } = await supabase
+      .from('household_ingredient_equivalencies')
+      .select('*')
+      .eq('household_id', householdId)
+
+    if (error) {
+      console.warn('Failed to load household equivalencies:', error)
+      return new Map()
+    }
+
+    const equivalenciesMap = new Map<string, any[]>()
+
+    if (equivalencies) {
+      equivalencies.forEach(eq => {
+        const key = normalizeIngredient(eq.ingredient_name)
+        if (!equivalenciesMap.has(key)) {
+          equivalenciesMap.set(key, [])
+        }
+        equivalenciesMap.get(key)!.push({
+          equivalent_name: eq.equivalent_name,
+          confidence_score: eq.confidence_score,
+          substitution_ratio: eq.substitution_ratio,
+          notes: eq.notes,
+          is_bidirectional: eq.is_bidirectional
+        })
+
+        // Add bidirectional mapping if enabled
+        if (eq.is_bidirectional) {
+          const reverseKey = normalizeIngredient(eq.equivalent_name)
+          if (!equivalenciesMap.has(reverseKey)) {
+            equivalenciesMap.set(reverseKey, [])
+          }
+          equivalenciesMap.get(reverseKey)!.push({
+            equivalent_name: eq.ingredient_name,
+            confidence_score: eq.confidence_score,
+            substitution_ratio: eq.substitution_ratio,
+            notes: eq.notes,
+            is_bidirectional: eq.is_bidirectional
+          })
+        }
+      })
+    }
+
+    householdEquivalenciesCache.set(cacheKey, equivalenciesMap)
+    return equivalenciesMap
+  } catch (error) {
+    console.error('Error loading household equivalencies:', error)
+    return new Map()
+  }
+}
+
+/**
  * Normalize ingredient name for matching
  */
 function normalizeIngredient(name: string): string {
@@ -161,7 +229,7 @@ function normalizeIngredient(name: string): string {
 /**
  * Check if two ingredient names are equivalent
  */
-function areIngredientsEquivalent(ingredient1: string, ingredient2: string): boolean {
+function areIngredientsEquivalent(ingredient1: string, ingredient2: string, householdEquivalencies?: Map<string, any[]>): boolean {
   const norm1 = normalizeIngredient(ingredient1)
   const norm2 = normalizeIngredient(ingredient2)
 
@@ -178,7 +246,30 @@ function areIngredientsEquivalent(ingredient1: string, ingredient2: string): boo
   // Check if one contains the other
   if (norm1.includes(norm2) || norm2.includes(norm1)) return true
 
-  // Check equivalency mappings
+  // First check household equivalencies (higher priority)
+  if (householdEquivalencies) {
+    // Check if ingredient1 has household equivalencies that match ingredient2
+    const household1 = householdEquivalencies.get(norm1)
+    if (household1) {
+      const matches = household1.some(eq => {
+        const eqNorm = normalizeIngredient(eq.equivalent_name)
+        return norm2.includes(eqNorm) || eqNorm.includes(norm2)
+      })
+      if (matches) return true
+    }
+
+    // Check if ingredient2 has household equivalencies that match ingredient1
+    const household2 = householdEquivalencies.get(norm2)
+    if (household2) {
+      const matches = household2.some(eq => {
+        const eqNorm = normalizeIngredient(eq.equivalent_name)
+        return norm1.includes(eqNorm) || eqNorm.includes(norm1)
+      })
+      if (matches) return true
+    }
+  }
+
+  // Check system equivalency mappings
   for (const [key, equivalents] of Object.entries(ingredientEquivalencies)) {
     const keyNorm = normalizeIngredient(key)
     const equivNorms = equivalents.map(e => normalizeIngredient(e))
@@ -197,7 +288,7 @@ function areIngredientsEquivalent(ingredient1: string, ingredient2: string): boo
 /**
  * Find matching inventory items for a recipe ingredient
  */
-export function findIngredientMatches(
+export async function findIngredientMatches(
   recipeIngredient: string,
   inventoryItems: Array<{
     id: string
@@ -209,10 +300,17 @@ export function findIngredientMatches(
     }
     quantity: number
     unit?: string | null
-  }>
-): IngredientMatch[] {
+  }>,
+  householdId?: string
+): Promise<IngredientMatch[]> {
   const matches: IngredientMatch[] = []
   const normIngredient = normalizeIngredient(recipeIngredient)
+
+  // Load household equivalencies if householdId provided
+  let householdEquivalencies: Map<string, any[]> = new Map()
+  if (householdId) {
+    householdEquivalencies = await loadHouseholdEquivalencies(householdId)
+  }
 
   for (const item of inventoryItems) {
     // Early exit if we have enough high-confidence matches
@@ -233,12 +331,22 @@ export function findIngredientMatches(
       continue // Skip this item as it's been marked as incorrect
     }
 
-    // Check for exact or equivalent match
-    if (areIngredientsEquivalent(recipeIngredient, productName)) {
+    // Check for exact or equivalent match (including household equivalencies)
+    if (areIngredientsEquivalent(recipeIngredient, productName, householdEquivalencies)) {
+      // Check if this is a household-specific match for higher confidence
+      let confidence = 1.0
+      let notes = undefined
+
+      if (householdEquivalencies?.has(normIngredient) || householdEquivalencies?.has(normalizeIngredient(productName))) {
+        confidence = 1.0
+        notes = `Household equivalency: "${productName}" for "${recipeIngredient}"`
+      }
+
       matches.push({
         inventoryItem: item,
         matchType: 'exact',
-        confidence: 1.0
+        confidence,
+        notes
       })
       continue
     }

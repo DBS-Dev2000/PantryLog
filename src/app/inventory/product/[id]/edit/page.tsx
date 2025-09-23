@@ -42,6 +42,7 @@ import {
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import HouseholdTaxonomyManager from '@/components/HouseholdTaxonomyManager'
 
 interface ProductDetail {
   id: string
@@ -1010,6 +1011,18 @@ export default function EditProductPage() {
           </Box>
         </CardContent>
       </Card>
+
+      {/* Household Customizations */}
+      {product && user && (
+        <HouseholdTaxonomyManager
+          productName={product.name}
+          householdId={user.id}
+          onUpdate={() => {
+            // Optionally refresh product data or show success message
+            console.log('Household customizations updated')
+          }}
+        />
+      )}
 
       {/* Update Information Modal */}
       <Dialog
