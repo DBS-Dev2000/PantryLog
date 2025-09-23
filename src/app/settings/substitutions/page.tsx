@@ -61,6 +61,7 @@ export default function SubstitutionsPage() {
   const [editingItem, setEditingItem] = useState<Substitution | null>(null)
   const [user, setUser] = useState<any>(null)
   const [householdId, setHouseholdId] = useState<string | null>(null)
+  const [initializing, setInitializing] = useState(true)
   const router = useRouter()
 
   // Form fields
@@ -142,6 +143,8 @@ export default function SubstitutionsPage() {
         }
       }
     }
+
+    setInitializing(false)
   }
 
   const loadSubstitutions = async () => {
@@ -213,15 +216,29 @@ export default function SubstitutionsPage() {
   const handleSave = async () => {
     console.log('Saving substitution:', { householdId, formData, user })
 
+    // Clear any previous errors
+    setError(null)
+
+    // Check each required field individually
+    const errors = []
+
     if (!householdId) {
-      setError('No household found. Please refresh the page or contact support.')
+      errors.push('No household found')
       console.error('No household ID found')
-      return
     }
 
-    if (!formData.ingredient_name?.trim() || !formData.equivalent_name?.trim()) {
-      setError('Please fill in both ingredient names')
-      console.error('Missing ingredient names:', formData)
+    if (!formData.ingredient_name?.trim()) {
+      errors.push('Original ingredient name is required')
+      console.error('Missing original ingredient name')
+    }
+
+    if (!formData.equivalent_name?.trim()) {
+      errors.push('Substitute ingredient name is required')
+      console.error('Missing substitute ingredient name')
+    }
+
+    if (errors.length > 0) {
+      setError(errors.join('. '))
       return
     }
 
@@ -344,8 +361,9 @@ export default function SubstitutionsPage() {
                   variant="contained"
                   startIcon={<AddIcon />}
                   onClick={handleAdd}
+                  disabled={initializing || !householdId}
                 >
-                  Add Substitution
+                  {initializing ? 'Loading...' : 'Add Substitution'}
                 </Button>
               </Grid>
             </Grid>
@@ -442,7 +460,10 @@ export default function SubstitutionsPage() {
             <Typography variant="body2" color="text.secondary" paragraph>
               Click to add these popular substitutions to your household
             </Typography>
-            <Grid container spacing={1}>
+            {initializing ? (
+              <Typography color="text.secondary">Loading household information...</Typography>
+            ) : (
+              <Grid container spacing={1}>
               {commonSubstitutions.map((sub, idx) => (
                 <Grid item xs={12} sm={6} key={idx}>
                   <Paper
@@ -452,7 +473,14 @@ export default function SubstitutionsPage() {
                       '&:hover': { bgcolor: 'action.hover' }
                     }}
                     onClick={() => {
-                      setFormData({
+                      // Check if household ID is available
+                      if (!householdId) {
+                        setError('Please wait while we load your household information...')
+                        return
+                      }
+
+                      console.log('Setting form data from common substitution:', sub)
+                      const newFormData = {
                         ingredient_name: sub.from,
                         equivalent_name: sub.to,
                         substitution_ratio: sub.ratio,
@@ -461,7 +489,10 @@ export default function SubstitutionsPage() {
                         is_bidirectional: false,
                         substitution_mode: 'when_available',
                         is_active: true
-                      })
+                      }
+                      console.log('New form data:', newFormData)
+
+                      setFormData(newFormData)
                       setEditingItem(null)
                       setShowDialog(true)
                     }}
@@ -476,6 +507,7 @@ export default function SubstitutionsPage() {
                 </Grid>
               ))}
             </Grid>
+            )}
           </CardContent>
         </Card>
 
