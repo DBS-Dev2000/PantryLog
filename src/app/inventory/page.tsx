@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense, useMemo } from 'react'
+import { getUserHouseholdId } from '@/lib/household-utils'
 import {
   Container,
   Typography,
@@ -117,24 +118,20 @@ function InventoryPageContent() {
     setError(null)
 
     try {
-      // Ensure household exists (don't overwrite existing name)
-      const { data: existingHousehold } = await supabase
-        .from('households')
-        .select('id, name')
-        .eq('id', userId)
-        .single()
+      // Get the user's actual household ID
+      const householdId = await getUserHouseholdId(userId)
 
-      if (!existingHousehold) {
-        await supabase
-          .from('households')
-          .insert([{ id: userId, name: 'My Household' }])
+      if (!householdId) {
+        throw new Error('No household found for user. Please contact support.')
       }
+
+      console.log('🏠 Loading inventory for household:', householdId)
 
       // First, load all storage locations to build paths
       const { data: allStorageLocations, error: locationsError } = await supabase
         .from('storage_locations')
         .select('*')
-        .eq('household_id', userId)
+        .eq('household_id', householdId)
         .eq('is_active', true)
 
       if (locationsError) throw locationsError
@@ -147,7 +144,7 @@ function InventoryPageContent() {
           products (*),
           storage_locations (*)
         `)
-        .eq('household_id', userId)
+        .eq('household_id', householdId)
         .eq('is_consumed', false)
         .order('created_at', { ascending: false })
 

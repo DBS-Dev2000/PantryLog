@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, Suspense } from 'react'
+import { getUserHouseholdId } from '@/lib/household-utils'
 import {
   Container,
   Typography,
@@ -400,22 +401,14 @@ function QuickAddPageContent() {
     setError(null)
 
     try {
-      const householdId = user.id
+      // Get the user's actual household ID
+      const householdId = await getUserHouseholdId(user.id)
 
-      console.log('🏠 Ensuring household exists for user:', householdId)
-
-      // Ensure household exists (don't overwrite existing name)
-      const { data: existingHousehold } = await supabase
-        .from('households')
-        .select('id, name')
-        .eq('id', householdId)
-        .single()
-
-      if (!existingHousehold) {
-        await supabase
-          .from('households')
-          .insert([{ id: householdId, name: 'My Household' }])
+      if (!householdId) {
+        throw new Error('No household found for user. Please contact support.')
       }
+
+      console.log('🏠 Adding item to household:', householdId)
 
       console.log('✅ Household ready:', householdId)
 
