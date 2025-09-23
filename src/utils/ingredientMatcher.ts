@@ -375,6 +375,11 @@ function findIngredientMatchesSync(
              !normProduct.includes('peppercorn')) {
       // Skip this match - pepper should only match pepper products
     }
+    // Prevent pepper from matching tomato products specifically
+    else if (normIngredient === 'pepper' &&
+             (normProduct.includes('tomato') || normProduct.includes('roma'))) {
+      // Skip this match - pepper should never match tomato products
+    }
     // Prevent butter from matching butter-flavored chips or similar compounds
     else if ((normIngredient === 'butter' && normProduct.includes('chips')) ||
              (normIngredient === 'butter' && normProduct.includes('crackers')) ||
@@ -424,6 +429,17 @@ function findIngredientMatchesSync(
         })
         continue
       }
+    }
+
+    // Additional category mismatch prevention
+    // Prevent spices from matching with vegetables/sauces
+    const isSpiceIngredient = ['pepper', 'salt', 'oregano', 'basil', 'thyme', 'rosemary', 'cinnamon', 'paprika', 'cumin'].includes(normIngredient)
+    const isSauceProduct = normProduct.includes('sauce') || normProduct.includes('paste') || normProduct.includes('soup')
+    const isVegetableProduct = normProduct.includes('tomato') || normProduct.includes('onion') || normProduct.includes('carrot')
+
+    if (isSpiceIngredient && (isSauceProduct || isVegetableProduct)) {
+      // Skip taxonomy matching for spice vs sauce/vegetable mismatches
+      continue
     }
 
     // Check taxonomy match with caching
@@ -589,6 +605,11 @@ async function findIngredientMatchesAsync(
              !normProduct.includes('peppercorn')) {
       // Skip this match - pepper should only match pepper products
     }
+    // Prevent pepper from matching tomato products specifically
+    else if (normIngredient === 'pepper' &&
+             (normProduct.includes('tomato') || normProduct.includes('roma'))) {
+      // Skip this match - pepper should never match tomato products
+    }
     // Prevent butter from matching butter-flavored chips or similar compounds
     else if ((normIngredient === 'butter' && normProduct.includes('chips')) ||
              (normIngredient === 'butter' && normProduct.includes('crackers')) ||
@@ -632,6 +653,17 @@ async function findIngredientMatchesAsync(
         })
         continue
       }
+    }
+
+    // Additional category mismatch prevention
+    // Prevent spices from matching with vegetables/sauces
+    const isSpiceIngredient = ['pepper', 'salt', 'oregano', 'basil', 'thyme', 'rosemary', 'cinnamon', 'paprika', 'cumin'].includes(normIngredient)
+    const isSauceProduct = normProduct.includes('sauce') || normProduct.includes('paste') || normProduct.includes('soup')
+    const isVegetableProduct = normProduct.includes('tomato') || normProduct.includes('onion') || normProduct.includes('carrot')
+
+    if (isSpiceIngredient && (isSauceProduct || isVegetableProduct)) {
+      // Skip taxonomy matching for spice vs sauce/vegetable mismatches
+      continue
     }
 
     // Check taxonomy match with caching
