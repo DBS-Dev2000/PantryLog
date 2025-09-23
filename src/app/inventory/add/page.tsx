@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, Suspense } from 'react'
-import { getUserHouseholdId } from '@/lib/household-utils'
+import { getUserHouseholdId } from '@/lib/household-utils-client'
 import {
   Container,
   Typography,

@@ -58,7 +58,7 @@ import VisualItemScanner from '@/components/VisualItemScanner'
 import VoiceAssistant from '@/components/VoiceAssistant'
 import WhisperVoiceAssistant from '@/components/WhisperVoiceAssistant'
 import { canUseVoiceAssistant, getVoiceAssistantType } from '@/lib/features'
-import { getUserHouseholdId } from '@/lib/household-utils'
+import { getUserHouseholdId } from '@/lib/household-utils-client'
 
 interface ProductData {
   id: string

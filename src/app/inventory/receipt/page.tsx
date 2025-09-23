@@ -45,7 +45,7 @@ import {
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { getUserHouseholdId } from '@/lib/household-utils'
+import { getUserHouseholdId } from '@/lib/household-utils-client'
 
 interface ReceiptItem {
   name: string
