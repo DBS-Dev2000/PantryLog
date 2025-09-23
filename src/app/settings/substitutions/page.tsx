@@ -169,7 +169,11 @@ export default function SubstitutionsPage() {
 
   const handleEdit = (item: Substitution) => {
     setEditingItem(item)
-    setFormData(item)
+    setFormData({
+      ...item,
+      substitution_mode: item.substitution_mode || 'when_available',
+      is_active: item.is_active !== false  // Default to true if undefined
+    })
     setShowDialog(true)
   }
 
@@ -196,11 +200,13 @@ export default function SubstitutionsPage() {
 
     if (!householdId) {
       setError('No household found. Please refresh the page or contact support.')
+      console.error('No household ID found')
       return
     }
 
     if (!formData.ingredient_name?.trim() || !formData.equivalent_name?.trim()) {
       setError('Please fill in both ingredient names')
+      console.error('Missing ingredient names:', formData)
       return
     }
 
@@ -209,19 +215,32 @@ export default function SubstitutionsPage() {
 
     try {
       const dataToSave = {
-        ...formData,
+        ingredient_name: formData.ingredient_name.trim(),
+        equivalent_name: formData.equivalent_name.trim(),
+        confidence_score: formData.confidence_score || 1.0,
+        substitution_ratio: formData.substitution_ratio || '1:1',
+        notes: formData.notes || null,
+        is_bidirectional: formData.is_bidirectional !== false,
+        substitution_mode: formData.substitution_mode || 'when_available',
+        is_active: formData.is_active !== false,
         household_id: householdId,
         created_by: user?.id
       }
 
+      console.log('Data to save:', dataToSave)
+
       if (editingItem?.id) {
-        // Update existing
+        // Update existing - remove fields that shouldn't be updated
+        const { household_id, created_by, ...updateData } = dataToSave
         const { error } = await supabase
           .from('household_ingredient_equivalencies')
-          .update(dataToSave)
+          .update(updateData)
           .eq('id', editingItem.id)
 
-        if (error) throw error
+        if (error) {
+          console.error('Update error:', error)
+          throw error
+        }
         setSuccess('Substitution updated successfully')
       } else {
         // Insert new
@@ -229,15 +248,18 @@ export default function SubstitutionsPage() {
           .from('household_ingredient_equivalencies')
           .insert([dataToSave])
 
-        if (error) throw error
+        if (error) {
+          console.error('Insert error:', error)
+          throw error
+        }
         setSuccess('Substitution added successfully')
       }
 
       setShowDialog(false)
       loadSubstitutions()
     } catch (err: any) {
-      setError('Failed to save substitution')
-      console.error(err)
+      setError(err.message || 'Failed to save substitution')
+      console.error('Save error:', err)
     } finally {
       setSaving(false)
     }
@@ -519,8 +541,8 @@ export default function SubstitutionsPage() {
                   <Grid item>
                     <Chip
                       label="When Available"
-                      color={formData.substitution_mode === 'when_available' ? 'primary' : 'default'}
-                      onClick={() => setFormData({ ...formData, substitution_mode: 'when_available' })}
+                      color={(!formData.substitution_mode || formData.substitution_mode === 'when_available') ? 'primary' : 'default'}
+                      onClick={() => setFormData(prev => ({ ...prev, substitution_mode: 'when_available' }))}
                       sx={{ cursor: 'pointer' }}
                     />
                   </Grid>
@@ -528,7 +550,7 @@ export default function SubstitutionsPage() {
                     <Chip
                       label="Always (Hard Rule)"
                       color={formData.substitution_mode === 'always' ? 'error' : 'default'}
-                      onClick={() => setFormData({ ...formData, substitution_mode: 'always' })}
+                      onClick={() => setFormData(prev => ({ ...prev, substitution_mode: 'always' }))}
                       sx={{ cursor: 'pointer' }}
                     />
                   </Grid>
