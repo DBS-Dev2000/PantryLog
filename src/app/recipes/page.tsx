@@ -56,6 +56,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { checkRecipeAvailability } from '@/utils/ingredientMatcherClient'
+import { checkRecipeAvailabilityLight } from '@/utils/ingredientMatcherLight'
 import RecipePhotoScanner from '@/components/RecipePhotoScanner'
 import FeatureGuard from '@/components/FeatureGuard'
 
@@ -174,19 +175,15 @@ export default function RecipesPage() {
         unit: item.unit
       })) || []
 
-      // For performance, only check availability for first 10 recipes initially
-      // We'll check the rest lazily as the user scrolls
-      const recipesToCheckInitially = (recipesData || []).slice(0, 10)
-      const recipesToCheckLater = (recipesData || []).slice(10)
-
-      // Check availability for initial recipes
-      const initialRecipesWithAvailability = await Promise.all(
-        recipesToCheckInitially.map(async (recipe) => {
+      // Use lightweight availability check for ALL recipes
+      // This is much faster since we moved data to the database
+      const allRecipesWithAvailability = await Promise.all(
+        (recipesData || []).map(async (recipe) => {
           try {
-            // Get recipe ingredients
+            // Get recipe ingredients (just names for lightweight check)
             const { data: ingredients } = await supabase
               .from('recipe_ingredients')
-              .select('ingredient_name, quantity, unit')
+              .select('ingredient_name')
               .eq('recipe_id', recipe.id)
 
             if (!ingredients || ingredients.length === 0) {
@@ -199,20 +196,16 @@ export default function RecipesPage() {
               }
             }
 
-            // Check availability using our intelligent matcher
-            const availabilityCheck = checkRecipeAvailability(
-              ingredients.map(ing => ({
-                name: ing.ingredient_name,
-                quantity: ing.quantity,
-                unit: ing.unit
-              })),
+            // Use lightweight check for ALL recipes now that it's fast
+            const availabilityCheck = checkRecipeAvailabilityLight(
+              ingredients,
               inventoryForMatching
             )
 
             let status: 'can_make' | 'partial' | 'missing_ingredients' = 'missing_ingredients'
             if (availabilityCheck.canMake) {
               status = 'can_make'
-            } else if (availabilityCheck.availability > 0) {
+            } else if (availabilityCheck.percentageAvailable >= 50) {
               status = 'partial'
             }
 
@@ -220,8 +213,8 @@ export default function RecipesPage() {
               ...recipe,
               category_name: recipe.recipe_categories?.name,
               availability_status: status,
-              available_ingredients: availabilityCheck.availableIngredients.length,
-              total_ingredients: ingredients.length
+              available_ingredients: availabilityCheck.availableCount,
+              total_ingredients: availabilityCheck.totalCount
             }
           } catch (err) {
             console.warn('Error checking availability for recipe:', recipe.title, err)
@@ -236,16 +229,7 @@ export default function RecipesPage() {
         })
       )
 
-      // Add recipes that we haven't checked yet with a 'pending' status
-      const laterRecipesWithPending = recipesToCheckLater.map(recipe => ({
-        ...recipe,
-        category_name: recipe.recipe_categories?.name,
-        availability_status: 'pending' as const,
-        available_ingredients: 0,
-        total_ingredients: 0
-      }))
-
-      const allRecipes = [...initialRecipesWithAvailability, ...laterRecipesWithPending]
+      const allRecipes = allRecipesWithAvailability
       setRecipes(allRecipes)
       console.log('🍳 Loaded', allRecipes.length, 'recipes')
 
