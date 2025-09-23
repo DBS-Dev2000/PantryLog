@@ -59,7 +59,7 @@ import {
   Save as SaveIcon
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase-client'
 import QRCode from 'qrcode'
 
 interface ProductDetail {

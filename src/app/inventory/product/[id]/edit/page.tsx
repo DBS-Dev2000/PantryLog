@@ -41,7 +41,7 @@ import {
   Update as UpdateIcon
 } from '@mui/icons-material'
 import { useRouter, useParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase-client'
 import HouseholdTaxonomyManager from '@/components/HouseholdTaxonomyManager'
 
 interface ProductDetail {

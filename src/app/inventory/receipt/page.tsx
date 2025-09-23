@@ -44,7 +44,7 @@ import {
   ShoppingCart as CartIcon
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase-client'
 import { getUserHouseholdId } from '@/lib/household-utils-client'
 
 interface ReceiptItem {
