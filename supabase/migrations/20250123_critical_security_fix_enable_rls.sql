@@ -37,7 +37,7 @@ ALTER TABLE IF EXISTS public.food_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.food_subcategories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.food_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.food_shelf_life ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.ml_ingredient_feedback ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.ingredient_match_feedback ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.household_food_taxonomy ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.household_shelf_life_overrides ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.household_ingredient_equivalencies ENABLE ROW LEVEL SECURITY;
@@ -129,9 +129,9 @@ DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_policies
-    WHERE tablename = 'ml_ingredient_feedback' AND policyname = 'Authenticated users can submit feedback'
+    WHERE tablename = 'ingredient_match_feedback' AND policyname = 'Authenticated users can submit feedback'
   ) THEN
-    CREATE POLICY "Authenticated users can submit feedback" ON public.ml_ingredient_feedback
+    CREATE POLICY "Authenticated users can submit feedback" ON public.ingredient_match_feedback
       FOR ALL USING (auth.uid() IS NOT NULL);
   END IF;
 END $$;
