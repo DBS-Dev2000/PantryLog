@@ -8,32 +8,26 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-// Helper to create authenticated client - use service role to bypass RLS
+// Helper to create authenticated client with proper user authentication
 function createAuthClient(req: NextRequest) {
-  // Use service role key to bypass RLS for meal planning
-  // This is safe because we validate the user ID from the request
-  if (supabaseServiceKey) {
-    return createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false
-      }
-    })
-  }
-
-  // Fallback to anon key with auth header
+  // SECURITY FIX: Always use anon key with proper user authentication
   const authorization = req.headers.get('authorization')
-  if (authorization) {
-    return createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          authorization
-        }
-      }
-    })
+
+  if (!authorization) {
+    throw new Error('Authentication required. Please log in to generate meal plans.')
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey)
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        authorization
+      }
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false
+    }
+  })
 }
 
 // Simplified meal planning without AI for now
@@ -89,7 +83,28 @@ export async function POST(req: NextRequest) {
       confirmMeals?: any[]
     }
 
-    console.log('Generating meal plan:', { householdId, startDate, endDate, strategy })
+    // SECURITY FIX: Validate user has access to the requested household
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Authentication required. Please log in.')
+    }
+
+    // Verify user belongs to the requested household
+    const { data: userProfile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('household_id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile) {
+      throw new Error('User profile not found.')
+    }
+
+    if (userProfile.household_id !== householdId) {
+      throw new Error('Access denied. You can only generate meal plans for your own household.')
+    }
+
+    console.log('Generating meal plan:', { householdId, startDate, endDate, strategy, userId: user.id })
 
     // Get household profile data
     const profile = await getHouseholdProfile(householdId, supabase)
@@ -1004,16 +1019,11 @@ async function saveMealPlan(householdId: string, mealPlan: any[], supabase: any)
     throw new Error('Cannot save empty meal plan')
   }
 
-  // Ensure we're using service role client
-  const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false
-    }
-  })
+  // SECURITY FIX: Use the authenticated client passed in (respects RLS)
+  // This ensures users can only save meal plans to their own household
 
   // Create the meal plan record
-  const { data: planData, error: planError } = await serviceSupabase
+  const { data: planData, error: planError } = await supabase
     .from('meal_plans')
     .insert({
       household_id: householdId,
@@ -1045,7 +1055,7 @@ async function saveMealPlan(householdId: string, mealPlan: any[], supabase: any)
   }))
 
   console.log('Saving planned meals:', plannedMeals.length, 'meals')
-  const { error: mealsError } = await serviceSupabase
+  const { error: mealsError } = await supabase
     .from('planned_meals')
     .insert(plannedMeals)
 
