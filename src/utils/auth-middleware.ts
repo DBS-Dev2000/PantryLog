@@ -281,7 +281,7 @@ export async function logAIUsage(
  */
 export async function withAuth(
   req: NextRequest,
-  handler: (authContext: AuthContext) => Promise<NextResponse>,
+  handler: (authContext: AuthContext, req: NextRequest) => Promise<NextResponse>,
   options: {
     requireAdmin?: boolean
     requireAI?: boolean
@@ -308,8 +308,8 @@ export async function withAuth(
       console.log(`🔐 Authenticated API access: ${req.url} by user ${authContext.user.id}`)
     }
 
-    // Step 4: Execute handler with authenticated context
-    return await handler(authContext)
+    // Step 4: Execute handler with authenticated context and original request
+    return await handler(authContext, req)
 
   } catch (error) {
     return handleAuthError(error)

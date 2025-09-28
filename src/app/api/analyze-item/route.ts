@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { withAuth, logAIUsage, AuthContext } from '@/utils/auth-middleware'
 
 export async function POST(request: NextRequest) {
+  return withAuth(request, handleAnalyzeItem, {
+    requireAI: true,
+    logAccess: true
+  })
+}
+
+async function handleAnalyzeItem(authContext: AuthContext, req: NextRequest): Promise<NextResponse> {
   const startTime = Date.now()
-  let userId: string | null = null
-  let householdId: string | null = null
 
   try {
-    const { image, prompt, user_id } = await request.json()
+    const { image, prompt } = await req.json()
 
     if (!image || !prompt) {
       return NextResponse.json(
@@ -21,28 +21,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    userId = user_id
-    householdId = user_id // Using user_id as household_id for now
-
+    const userId = authContext.user.id
     console.log('🤖 AI Image Analysis Request Received for user:', userId)
-
-    // Check if user can make AI request (within limits)
-    if (userId) {
-      const { data: canUse, error: limitError } = await supabase
-        .rpc('can_user_make_ai_request', { p_user_id: userId })
-
-      if (limitError) {
-        console.error('Error checking user limits:', limitError)
-      } else if (!canUse) {
-        return NextResponse.json(
-          {
-            error: 'AI usage limit reached. Please upgrade your plan or wait for reset.',
-            limit_reached: true
-          },
-          { status: 429 }
-        )
-      }
-    }
 
     // Try AI providers in order: Claude -> Gemini -> Mock
     const aiProviders = [
@@ -145,26 +125,19 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Log successful usage
-        if (userId && result.usage) {
-          const processingTime = Date.now() - startTime
-          await supabase.rpc('log_ai_usage', {
-            p_user_id: userId,
-            p_household_id: householdId,
-            p_api_provider: provider.name,
-            p_model_name: modelName,
-            p_api_endpoint: '/api/analyze-item',
-            p_input_tokens: result.usage.input_tokens || 0,
-            p_output_tokens: result.usage.output_tokens || 0,
-            p_image_count: 1,
-            p_total_cost: 0, // Calculated in function
-            p_request_type: 'item_recognition',
-            p_success: true,
-            p_error_message: null,
-            p_processing_time_ms: processingTime
+        // Log successful usage using middleware helper
+        if (result.usage) {
+          await logAIUsage(authContext, {
+            apiProvider: provider.name,
+            modelName: modelName,
+            apiEndpoint: '/api/analyze-item',
+            inputTokens: result.usage.input_tokens || 0,
+            outputTokens: result.usage.output_tokens || 0,
+            imageCount: 1,
+            requestType: 'item_recognition',
+            success: true,
+            processingTimeMs: Date.now() - startTime
           })
-
-          console.log(`✅ ${provider.name.toUpperCase()} usage logged:`, result.usage.input_tokens, 'input +', result.usage.output_tokens, 'output tokens')
         }
 
         console.log(`✅ ${provider.name.toUpperCase()} AI Analysis Complete`)
@@ -173,24 +146,19 @@ export async function POST(request: NextRequest) {
       } catch (providerError) {
         console.error(`❌ ${provider.name.toUpperCase()} API error:`, providerError)
 
-        // Log failed attempt
-        if (userId) {
-          await supabase.rpc('log_ai_usage', {
-            p_user_id: userId,
-            p_household_id: householdId,
-            p_api_provider: provider.name,
-            p_model_name: modelName || `${provider.name}-model`,
-            p_api_endpoint: '/api/analyze-item',
-            p_input_tokens: 0,
-            p_output_tokens: 0,
-            p_image_count: 1,
-            p_total_cost: 0,
-            p_request_type: 'item_recognition',
-            p_success: false,
-            p_error_message: providerError.message,
-            p_processing_time_ms: Date.now() - startTime
-          })
-        }
+        // Log failed attempt using middleware helper
+        await logAIUsage(authContext, {
+          apiProvider: provider.name,
+          modelName: modelName || `${provider.name}-model`,
+          apiEndpoint: '/api/analyze-item',
+          inputTokens: 0,
+          outputTokens: 0,
+          imageCount: 1,
+          requestType: 'item_recognition',
+          success: false,
+          errorMessage: providerError.message,
+          processingTimeMs: Date.now() - startTime
+        })
 
         // Continue to next provider
         continue
@@ -203,28 +171,21 @@ export async function POST(request: NextRequest) {
     console.log('📝 Prompt length:', prompt.length, 'characters')
 
     // Log usage even for mock (for testing billing system)
-    if (userId) {
-      const processingTime = Date.now() - startTime
-      try {
-        await supabase.rpc('log_ai_usage', {
-          p_user_id: userId,
-          p_household_id: householdId,
-          p_api_provider: 'claude',
-          p_model_name: 'claude-3-5-sonnet-mock',
-          p_api_endpoint: '/api/analyze-item',
-          p_input_tokens: 100, // Mock token counts
-          p_output_tokens: 50,
-          p_image_count: 1,
-          p_total_cost: 0.001, // Mock cost
-          p_request_type: 'item_recognition',
-          p_success: true,
-          p_error_message: null,
-          p_processing_time_ms: processingTime
-        })
-        console.log('✅ Mock usage logged for testing')
-      } catch (logError) {
-        console.warn('❌ Failed to log mock usage:', logError)
-      }
+    try {
+      await logAIUsage(authContext, {
+        apiProvider: 'claude',
+        modelName: 'claude-3-5-sonnet-mock',
+        apiEndpoint: '/api/analyze-item',
+        inputTokens: 100, // Mock token counts
+        outputTokens: 50,
+        imageCount: 1,
+        requestType: 'item_recognition',
+        success: true,
+        processingTimeMs: Date.now() - startTime
+      })
+      console.log('✅ Mock usage logged for testing')
+    } catch (logError) {
+      console.warn('❌ Failed to log mock usage:', logError)
     }
 
     // Simulate AI processing delay
