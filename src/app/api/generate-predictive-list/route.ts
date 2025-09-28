@@ -1,29 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
+// Service role client for internal operations only
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+function createAuthClient(req: NextRequest) {
+  const authorization = req.headers.get('authorization')
+  if (!authorization) {
+    throw new Error('Authentication required. Please log in to generate predictive shopping lists.')
+  }
+
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        headers: {
+          authorization
+        }
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    }
+  )
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { user_id, prediction_days = 7 } = await request.json()
+    // SECURITY FIX: Get authenticated user instead of accepting user_id from request
+    const authSupabase = createAuthClient(request)
+    const { data: { user }, error: userError } = await authSupabase.auth.getUser()
 
-    if (!user_id) {
+    if (userError || !user) {
       return NextResponse.json(
-        { error: 'User ID required' },
-        { status: 400 }
+        { error: 'Authentication required. Please log in to generate predictive shopping lists.' },
+        { status: 401 }
       )
     }
 
-    console.log('🔮 Generating predictive shopping list for user:', user_id)
+    const { prediction_days = 7 } = await request.json()
+    const userId = user.id
+
+    console.log('🔮 Generating predictive shopping list for user:', userId)
 
     // Analyze consumption patterns
-    const consumptionAnalysis = await analyzeConsumptionPatterns(user_id, prediction_days)
+    const consumptionAnalysis = await analyzeConsumptionPatterns(authSupabase, userId, prediction_days)
 
     // Generate AI-powered predictions
-    const predictiveItems = await generatePredictiveItems(user_id, consumptionAnalysis)
+    const predictiveItems = await generatePredictiveItems(authSupabase, userId, consumptionAnalysis)
 
     console.log('✅ Predictive shopping list generated:', predictiveItems.length, 'items')
     return NextResponse.json({
@@ -41,7 +70,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function analyzeConsumptionPatterns(userId: string, days: number) {
+async function analyzeConsumptionPatterns(supabase: any, userId: string, days: number) {
   const endDate = new Date()
   const startDate = new Date(endDate)
   startDate.setDate(startDate.getDate() - days)
@@ -113,7 +142,7 @@ async function analyzeConsumptionPatterns(userId: string, days: number) {
   }
 }
 
-async function generatePredictiveItems(userId: string, analysis: any) {
+async function generatePredictiveItems(supabase: any, userId: string, analysis: any) {
   const predictedItems = []
 
   // Get current inventory levels
