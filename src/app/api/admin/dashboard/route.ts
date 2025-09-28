@@ -15,15 +15,42 @@ const supabaseAdmin = createClient(
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const requestingUserId = searchParams.get('user_id')
+    // SECURITY FIX: Get user ID from proper authentication, not query params
+    const authorization = request.headers.get('authorization')
 
-    if (!requestingUserId) {
+    if (!authorization) {
       return NextResponse.json(
-        { error: 'User ID required' },
-        { status: 400 }
+        { error: 'Authentication required' },
+        { status: 401 }
       )
     }
+
+    // Create authenticated client to verify user
+    const authSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            authorization
+          }
+        },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false
+        }
+      }
+    )
+
+    const { data: { user }, error: userError } = await authSupabase.auth.getUser()
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: 'Invalid authentication token' },
+        { status: 401 }
+      )
+    }
+
+    const requestingUserId = user.id
 
     // Verify requesting user is admin
     try {
