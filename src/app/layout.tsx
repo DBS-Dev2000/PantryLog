@@ -3,6 +3,7 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 import { StoreProvider } from '@/store/StoreProvider'
 import { HouseholdProvider } from '@/contexts/HouseholdContext'
 import AppLayout from '@/components/AppLayout'
+import { StorageMonitorProvider } from '@/providers/StorageMonitorProvider'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -22,9 +23,11 @@ export default function RootLayout({
       <body className={inter.className}>
         <StoreProvider>
           <ThemeProvider>
-            <AppLayout>
-              {children}
-            </AppLayout>
+            <StorageMonitorProvider>
+              <AppLayout>
+                {children}
+              </AppLayout>
+            </StorageMonitorProvider>
           </ThemeProvider>
         </StoreProvider>
       </body>
