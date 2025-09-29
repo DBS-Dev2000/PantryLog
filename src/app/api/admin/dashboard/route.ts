@@ -82,26 +82,84 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Load households with membership data (based on migration schema)
+    // Check if user is a super_admin for full access
+    let isSuperAdmin = false
+    try {
+      const { data: adminData } = await supabaseAdmin
+        .from('system_admins')
+        .select('admin_level')
+        .eq('user_id', requestingUserId)
+        .eq('is_active', true)
+        .single()
+
+      isSuperAdmin = adminData?.admin_level === 'super_admin'
+    } catch (err) {
+      console.log('Admin level check:', err)
+    }
+
+    // Load households with membership data
     let households = []
     try {
-      const { data: householdsData, error: householdsError } = await supabaseAdmin
-        .from('households')
-        .select(`
-          id,
-          name,
-          created_at,
-          updated_at,
-          features,
-          household_members(
-            user_id,
-            role,
-            joined_at
-          )
-        `)
-        .order('created_at', { ascending: false })
+      // Use admin function for super admins to bypass RLS
+      if (isSuperAdmin) {
+        console.log('🔓 Using super admin access for all households')
+        const { data: allHouseholdsData, error: adminError } = await supabaseAdmin
+          .rpc('get_all_households_admin')
 
-      if (!householdsError && householdsData) {
+        if (!adminError && allHouseholdsData) {
+          households = allHouseholdsData.map(h => ({
+            ...h,
+            household_members: h.members || [],
+            member_count: h.member_count || 0
+          }))
+          console.log('✅ Super admin: loaded ALL households:', households.length)
+        } else {
+          console.error('❌ Admin function error:', adminError)
+          // Fallback to regular query
+          const { data: householdsData, error: householdsError } = await supabaseAdmin
+            .from('households')
+            .select(`
+              id,
+              name,
+              created_at,
+              updated_at,
+              features,
+              household_members(
+                user_id,
+                role,
+                joined_at
+              )
+            `)
+            .order('created_at', { ascending: false })
+
+          if (!householdsError && householdsData) {
+            households = householdsData
+          }
+        }
+      } else {
+        // Regular admin - use normal query
+        const { data: householdsData, error: householdsError } = await supabaseAdmin
+          .from('households')
+          .select(`
+            id,
+            name,
+            created_at,
+            updated_at,
+            features,
+            household_members(
+              user_id,
+              role,
+              joined_at
+            )
+          `)
+          .order('created_at', { ascending: false })
+
+        if (!householdsError && householdsData) {
+          households = householdsData
+        }
+      }
+
+      if (households.length > 0) {
         // Get all user data for member details
         const allUsersData = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
         const userMap = new Map()
