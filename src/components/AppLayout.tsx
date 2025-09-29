@@ -205,8 +205,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       // Check if user is a system admin using unified auth
       if (session?.user) {
-        const adminStatus = await isSystemAdmin(session.user.id)
-        setIsSystemAdmin(adminStatus)
+        try {
+          const adminStatus = await isSystemAdmin(session.user.id)
+          setIsSystemAdmin(adminStatus)
+        } catch (error) {
+          console.error('Error checking admin status:', error)
+          // Fallback: Check email directly
+          const adminEmails = ['daren@prolongedpantry.com', 'dbruncak@outlook.com']
+          setIsSystemAdmin(adminEmails.includes(session.user.email || ''))
+        }
       }
     }
 
@@ -219,8 +226,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       // Check admin status on auth state change using unified auth
       if (session?.user) {
-        const adminStatus = await isSystemAdmin(session.user.id)
-        setIsSystemAdmin(adminStatus)
+        try {
+          const adminStatus = await isSystemAdmin(session.user.id)
+          setIsSystemAdmin(adminStatus)
+        } catch (error) {
+          console.error('Error checking admin status on auth change:', error)
+          // Fallback: Check email directly
+          const adminEmails = ['daren@prolongedpantry.com', 'dbruncak@outlook.com']
+          setIsSystemAdmin(adminEmails.includes(session.user.email || ''))
+        }
       } else {
         setIsSystemAdmin(false)
       }
