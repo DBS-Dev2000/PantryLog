@@ -47,6 +47,7 @@ import {
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getUserHouseholdFeatures, shouldShowFeature, FeaturePermissions } from '@/lib/features'
+import { isSystemAdmin } from '@/lib/adminAuth'
 import FeatureUpsell from './FeatureUpsell'
 // import { useHousehold } from '@/contexts/HouseholdContext' // Temporarily disabled
 
@@ -202,15 +203,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user)
 
-      // Check if user is a system admin
+      // Check if user is a system admin using unified auth
       if (session?.user) {
-        const { data: adminData } = await supabase
-          .from('system_admins')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single()
-
-        setIsSystemAdmin(!!adminData)
+        const adminStatus = await isSystemAdmin(session.user.id)
+        setIsSystemAdmin(adminStatus)
       }
     }
 
@@ -221,15 +217,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user)
 
-      // Check admin status on auth state change
+      // Check admin status on auth state change using unified auth
       if (session?.user) {
-        const { data: adminData } = await supabase
-          .from('system_admins')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single()
-
-        setIsSystemAdmin(!!adminData)
+        const adminStatus = await isSystemAdmin(session.user.id)
+        setIsSystemAdmin(adminStatus)
       } else {
         setIsSystemAdmin(false)
       }

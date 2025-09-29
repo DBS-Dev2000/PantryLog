@@ -15,17 +15,44 @@ const supabaseAdmin = createClient(
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const requestingUserId = searchParams.get('user_id')
+    // SECURITY FIX: Get user ID from proper authentication, not query params
+    const authorization = request.headers.get('authorization')
 
-    if (!requestingUserId) {
+    if (!authorization) {
       return NextResponse.json(
-        { error: 'User ID required' },
-        { status: 400 }
+        { error: 'Authentication required' },
+        { status: 401 }
       )
     }
 
-    // Verify requesting user is admin (simplified check)
+    // Create authenticated client to verify user
+    const authSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            authorization
+          }
+        },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false
+        }
+      }
+    )
+
+    const { data: { user }, error: userError } = await authSupabase.auth.getUser()
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: 'Invalid authentication token' },
+        { status: 401 }
+      )
+    }
+
+    const requestingUserId = user.id
+
+    // Verify requesting user is admin using unified auth
     try {
       const { data: isAdmin, error: adminCheckError } = await supabaseAdmin
         .rpc('is_system_admin', { p_user_id: requestingUserId })
@@ -33,7 +60,7 @@ export async function GET(request: NextRequest) {
       if (adminCheckError || !isAdmin) {
         // Fallback admin check for development
         const { data: userData } = await supabaseAdmin.auth.admin.getUserById(requestingUserId)
-        const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || []
+        const adminEmails = ['daren@prolongedpantry.com', 'dbruncak@outlook.com']
 
         if (!userData.user || !adminEmails.includes(userData.user.email || '')) {
           return NextResponse.json(
@@ -45,7 +72,7 @@ export async function GET(request: NextRequest) {
     } catch (rpcError) {
       // RPC function doesn't exist, use fallback admin check
       const { data: userData } = await supabaseAdmin.auth.admin.getUserById(requestingUserId)
-      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || []
+      const adminEmails = ['daren@prolongedpantry.com', 'dbruncak@outlook.com']
 
       if (!userData.user || !adminEmails.includes(userData.user.email || '')) {
         return NextResponse.json(

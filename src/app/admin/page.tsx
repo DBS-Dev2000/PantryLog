@@ -216,10 +216,29 @@ export default function AdminPage() {
     try {
       console.log('📡 Loading admin data for user:', user.email, 'User ID:', user.id)
 
-      // Load all admin data via API routes
+      // Get the session token for authorization
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+
+      if (!token) {
+        console.error('❌ No access token available')
+        setError('Authentication required. Please sign in again.')
+        router.push('/auth')
+        return
+      }
+
+      // Load all admin data via API routes with proper authorization
       const [usersResponse, dashboardResponse] = await Promise.all([
-        fetch(`/api/admin/users?user_id=${user.id}`).catch(() => null),
-        fetch(`/api/admin/dashboard?user_id=${user.id}`).catch(() => null)
+        fetch('/api/admin/users', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }).catch(() => null),
+        fetch('/api/admin/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }).catch(() => null)
       ])
 
       // Load users data

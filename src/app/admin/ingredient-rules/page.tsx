@@ -57,6 +57,7 @@ import {
   Upload as UploadIcon
 } from '@mui/icons-material'
 import { supabase } from '@/lib/supabase'
+import { isSystemAdmin } from '@/lib/adminAuth'
 import { format } from 'date-fns'
 import AdminNav from '@/components/AdminNav'
 
@@ -145,14 +146,10 @@ export default function IngredientRulesAdmin() {
     if (session?.user) {
       setUser(session.user)
 
-      // Check if user is a system admin
-      const { data: adminUser } = await supabase
-        .from('system_admins')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single()
+      // Check if user is a system admin using unified auth
+      const adminStatus = await isSystemAdmin(session.user.id)
 
-      if (adminUser) {
+      if (adminStatus) {
         setIsAdmin(true)
         loadAllData()
       } else {
